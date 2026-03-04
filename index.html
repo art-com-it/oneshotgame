@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/images/logo/logo.png" />
+    <link rel="icon" type="image/svg+xml" href="/images/logo/logo-simple.svg" />
+    <link rel="apple-touch-icon" href="/images/logo/logo.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>OneShot Game - Игровой магазин</title>
+    
+    <!-- Preload critical resources -->
+    <link rel="preload" href="/images/logo/logo.png" as="image" type="image/png">
+    <link rel="preload" href="/images/logo/logo-simple.svg" as="image" type="image/svg+xml">
+    
+    <!-- Display font: Orbitron for a futuristic look -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800&display=swap" rel="stylesheet">
+
+    <!-- Global text fonts with Cyrillic support: Noto Sans + Roboto -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;600;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <!-- Performance: preconnect/dns-prefetch to Steam CDNs used by product images -->
+    <link rel="preconnect" href="https://cdn.cloudflare.steamstatic.com" crossorigin>
+    <link rel="dns-prefetch" href="//cdn.cloudflare.steamstatic.com">
+    <link rel="preconnect" href="https://shared.akamai.steamstatic.com" crossorigin>
+    <link rel="dns-prefetch" href="//shared.akamai.steamstatic.com">
+    <link rel="preconnect" href="https://steamcommunity.com" crossorigin>
+    <link rel="dns-prefetch" href="//steamcommunity.com">
+    
+    <!-- Яндекс.Метрика -->
+    <script type="text/javascript">
+      (function(m,e,t,r,i,k,a){m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};
+      m[i].l=1*new Date();
+      for (var j = 0; j < document.scripts.length; j++) {if (document.scripts[j].src === r) { return; }}
+      k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)})
+      (window, document, "script", "https://mc.yandex.ru/metrika/tag.js", "ym");
+      
+      // ID метрики Яндекс.Метрики
+      var yandexMetrikaId = "105338366";
+      
+      if (yandexMetrikaId) {
+        ym(yandexMetrikaId, "init", {
+          clickmap: true,
+          trackLinks: true,
+          accurateTrackBounce: true,
+          webvisor: true
+        });
+      }
+    </script>
+    <!-- /Яндекс.Метрика -->
+  </head>
+  <body>
+    <noscript><img src="https://mc.yandex.ru/watch/105338366" style="position:absolute; left:-9999px;" alt="" /></noscript>
+    <div id="app"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>
+
+

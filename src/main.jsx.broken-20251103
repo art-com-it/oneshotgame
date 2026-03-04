@@ -1,0 +1,2532 @@
+import React from 'react'
+import { createRoot } from 'react-dom/client'
+import { BrowserRouter, Routes, Route, NavLink, useNavigate, useParams } from 'react-router-dom'
+import SkinRoulette from './SkinRoulette.jsx'
+import './style.css'
+
+// Компонент для оптимизированной загрузки изображений
+function LazyImage({ src, alt, className, fallback = '/images/logo/logo.png', ...props }) {
+  const [imageSrc, setImageSrc] = React.useState(fallback)
+  const [isLoading, setIsLoading] = React.useState(true)
+  const [hasError, setHasError] = React.useState(false)
+  const imgRef = React.useRef(null)
+
+  React.useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            const img = new Image()
+            img.onload = () => {
+              setImageSrc(src)
+              setIsLoading(false)
+              setHasError(false)
+            }
+            img.onerror = () => {
+              setImageSrc(fallback)
+              setIsLoading(false)
+              setHasError(true)
+            }
+            img.src = src
+            observer.unobserve(entry.target)
+          }
+        })
+      },
+      { threshold: 0.1, rootMargin: '50px' }
+    )
+
+    if (imgRef.current) {
+      observer.observe(imgRef.current)
+    }
+
+    return () => observer.disconnect()
+  }, [src, fallback])
+
+  return (
+    <div ref={imgRef} className={`relative ${className || ''}`}>
+      <img
+        src={imageSrc}
+        alt={alt}
+        className={`transition-opacity duration-300 ${isLoading ? 'opacity-50' : 'opacity-100'} ${className || ''}`}
+        loading="lazy"
+        decoding="async"
+        {...props}
+      />
+      {isLoading && (
+        <div className="absolute inset-0 flex items-center justify-center bg-[#161f38] animate-pulse">
+          <div className="w-8 h-8 border-2 border-white/20 border-t-white/60 rounded-full animate-spin"></div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// Единая база данных продуктов
+const DATA = {
+  products: [
+    // Игры
+    { id: 'cyberpunk', name: 'Cyberpunk 2077', price: 29.99, image: '/images/cyberpunk/intro.jpeg', category: 'game', type: 'rpg', introImage: '/images/cyberpunk/intro.jpeg', images: ['/images/cyberpunk/intro.jpeg','/images/cyberpunk/game-cyberpunk-preview-2.jpeg','/images/cyberpunk/game-cyberpunk-preview-3.jpg','/images/cyberpunk/game-cyberpunk-preview-4.jpg','/images/cyberpunk/game-cyberpunk-preview-5.jpg'], specs: { developer: 'CD Projekt Red', release: '2020', platform: 'PC/PlayStation/Xbox', min: 'Intel Core i5, 8GB RAM, GTX 780' }, description: 'Культовая RPG в мире Ночного Города. Исследуйте город, улучшайте импланты, выбирайте свою историю.' },
+    { id: 'battlefield6', name: 'Battlefield 6', price: 49.99, image: '/images/battlefield6/intro.jpeg', introImage: '/images/battlefield6/intro.jpeg', category: 'game', type: 'shooter', images: ['/images/battlefield6/intro.jpeg','/images/battlefield6/battlefield-preview-1.jpeg','/images/battlefield6/battlefield-preview-2.jpg','/images/battlefield6/battlefield-preview-3.png','/images/battlefield6/battlefield-preview-4.png'], specs: { developer: 'DICE', release: '2024', platform: 'PC/PlayStation/Xbox', min: 'Intel Core i5-8400, 8GB RAM, GTX 1060' }, description: 'Новейший шутер от DICE с масштабными сражениями до 128 игроков. Динамичные бои, разрушаемые карты и современное оружие.' },
+    { id: 'arc-raiders', name: 'ARC Raiders', price: 39.99, image: '/images/ARC Raiders/intro.jpg', introImage: '/images/ARC Raiders/intro.jpg', category: 'game', type: 'shooter', images: ['/images/ARC Raiders/intro.jpg','/images/ARC Raiders/raiders-preview-1.jpeg','/images/ARC Raiders/raiders-preview-2.jpeg','/images/ARC Raiders/raiders-preview-3.jpg','/images/ARC Raiders/raiders-preview-4.jpeg'], specs: { developer: 'Embark Studios', release: '2024', platform: 'PC/PlayStation/Xbox', min: 'Intel Core i5-9400F, 12GB RAM, GTX 1660' }, description: 'Кооперативный экшен-шутер от третьего лица в постапокалиптическом мире. Сражайтесь с роботами и другими игроками за ресурсы.' },
+    { id: 'ea-sports-fc-26', name: 'EA SPORTS FC 26', price: 59.99, image: '/images/EA SPORTS FC 26/intro.jpg', introImage: '/images/EA SPORTS FC 26/intro.jpg', category: 'game', type: 'sports', images: ['/images/EA SPORTS FC 26/intro.jpg','/images/EA SPORTS FC 26/sports-preview-1.jpeg','/images/EA SPORTS FC 26/sports-preview-2.jpg','/images/EA SPORTS FC 26/sports-preview-3.jpg','/images/EA SPORTS FC 26/sports-preview-4.jpg'], specs: { developer: 'EA Sports', release: '2025', platform: 'PC/PlayStation/Xbox', min: 'Intel Core i5-10400F, 8GB RAM, GTX 1650' }, description: 'Новейший футбольный симулятор с улучшенной физикой мяча, реалистичной анимацией игроков и обновленными режимами карьеры.' },
+    { id: 'gta-v', name: 'GTA V', price: 29.99, image: '/images/GTA V/intro.jpg', introImage: '/images/GTA V/intro.jpg', category: 'game', type: 'racing', images: ['/images/GTA V/intro.jpg','/images/GTA V/GTA-preview-1.jpg','/images/GTA V/GTA-preview-2.jpg','/images/GTA V/GTA-preview-3.jpg','/images/GTA V/GTA-preview-4.jpg'], specs: { developer: 'Rockstar Games', release: '2013', platform: 'PC/PlayStation/Xbox', min: 'Intel Core i5-3470, 8GB RAM, GTX 660' }, description: 'Легендарная игра в открытом мире. Три главных героя, огромный город Лос-Сантос, множество миссий и онлайн-режим GTA Online.' },
+    { id: 'jurassic-world-evolution-3', name: 'Jurassic World Evolution 3', price: 49.99, image: '/images/Jurassic World Evolution 3/intro.jpg', introImage: '/images/Jurassic World Evolution 3/intro.jpg', category: 'game', type: 'strategy', images: ['/images/Jurassic World Evolution 3/intro.jpg','/images/Jurassic World Evolution 3/evolution-preview-1.jpg','/images/Jurassic World Evolution 3/evolution-preview-2.jpeg','/images/Jurassic World Evolution 3/evolution-preview-3.png','/images/Jurassic World Evolution 3/evolution-preview-4.jpg'], specs: { developer: 'Frontier Developments', release: '2024', platform: 'PC/PlayStation/Xbox', min: 'Intel Core i5-8400, 12GB RAM, GTX 1060' }, description: 'Создавайте и управляйте собственным парком динозавров. Новые виды, улучшенная генетика и захватывающие сценарии из фильмов.' },
+    { id: 'rv-there-yet', name: 'RV There Yet', price: 19.99, image: '/images/RV There Yet/intro.jpg', introImage: '/images/RV There Yet/intro.jpg', category: 'game', type: 'indie', images: ['/images/RV There Yet/intro.jpg','/images/RV There Yet/there-preview-1.jpg','/images/RV There Yet/there-preview-2.jpeg','/images/RV There Yet/there-preview-3.jpg','/images/RV There Yet/there-preview-4.jpeg','/images/RV There Yet/there-preview-5.jpg'], specs: { developer: 'Indie Studio', release: '2024', platform: 'PC/Nintendo Switch', min: 'Intel Core i3, 4GB RAM, Integrated Graphics' }, description: 'Уютная приключенческая игра о путешествии на автодоме. Исследуйте красивые локации, встречайте интересных персонажей.' },
+    { id: 'dead-by-daylight', name: 'Dead by Daylight', price: 24.99, image: '/images/dead by daylight/intro.jpg', introImage: '/images/dead by daylight/intro.jpg', category: 'game', type: 'horror', images: ['/images/dead by daylight/intro.jpg','/images/dead by daylight/dead-preview-1.jpg','/images/dead by daylight/dead-preview-2.jpg','/images/dead by daylight/dead-preview-3.png','/images/dead by daylight/dead-preview-4.jpg'], specs: { developer: 'Behaviour Interactive', release: '2016', platform: 'PC/PlayStation/Xbox/Nintendo Switch', min: 'Intel Core i3-4170, 8GB RAM, GTX 460' }, description: 'Асимметричная игра на выживание 4 против 1. Выживайте от маньяка или охотьтесь на выживших в атмосферных локациях.' },
+      // Скины
+    { id: 'skin-awp-gungnir', name: 'AWP | GUNGNIR', price: 14.99, image: '/images/skins/AWP-GUNGNIR.png', category: 'skin', type: 'weapon', description: 'Легендарная снайперская винтовка с мифологическим дизайном. Копье Одина в мире CS2.' },
+    { id: 'skin-deagle-fenek', name: 'Desert Eagle | Фенек', price: 9.99, image: '/images/skins/Desert-eagle-fenek.png', category: 'skin', type: 'weapon', description: 'Мощный пистолет с ярким дизайном пустынной лисы. Редкий скин с уникальной расцветкой.' },
+    { id: 'skin-karambit-gradient', name: 'Керамбит | Градиент', price: 19.99, image: '/images/skins/kerambit-gradient.png', category: 'skin', type: 'weapon', description: 'Изогнутый нож с плавным градиентным переходом цветов. Один из самых популярных ножей в CS2.' },
+    { id: 'skin-negev-tra-ta-ta', name: 'Negev | Тра-та-та', price: 4.99, image: '/images/skins/negev-tra-ta-ta.png', category: 'skin', type: 'weapon', description: 'Пулемет с веселым дизайном и звукоподражательным названием. Отличный выбор для любителей тяжелого вооружения.' },
+    { id: 'skin-pp-bizon-anubis', name: 'PP-Bizon | Сын Анубиса', price: 5.99, image: '/images/skins/pp-bizon-syd-annubisa.png', category: 'skin', type: 'weapon', description: 'Пистолет-пулемет с египетской тематикой. Мистический дизайн с изображением бога Анубиса.' },
+    { id: 'skin-sawedoff-kraken', name: 'Sawed-Off | Кракен', price: 3.99, image: '/images/skins/saved-off-cracken.png', category: 'skin', type: 'weapon', description: 'Обрез с морской тематикой. Дизайн с изображением легендарного морского чудовища.' },
+    { id: 'skin-sport-gloves-butcher', name: 'Спортивные перчатки | Мясник', price: 24.99, image: '/images/skins/sport-perchatky-myasnik.png', category: 'skin', type: 'armor', description: 'Спортивные перчатки с брутальным дизайном. Кровавые пятна и потертости создают атмосферу настоящего бойца.' },
+    
+    // Дополнительные скины CS:GO/CS2
+    { id: 'skin-ak47-redline', name: 'AK-47 | Redline', price: 45.99, image: 'https://steamcommunity-a.akamaihd.net/economy/image/-9a81dlWLwJ2UUGcVs_nsVtzdOEdtWwKGZZLQHTxDZ7I56KU0Zwwo4NUX4oFJZEHLbXH5ApeO4YmlhxYQknCRvCo04DEVlxkKgpot7HxfDhjxszJemkV09-5lpKKqPrxN7LEmyUJ6ZYg2LiSrNmg2wXi-UNsZGGhJoKRdlQ2aFzU-lK-xOjvgJC5u5nPnSNnvCEm4HfZnhCpwUYb5Ks_Gg', category: 'skin', type: 'weapon', rarity: 'Classified', description: 'Легендарный AK-47 с красными полосами. Один из самых узнаваемых скинов в CS2.' },
+    { id: 'skin-awp-dragon-lore', name: 'AWP | Dragon Lore', price: 2499.99, image: 'https://steamcommunity-a.akamaihd.net/economy/image/-9a81dlWLwJ2UUGcVs_nsVtzdOEdtWwKGZZLQHTxDZ7I56KU0Zwwo4NUX4oFJZEHLbXH5ApeO4YmlhxYQknCRvCo04DEVlxkKgpot621FAR17PLfYQJD_9W7m5a0mvLwOq7c2D4G65Vy3-qVpNj22gDi_UVqYmGhJNKVdlQ6aVzU-lK-xOjvgJC5u5nPnSNnvCEm4HfZnhCpwUYb5Ks_Gg', category: 'skin', type: 'weapon', rarity: 'Covert', description: 'Самый дорогой и редкий скин AWP с изображением дракона. Мечта любого коллекционера.' },
+    { id: 'skin-karambit-fade', name: 'Karambit | Fade', price: 899.99, image: 'https://steamcommunity-a.akamaihd.net/economy/image/-9a81dlWLwJ2UUGcVs_nsVtzdOEdtWwKGZZLQHTxDZ7I56KU0Zwwo4NUX4oFJZEHLbXH5ApeO4YmlhxYQknCRvCo04DEVlxkKgpovbSsLQJf2PLacDBA5ciJlY20k_PkP6jummJW4NE_2LiVrNSi2wXi_UVsYmGhJNKVdlQ6aVzU-lK-xOjvgJC5u5nPnSNnvCEm4HfZnhCpwUYb5Ks_Gg', category: 'skin', type: 'weapon', rarity: '★ Covert', description: 'Изогнутый нож с градиентной окраской от желтого к фиолетовому. Символ статуса в CS2.' },
+    { id: 'skin-m4a4-howl', name: 'M4A4 | Howl', price: 1299.99, image: 'https://steamcommunity-a.akamaihd.net/economy/image/-9a81dlWLwJ2UUGcVs_nsVtzdOEdtWwKGZZLQHTxDZ7I56KU0Zwwo4NUX4oFJZEHLbXH5ApeO4YmlhxYQknCRvCo04DEVlxkKgpou-6kejhz2v_Nfz5H_uO1gb-Gw_alDLPIhm5u5Mx2gv2P8d2t2wDi_UVsYmGhJNKVdlQ6aVzU-lK-xOjvgJC5u5nPnSNnvCEm4HfZnhCpwUYb5Ks_Gg', category: 'skin', type: 'weapon', rarity: 'Contraband', description: 'Контрабандный скин M4A4 с изображением воющего волка. Больше не выпадает из кейсов.' },
+    { id: 'skin-glock-fade', name: 'Glock-18 | Fade', price: 189.99, image: 'https://steamcommunity-a.akamaihd.net/economy/image/-9a81dlWLwJ2UUGcVs_nsVtzdOEdtWwKGZZLQHTxDZ7I56KU0Zwwo4NUX4oFJZEHLbXH5ApeO4YmlhxYQknCRvCo04DEVlxkKgposbaqKAxf0Ob3djFN79eJmYGZnvnxDLfYkWNFppMh2LiSrNmg2wXi-UNsZGGhJoKRdlQ2aVzU-lK-xOjvgJC5u5nPnSNnvCEm4HfZnhCpwUYb5Ks_Gg', category: 'skin', type: 'weapon', rarity: 'Restricted', description: 'Стартовый пистолет с красивым градиентом. Популярный скин среди профессиональных игроков.' },
+    { id: 'skin-usp-kill-confirmed', name: 'USP-S | Kill Confirmed', price: 79.99, image: 'https://steamcommunity-a.akamaihd.net/economy/image/-9a81dlWLwJ2UUGcVs_nsVtzdOEdtWwKGZZLQHTxDZ7I56KU0Zwwo4NUX4oFJZEHLbXH5ApeO4YmlhxYQknCRvCo04DEVlxkKgpoo6m1FBRp3_bGcjhQ09-jq5WYh8j_OrfdqWdY781lteXA54vwxgDi_UVsYmGhJNKVdlQ6aVzU-lK-xOjvgJC5u5nPnSNnvCEm4HfZnhCpwUYb5Ks_Gg', category: 'skin', type: 'weapon', rarity: 'Covert', description: 'Бесшумный пистолет с военной тематикой. Темный дизайн с красными акцентами.' },
+    { id: 'skin-butterfly-knife-slaughter', name: 'Butterfly Knife | Slaughter', price: 1599.99, image: 'https://steamcommunity-a.akamaihd.net/economy/image/-9a81dlWLwJ2UUGcVs_nsVtzdOEdtWwKGZZLQHTxDZ7I56KU0Zwwo4NUX4oFJZEHLbXH5ApeO4YmlhxYQknCRvCo04DEVlxkKgpovbSsLQJf2PLacDBA5ciJlY20k_PkP6jummJW4NE_2LiVrNSi2wXi_UVsYmGhJNKVdlQ6aVzU-lK-xOjvgJC5u5nPnSNnvCEm4HfZnhCpwUYb5Ks_Gg', category: 'skin', type: 'weapon', rarity: '★ Covert', description: 'Нож-бабочка с кровавым узором. Эффектная анимация и устрашающий вид.' },
+    { id: 'skin-ak47-fire-serpent', name: 'AK-47 | Fire Serpent', price: 899.99, image: 'https://steamcommunity-a.akamaihd.net/economy/image/-9a81dlWLwJ2UUGcVs_nsVtzdOEdtWwKGZZLQHTxDZ7I56KU0Zwwo4NUX4oFJZEHLbXH5ApeO4YmlhxYQknCRvCo04DEVlxkKgpot7HxfDhjxszJemkV09-5lpKKqPrxN7LEmyUJ6ZYg2LiSrNmg2wXi-UNsZGGhJoKRdlQ2aVzU-lK-xOjvgJC5u5nPnSNnvCEm4HfZnhCpwUYb5Ks_Gg', category: 'skin', type: 'weapon', rarity: 'Covert', description: 'AK-47 с изображением огненного змея. Мифический дизайн с красно-золотой расцветкой.' },
+    { id: 'skin-m4a1s-hot-rod', name: 'M4A1-S | Hot Rod', price: 299.99, image: 'https://steamcommunity-a.akamaihd.net/economy/image/-9a81dlWLwJ2UUGcVs_nsVtzdOEdtWwKGZZLQHTxDZ7I56KU0Zwwo4NUX4oFJZEHLbXH5ApeO4YmlhxYQknCRvCo04DEVlxkKgpou-6kejhz2v_Nfz5H_uO1gb-Gw_alDLPIhm5u5Mx2gv2P8d2t2wDi_UVsYmGhJNKVdlQ6aVzU-lK-xOjvgJC5u5nPnSNnvCEm4HfZnhCpwUYb5Ks_Gg', category: 'skin', type: 'weapon', rarity: 'Classified', description: 'Бесшумная винтовка с ярко-красным дизайном. Стильный и агрессивный внешний вид.' },
+    { id: 'skin-awp-asiimov', name: 'AWP | Asiimov', price: 149.99, image: 'https://steamcommunity-a.akamaihd.net/economy/image/-9a81dlWLwJ2UUGcVs_nsVtzdOEdtWwKGZZLQHTxDZ7I56KU0Zwwo4NUX4oFJZEHLbXH5ApeO4YmlhxYQknCRvCo04DEVlxkKgpot621FAR17PLfYQJD_9W7m5a0mvLwOq7c2D4G65Vy3-qVpNj22gDi_UVqYmGhJNKVdlQ6aVzU-lK-xOjvgJC5u5nPnSNnvCEm4HfZnhCpwUYb5Ks_Gg', category: 'skin', type: 'weapon', rarity: 'Covert', description: 'Футуристический дизайн снайперской винтовки. Бело-оранжевая расцветка в стиле sci-fi.' },
+    
+    // Скины для других игр
+    { id: 'skin-dota2-pudge-hook', name: 'Pudge | Dragonclaw Hook', price: 399.99, image: 'https://steamcdn-a.akamaihd.net/apps/dota2/images/items/pudge_dragonclaw_hook_large.png', category: 'skin', type: 'weapon', rarity: 'Immortal', description: 'Легендарный крюк Пуджа из Dota 2. Один из самых дорогих предметов в игре.' },
+    { id: 'skin-rust-ak-redline', name: 'AK47 | Redline Rust', price: 25.99, image: 'https://files.rustlabs.com/img/items180/rifle.ak.png', category: 'skin', type: 'weapon', rarity: 'Rare', description: 'Автомат Калашникова с красными полосами для игры Rust. Надежное оружие для выживания.' },
+    { id: 'skin-tf2-unusual-hat', name: 'Unusual Team Captain', price: 199.99, image: 'https://wiki.teamfortress.com/w/images/thumb/8/8c/Team_Captain.png/250px-Team_Captain.png', category: 'skin', type: 'armor', rarity: 'Unusual', description: 'Необычная шляпа из Team Fortress 2 с эффектом частиц. Редкий косметический предмет.' },
+    
+    // Дополнительные CS2 скины
+    { id: 'skin-deagle-blaze', name: 'Desert Eagle | Blaze', price: 89.99, image: 'https://steamcommunity-a.akamaihd.net/economy/image/-9a81dlWLwJ2UUGcVs_nsVtzdOEdtWwKGZZLQHTxDZ7I56KU0Zwwo4NUX4oFJZEHLbXH5ApeO4YmlhxYQknCRvCo04DEVlxkKgposr-kLAtl7PLZTjlH7du6kb-HnvD8J_WBkjMEsJUg3LqT8Nqg3gDi_UVsYmGhJNKVdlQ6aVzU-lK-xOjvgJC5u5nPnSNnvCEm4HfZnhCpwUYb5Ks_Gg', category: 'skin', type: 'weapon', rarity: 'Restricted', description: 'Мощный пистолет с огненным дизайном. Яркие оранжево-желтые языки пламени.' },
+    { id: 'skin-m9-bayonet-doppler', name: 'M9 Bayonet | Doppler', price: 699.99, image: 'https://steamcommunity-a.akamaihd.net/economy/image/-9a81dlWLwJ2UUGcVs_nsVtzdOEdtWwKGZZLQHTxDZ7I56KU0Zwwo4NUX4oFJZEHLbXH5ApeO4YmlhxYQknCRvCo04DEVlxkKgpovbSsLQJf2PLacDBA5ciJlY20k_PkP6jummJW4NE_2LiVrNSi2wXi_UVsYmGhJNKVdlQ6aVzU-lK-xOjvgJC5u5nPnSNnvCEm4HfZnhCpwUYb5Ks_Gg', category: 'skin', type: 'weapon', rarity: '★ Covert', description: 'Штык-нож M9 с переливающимся дизайном. Различные фазы создают уникальные узоры.' },
+    { id: 'skin-ak47-vulcan', name: 'AK-47 | Vulcan', price: 199.99, image: 'https://steamcommunity-a.akamaihd.net/economy/image/-9a81dlWLwJ2UUGcVs_nsVtzdOEdtWwKGZZLQHTxDZ7I56KU0Zwwo4NUX4oFJZEHLbXH5ApeO4YmlhxYQknCRvCo04DEVlxkKgpot7HxfDhjxszJemkV09-5lpKKqPrxN7LEmyUJ6ZYg2LiSrNmg2wXi-UNsZGGhJoKRdlQ2aVzU-lK-xOjvgJC5u5nPnSNnvCEm4HfZnhCpwUYb5Ks_Gg', category: 'skin', type: 'weapon', rarity: 'Classified', description: 'Футуристический AK-47 с технологичным дизайном. Серо-оранжевая расцветка в стиле sci-fi.' },
+    { id: 'skin-awp-lightning-strike', name: 'AWP | Lightning Strike', price: 79.99, image: 'https://steamcommunity-a.akamaihd.net/economy/image/-9a81dlWLwJ2UUGcVs_nsVtzdOEdtWwKGZZLQHTxDZ7I56KU0Zwwo4NUX4oFJZEHLbXH5ApeO4YmlhxYQknCRvCo04DEVlxkKgpot621FAR17PLfYQJD_9W7m5a0mvLwOq7c2D4G65Vy3-qVpNj22gDi_UVqYmGhJNKVdlQ6aVzU-lK-xOjvgJC5u5nPnSNnvCEm4HfZnhCpwUYb5Ks_Gg', category: 'skin', type: 'weapon', rarity: 'Classified', description: 'Снайперская винтовка с изображением молнии. Электрический дизайн на темном фоне.' },
+    { id: 'skin-p90-asiimov', name: 'P90 | Asiimov', price: 39.99, image: 'https://steamcommunity-a.akamaihd.net/economy/image/-9a81dlWLwJ2UUGcVs_nsVtzdOEdtWwKGZZLQHTxDZ7I56KU0Zwwo4NUX4oFJZEHLbXH5ApeO4YmlhxYQknCRvCo04DEVlxkKgpopuP1FAR17PLfYQJD_9W7m5a0mvLwOq7c2D4G65Vy3-qVpNj22gDi_UVqYmGhJNKVdlQ6aVzU-lK-xOjvgJC5u5nPnSNnvCEm4HfZnhCpwUYb5Ks_Gg', category: 'skin', type: 'weapon', rarity: 'Covert', description: 'Пистолет-пулемет в футуристическом стиле. Бело-оранжевый дизайн серии Asiimov.' },
+    { id: 'skin-galil-eco', name: 'Galil AR | Eco', price: 12.99, image: 'https://steamcommunity-a.akamaihd.net/economy/image/-9a81dlWLwJ2UUGcVs_nsVtzdOEdtWwKGZZLQHTxDZ7I56KU0Zwwo4NUX4oFJZEHLbXH5ApeO4YmlhxYQknCRvCo04DEVlxkKgpou-6kejhz2v_Nfz5H_uO1gb-Gw_alDLPIhm5u5Mx2gv2P8d2t2wDi_UVsYmGhJNKVdlQ6aVzU-lK-xOjvgJC5u5nPnSNnvCEm4HfZnhCpwUYb5Ks_Gg', category: 'skin', type: 'weapon', rarity: 'Restricted', description: 'Автоматическая винтовка с экологической тематикой. Зеленые тона и природные мотивы.' },
+    { id: 'skin-famas-djinn', name: 'FAMAS | Djinn', price: 18.99, image: 'https://steamcommunity-a.akamaihd.net/economy/image/-9a81dlWLwJ2UUGcVs_nsVtzdOEdtWwKGZZLQHTxDZ7I56KU0Zwwo4NUX4oFJZEHLbXH5ApeO4YmlhxYQknCRvCo04DEVlxkKgpou-6kejhz2v_Nfz5H_uO1gb-Gw_alDLPIhm5u5Mx2gv2P8d2t2wDi_UVsYmGhJNKVdlQ6aVzU-lK-xOjvgJC5u5nPnSNnvCEm4HfZnhCpwUYb5Ks_Gg', category: 'skin', type: 'weapon', rarity: 'Restricted', description: 'Штурмовая винтовка с мистическим дизайном джинна. Восточные мотивы и магические узоры.' },
+    { id: 'skin-mac10-neon-rider', name: 'MAC-10 | Neon Rider', price: 8.99, image: 'https://steamcommunity-a.akamaihd.net/economy/image/-9a81dlWLwJ2UUGcVs_nsVtzdOEdtWwKGZZLQHTxDZ7I56KU0Zwwo4NUX4oFJZEHLbXH5ApeO4YmlhxYQknCRvCo04DEVlxkKgpou-6kejhz2v_Nfz5H_uO1gb-Gw_alDLPIhm5u5Mx2gv2P8d2t2wDi_UVsYmGhJNKVdlQ6aVzU-lK-xOjvgJC5u5nPnSNnvCEm4HfZnhCpwUYb5Ks_Gg', category: 'skin', type: 'weapon', rarity: 'Classified', description: 'Пистолет-пулемет с неоновым дизайном. Яркие цвета и киберпанк-эстетика.' },
+    
+    // Перчатки и ножи
+    { id: 'skin-gloves-pandora', name: 'Sport Gloves | Pandora\'s Box', price: 299.99, image: 'https://steamcommunity-a.akamaihd.net/economy/image/-9a81dlWLwJ2UUGcVs_nsVtzdOEdtWwKGZZLQHTxDZ7I56KU0Zwwo4NUX4oFJZEHLbXH5ApeO4YmlhxYQknCRvCo04DEVlxkKgpovbSsLQJf2PLacDBA5ciJlY20k_PkP6jummJW4NE_2LiVrNSi2wXi_UVsYmGhJNKVdlQ6aVzU-lK-xOjvgJC5u5nPnSNnvCEm4HfZnhCpwUYb5Ks_Gg', category: 'skin', type: 'armor', rarity: '★ Covert', description: 'Спортивные перчатки с мистическим дизайном ящика Пандоры. Темные тона с золотыми акцентами.' },
+    { id: 'skin-gloves-superconductor', name: 'Driver Gloves | Superconductor', price: 199.99, image: 'https://steamcommunity-a.akamaihd.net/economy/image/-9a81dlWLwJ2UUGcVs_nsVtzdOEdtWwKGZZLQHTxDZ7I56KU0Zwwo4NUX4oFJZEHLbXH5ApeO4YmlhxYQknCRvCo04DEVlxkKgpovbSsLQJf2PLacDBA5ciJlY20k_PkP6jummJW4NE_2LiVrNSi2wXi_UVsYmGhJNKVdlQ6aVzU-lK-xOjvgJC5u5nPnSNnvCEm4HfZnhCpwUYb5Ks_Gg', category: 'skin', type: 'armor', rarity: '★ Covert', description: 'Водительские перчатки с технологичным дизайном. Электрические узоры и современный стиль.' },
+    { id: 'skin-bayonet-tiger-tooth', name: 'Bayonet | Tiger Tooth', price: 399.99, image: 'https://steamcommunity-a.akamaihd.net/economy/image/-9a81dlWLwJ2UUGcVs_nsVtzdOEdtWwKGZZLQHTxDZ7I56KU0Zwwo4NUX4oFJZEHLbXH5ApeO4YmlhxYQknCRvCo04DEVlxkKgpovbSsLQJf2PLacDBA5ciJlY20k_PkP6jummJW4NE_2LiVrNSi2wXi_UVsYmGhJNKVdlQ6aVzU-lK-xOjvgJC5u5nPnSNnvCEm4HfZnhCpwUYb5Ks_Gg', category: 'skin', type: 'weapon', rarity: '★ Covert', description: 'Штык-нож с узором тигриного зуба. Золотисто-оранжевые полосы на лезвии.' },
+    { id: 'skin-flip-knife-marble-fade', name: 'Flip Knife | Marble Fade', price: 299.99, image: 'https://steamcommunity-a.akamaihd.net/economy/image/-9a81dlWLwJ2UUGcVs_nsVtzdOEdtWwKGZZLQHTxDZ7I56KU0Zwwo4NUX4oFJZEHLbXH5ApeO4YmlhxYQknCRvCo04DEVlxkKgpovbSsLQJf2PLacDBA5ciJlY20k_PkP6jummJW4NE_2LiVrNSi2wXi_UVsYmGhJNKVdlQ6aVzU-lK-xOjvgJC5u5nPnSNnvCEm4HfZnhCpwUYb5Ks_Gg', category: 'skin', type: 'weapon', rarity: '★ Covert', description: 'Складной нож с мраморным узором. Красивые переливы красного, синего и желтого цветов.' },
+    
+    // Дешевые скины
+    { id: 'skin-glock-water-elemental', name: 'Glock-18 | Water Elemental', price: 15.99, image: 'https://steamcommunity-a.akamaihd.net/economy/image/-9a81dlWLwJ2UUGcVs_nsVtzdOEdtWwKGZZLQHTxDZ7I56KU0Zwwo4NUX4oFJZEHLbXH5ApeO4YmlhxYQknCRvCo04DEVlxkKgposbaqKAxf0Ob3djFN79eJmYGZnvnxDLfYkWNFppMh2LiSrNmg2wXi-UNsZGGhJoKRdlQ2aVzU-lK-xOjvgJC5u5nPnSNnvCEm4HfZnhCpwUYb5Ks_Gg', category: 'skin', type: 'weapon', rarity: 'Restricted', description: 'Стартовый пистолет с водной стихией. Синие тона и волнообразные узоры.' },
+    { id: 'skin-p250-see-ya-later', name: 'P250 | See Ya Later', price: 6.99, image: 'https://steamcommunity-a.akamaihd.net/economy/image/-9a81dlWLwJ2UUGcVs_nsVtzdOEdtWwKGZZLQHTxDZ7I56KU0Zwwo4NUX4oFJZEHLbXH5ApeO4YmlhxYQknCRvCo04DEVlxkKgpopujwezhjxszYI2gS09-5lpKKqPrxN7LEmyUJ6ZYg2LiSrNmg2wXi-UNsZGGhJoKRdlQ2aVzU-lK-xOjvgJC5u5nPnSNnvCEm4HfZnhCpwUYb5Ks_Gg', category: 'skin', type: 'weapon', rarity: 'Mil-Spec', description: 'Пистолет P250 с ярким граффити-дизайном. Уличная культура и яркие краски.' },
+    { id: 'skin-mp9-bulldozer', name: 'MP9 | Bulldozer', price: 4.99, image: 'https://steamcommunity-a.akamaihd.net/economy/image/-9a81dlWLwJ2UUGcVs_nsVtzdOEdtWwKGZZLQHTxDZ7I56KU0Zwwo4NUX4oFJZEHLbXH5ApeO4YmlhxYQknCRvCo04DEVlxkKgpou6r8FAR17PLfYQJD_9W7m5a0mvLwOq7c2D4G65Vy3-qVpNj22gDi_UVqYmGhJNKVdlQ6aVzU-lK-xOjvgJC5u5nPnSNnvCEm4HfZnhCpwUYb5Ks_Gg', category: 'skin', type: 'weapon', rarity: 'Mil-Spec', description: 'Пистолет-пулемет с промышленным дизайном. Желто-черная расцветка строительной техники.' },
+    { id: 'skin-nova-antique', name: 'Nova | Antique', price: 3.99, image: 'https://steamcommunity-a.akamaihd.net/economy/image/-9a81dlWLwJ2UUGcVs_nsVtzdOEdtWwKGZZLQHTxDZ7I56KU0Zwwo4NUX4oFJZEHLbXH5ApeO4YmlhxYQknCRvCo04DEVlxkKgpouLWzKjhzw8zSdD9Q7d2lq4yCkP_gfeuJxj4IvJQp2LqVrNSi2wXi_UVsYmGhJNKVdlQ6aVzU-lK-xOjvgJC5u5nPnSNnvCEm4HfZnhCpwUYb5Ks_Gg', category: 'skin', type: 'weapon', rarity: 'Consumer Grade', description: 'Дробовик с антикварным дизайном. Классический деревянный приклад и металлические детали.' },
+    { id: 'skin-xm1014-seasons', name: 'XM1014 | Seasons', price: 2.99, image: 'https://steamcommunity-a.akamaihd.net/economy/image/-9a81dlWLwJ2UUGcVs_nsVtzdOEdtWwKGZZLQHTxDZ7I56KU0Zwwo4NUX4oFJZEHLbXH5ApeO4YmlhxYQknCRvCo04DEVlxkKgpouLWzKjhzw8zSdD9Q7d2lq4yCkP_gfeuJxj4IvJQp2LqVrNSi2wXi_UVsYmGhJNKVdlQ6aVzU-lK-xOjvgJC5u5nPnSNnvCEm4HfZnhCpwUYb5Ks_Gg', category: 'skin', type: 'weapon', rarity: 'Consumer Grade', description: 'Автоматический дробовик с сезонным камуфляжем. Осенние листья и природные тона.' },
+    
+    // Средний ценовой сегмент
+    { id: 'skin-m4a4-radiation-hazard', name: 'M4A4 | Radiation Hazard', price: 45.99, image: 'https://steamcommunity-a.akamaihd.net/economy/image/-9a81dlWLwJ2UUGcVs_nsVtzdOEdtWwKGZZLQHTxDZ7I56KU0Zwwo4NUX4oFJZEHLbXH5ApeO4YmlhxYQknCRvCo04DEVlxkKgpou-6kejhz2v_Nfz5H_uO1gb-Gw_alDLPIhm5u5Mx2gv2P8d2t2wDi_UVsYmGhJNKVdlQ6aVzU-lK-xOjvgJC5u5nPnSNnvCEm4HfZnhCpwUYb5Ks_Gg', category: 'skin', type: 'weapon', rarity: 'Restricted', description: 'Штурмовая винтовка с радиационной тематикой. Желто-черные предупреждающие знаки.' },
+    { id: 'skin-awp-redline', name: 'AWP | Redline', price: 35.99, image: 'https://steamcommunity-a.akamaihd.net/economy/image/-9a81dlWLwJ2UUGcVs_nsVtzdOEdtWwKGZZLQHTxDZ7I56KU0Zwwo4NUX4oFJZEHLbXH5ApeO4YmlhxYQknCRvCo04DEVlxkKgpot621FAR17PLfYQJD_9W7m5a0mvLwOq7c2D4G65Vy3-qVpNj22gDi_UVqYmGhJNKVdlQ6aVzU-lK-xOjvgJC5u5nPnSNnvCEm4HfZnhCpwUYb5Ks_Gg', category: 'skin', type: 'weapon', rarity: 'Classified', description: 'Снайперская винтовка с красными полосами. Классический дизайн серии Redline.' },
+    { id: 'skin-ak47-point-disarray', name: 'AK-47 | Point Disarray', price: 29.99, image: 'https://steamcommunity-a.akamaihd.net/economy/image/-9a81dlWLwJ2UUGcVs_nsVtzdOEdtWwKGZZLQHTxDZ7I56KU0Zwwo4NUX4oFJZEHLbXH5ApeO4YmlhxYQknCRvCo04DEVlxkKgpot7HxfDhjxszJemkV09-5lpKKqPrxN7LEmyUJ6ZYg2LiSrNmg2wXi-UNsZGGhJoKRdlQ2aVzU-lK-xOjvgJC5u5nPnSNnvCEm4HfZnhCpwUYb5Ks_Gg', category: 'skin', type: 'weapon', rarity: 'Classified', description: 'AK-47 с абстрактным геометрическим дизайном. Хаотичные узоры и яркие цвета.' },
+    { id: 'skin-m4a1s-cyrex', name: 'M4A1-S | Cyrex', price: 55.99, image: 'https://steamcommunity-a.akamaihd.net/economy/image/-9a81dlWLwJ2UUGcVs_nsVtzdOEdtWwKGZZLQHTxDZ7I56KU0Zwwo4NUX4oFJZEHLbXH5ApeO4YmlhxYQknCRvCo04DEVlxkKgpou-6kejhz2v_Nfz5H_uO1gb-Gw_alDLPIhm5u5Mx2gv2P8d2t2wDi_UVsYmGhJNKVdlQ6aVzU-lK-xOjvgJC5u5nPnSNnvCEm4HfZnhCpwUYb5Ks_Gg', category: 'skin', type: 'weapon', rarity: 'Classified', description: 'Бесшумная винтовка с киберспортивным дизайном. Бело-синяя расцветка с технологичными узорами.' },
+    { id: 'skin-awp-hyper-beast', name: 'AWP | Hyper Beast', price: 65.99, image: 'https://steamcommunity-a.akamaihd.net/economy/image/-9a81dlWLwJ2UUGcVs_nsVtzdOEdtWwKGZZLQHTxDZ7I56KU0Zwwo4NUX4oFJZEHLbXH5ApeO4YmlhxYQknCRvCo04DEVlxkKgpot621FAR17PLfYQJD_9W7m5a0mvLwOq7c2D4G65Vy3-qVpNj22gDi_UVqYmGhJNKVdlQ6aVzU-lK-xOjvgJC5u5nPnSNnvCEm4HfZnhCpwUYb5Ks_Gg', category: 'skin', type: 'weapon', rarity: 'Covert', description: 'Снайперская винтовка с фантастическим существом. Яркий арт в стиле граффити.' },
+    
+    // Дополнительные редкие скины
+    { id: 'skin-ak47-bloodsport', name: 'AK-47 | Bloodsport', price: 149.99, image: 'https://steamcommunity-a.akamaihd.net/economy/image/-9a81dlWLwJ2UUGcVs_nsVtzdOEdtWwKGZZLQHTxDZ7I56KU0Zwwo4NUX4oFJZEHLbXH5ApeO4YmlhxYQknCRvCo04DEVlxkKgpot7HxfDhjxszJemkV09-5lpKKqPrxN7LEmyUJ6ZYg2LiSrNmg2wXi-UNsZGGhJoKRdlQ2aVzU-lK-xOjvgJC5u5nPnSNnvCEm4HfZnhCpwUYb5Ks_Gg', category: 'skin', type: 'weapon', rarity: 'Covert', description: 'AK-47 с кровавой спортивной тематикой. Красно-белый дизайн с брызгами крови.' },
+    { id: 'skin-m4a4-neo-noir', name: 'M4A4 | Neo-Noir', price: 89.99, image: 'https://steamcommunity-a.akamaihd.net/economy/image/-9a81dlWLwJ2UUGcVs_nsVtzdOEdtWwKGZZLQHTxDZ7I56KU0Zwwo4NUX4oFJZEHLbXH5ApeO4YmlhxYQknCRvCo04DEVlxkKgpou-6kejhz2v_Nfz5H_uO1gb-Gw_alDLPIhm5u5Mx2gv2P8d2t2wDi_UVsYmGhJNKVdlQ6aVzU-lK-xOjvgJC5u5nPnSNnvCEm4HfZnhCpwUYb5Ks_Gg', category: 'skin', type: 'weapon', rarity: 'Covert', description: 'Штурмовая винтовка в стиле нео-нуар. Черно-белый дизайн с красными акцентами.' },
+    { id: 'skin-awp-containment-breach', name: 'AWP | Containment Breach', price: 119.99, image: 'https://steamcommunity-a.akamaihd.net/economy/image/-9a81dlWLwJ2UUGcVs_nsVtzdOEdtWwKGZZLQHTxDZ7I56KU0Zwwo4NUX4oFJZEHLbXH5ApeO4YmlhxYQknCRvCo04DEVlxkKgpot621FAR17PLfYQJD_9W7m5a0mvLwOq7c2D4G65Vy3-qVpNj22gDi_UVqYmGhJNKVdlQ6aVzU-lK-xOjvgJC5u5nPnSNnvCEm4HfZnhCpwUYb5Ks_Gg', category: 'skin', type: 'weapon', rarity: 'Covert', description: 'Снайперская винтовка с научно-фантастической тематикой. Лабораторный дизайн с предупреждающими знаками.' },
+    { id: 'skin-ak47-neon-revolution', name: 'AK-47 | Neon Revolution', price: 179.99, image: 'https://steamcommunity-a.akamaihd.net/economy/image/-9a81dlWLwJ2UUGcVs_nsVtzdOEdtWwKGZZLQHTxDZ7I56KU0Zwwo4NUX4oFJZEHLbXH5ApeO4YmlhxYQknCRvCo04DEVlxkKgpot7HxfDhjxszJemkV09-5lpKKqPrxN7LEmyUJ6ZYg2LiSrNmg2wXi-UNsZGGhJoKRdlQ2aVzU-lK-xOjvgJC5u5nPnSNnvCEm4HfZnhCpwUYb5Ks_Gg', category: 'skin', type: 'weapon', rarity: 'Covert', description: 'AK-47 с неоновой революционной тематикой. Яркие цвета и граффити-стиль.' },
+    
+    // Коллекционные скины
+    { id: 'skin-souvenir-awp-dragon-lore', name: 'Souvenir AWP | Dragon Lore', price: 9999.99, image: 'https://steamcommunity-a.akamaihd.net/economy/image/-9a81dlWLwJ2UUGcVs_nsVtzdOEdtWwKGZZLQHTxDZ7I56KU0Zwwo4NUX4oFJZEHLbXH5ApeO4YmlhxYQknCRvCo04DEVlxkKgpot621FAR17PLfYQJD_9W7m5a0mvLwOq7c2D4G65Vy3-qVpNj22gDi_UVqYmGhJNKVdlQ6aVzU-lK-xOjvgJC5u5nPnSNnvCEm4HfZnhCpwUYb5Ks_Gg', category: 'skin', type: 'weapon', rarity: 'Souvenir', description: 'Сувенирная версия легендарного Dragon Lore. Самый дорогой скин в CS2 с золотыми наклейками.' },
+    { id: 'skin-stattrak-ak47-fire-serpent', name: 'StatTrak™ AK-47 | Fire Serpent', price: 1999.99, image: 'https://steamcommunity-a.akamaihd.net/economy/image/-9a81dlWLwJ2UUGcVs_nsVtzdOEdtWwKGZZLQHTxDZ7I56KU0Zwwo4NUX4oFJZEHLbXH5ApeO4YmlhxYQknCRvCo04DEVlxkKgpot7HxfDhjxszJemkV09-5lpKKqPrxN7LEmyUJ6ZYg2LiSrNmg2wXi-UNsZGGhJoKRdlQ2aVzU-lK-xOjvgJC5u5nPnSNnvCEm4HfZnhCpwUYb5Ks_Gg', category: 'skin', type: 'weapon', rarity: 'StatTrak™', description: 'StatTrak™ версия Fire Serpent со счетчиком убийств. Огненный змей с цифровым дисплеем.' },
+    { id: 'skin-factory-new-karambit-case-hardened', name: 'Karambit | Case Hardened (Blue Gem)', price: 4999.99, image: 'https://steamcommunity-a.akamaihd.net/economy/image/-9a81dlWLwJ2UUGcVs_nsVtzdOEdtWwKGZZLQHTxDZ7I56KU0Zwwo4NUX4oFJZEHLbXH5ApeO4YmlhxYQknCRvCo04DEVlxkKgpovbSsLQJf2PLacDBA5ciJlY20k_PkP6jummJW4NE_2LiVrNSi2wXi_UVsYmGhJNKVdlQ6aVzU-lK-xOjvgJC5u5nPnSNnvCEm4HfZnhCpwUYb5Ks_Gg', category: 'skin', type: 'weapon', rarity: '★ Covert', description: 'Керамбит с закаленным узором. Редкий Blue Gem паттерн с максимальным количеством синего цвета.' },
+    
+    // Дополнительные бюджетные скины
+    { id: 'skin-tec9-fuel-injector', name: 'Tec-9 | Fuel Injector', price: 7.99, image: 'https://steamcommunity-a.akamaihd.net/economy/image/-9a81dlWLwJ2UUGcVs_nsVtzdOEdtWwKGZZLQHTxDZ7I56KU0Zwwo4NUX4oFJZEHLbXH5ApeO4YmlhxYQknCRvCo04DEVlxkKgpoor-mcjhjxszcdD4b08-jhIWZlP_1IbzUklRd4cJ5nqeQrNSs2wXi_UVsYmGhJNKVdlQ6aVzU-lK-xOjvgJC5u5nPnSNnvCEm4HfZnhCpwUYb5Ks_Gg', category: 'skin', type: 'weapon', rarity: 'Restricted', description: 'Пистолет Tec-9 с автомобильной тематикой. Дизайн топливной форсунки с техническими деталями.' },
+    { id: 'skin-five-seven-monkey-business', name: 'Five-SeveN | Monkey Business', price: 5.99, image: 'https://steamcommunity-a.akamaihd.net/economy/image/-9a81dlWLwJ2UUGcVs_nsVtzdOEdtWwKGZZLQHTxDZ7I56KU0Zwwo4NUX4oFJZEHLbXH5ApeO4YmlhxYQknCRvCo04DEVlxkKgposLOzLhRlxfbGTj5X09q_goWYkuHxPYTck29Y_cg_3LuUrNSi2wXi_UVsYmGhJNKVdlQ6aVzU-lK-xOjvgJC5u5nPnSNnvCEm4HfZnhCpwUYb5Ks_Gg', category: 'skin', type: 'weapon', rarity: 'Mil-Spec', description: 'Пистолет Five-SeveN с веселым дизайном обезьян. Яркие цвета и игривые мотивы.' },
+    { id: 'skin-cz75-yellow-jacket', name: 'CZ75-Auto | Yellow Jacket', price: 4.99, image: 'https://steamcommunity-a.akamaihd.net/economy/image/-9a81dlWLwJ2UUGcVs_nsVtzdOEdtWwKGZZLQHTxDZ7I56KU0Zwwo4NUX4oFJZEHLbXH5ApeO4YmlhxYQknCRvCo04DEVlxkKgpotaDyfgZf1OD3cicVuY-JmImMn-O6YOLTzj8IuJYg2LiSrNmg2wXi-UNsZGGhJoKRdlQ2aVzU-lK-xOjvgJC5u5nPnSNnvCEm4HfZnhCpwUYb5Ks_Gg', category: 'skin', type: 'weapon', rarity: 'Restricted', description: 'Автоматический пистолет с дизайном желтой куртки. Промышленный стиль с предупреждающими полосами.' },
+    { id: 'skin-dual-berettas-hemoglobin', name: 'Dual Berettas | Hemoglobin', price: 3.99, image: 'https://steamcommunity-a.akamaihd.net/economy/image/-9a81dlWLwJ2UUGcVs_nsVtzdOEdtWwKGZZLQHTxDZ7I56KU0Zwwo4NUX4oFJZEHLbXH5ApeO4YmlhxYQknCRvCo04DEVlxkKgpos7asPwJf1OD3cicVuY-JmImMn-O6YOLTzj8IuJYg2LiSrNmg2wXi-UNsZGGhJoKRdlQ2aVzU-lK-xOjvgJC5u5nPnSNnvCEm4HfZnhCpwUYb5Ks_Gg', category: 'skin', type: 'weapon', rarity: 'Mil-Spec', description: 'Парные пистолеты с медицинской тематикой. Красно-белый дизайн с кровяными клетками.' },
+    { id: 'skin-r8-revolver-fade', name: 'R8 Revolver | Fade', price: 12.99, image: 'https://steamcommunity-a.akamaihd.net/economy/image/-9a81dlWLwJ2UUGcVs_nsVtzdOEdtWwKGZZLQHTxDZ7I56KU0Zwwo4NUX4oFJZEHLbXH5ApeO4YmlhxYQknCRvCo04DEVlxkKgpopL-zJAt21uH3cih9_92hkYSEkuXLPr7Vn35cppMh2LiSrNmg2wXi-UNsZGGhJoKRdlQ2aVzU-lK-xOjvgJC5u5nPnSNnvCEm4HfZnhCpwUYb5Ks_Gg', category: 'skin', type: 'weapon', rarity: 'Classified', description: 'Револьвер R8 с градиентной окраской. Плавный переход от желтого к фиолетовому цвету.' },
+    ]
+ }
+
+// Cart context
+const CartContext = React.createContext(null)
+
+// CMS Context
+const CMSContext = React.createContext(null)
+const useCMS = () => React.useContext(CMSContext)
+
+function CMSProvider({ children }) {
+  const [cmsContent, setCmsContent] = React.useState(() => {
+    const saved = localStorage.getItem('cms-content')
+    return saved ? JSON.parse(saved) : {
+      bannerTitle: '-30% на Cyberpunk 2077',
+      bannerDescription: 'Успейте купить по акции! До окончания:',
+      bannerButton1: 'Купить со скидкой',
+      bannerButton2: 'Посмотреть каталог',
+      rouletteButton: 'Попробуй свою удачу',
+      footerDescription: 'Современный магазин видеоигр и цифрового контента.'
+    }
+  })
+  
+  const updateCmsContent = (key, value) => {
+    const newContent = { ...cmsContent, [key]: value }
+    setCmsContent(newContent)
+    localStorage.setItem('cms-content', JSON.stringify(newContent))
+  }
+  
+  return (
+    <CMSContext.Provider value={{ cmsContent, updateCmsContent }}>
+      {children}
+    </CMSContext.Provider>
+  )
+}
+
+function CartProvider({ children }) {
+  const [items, setItems] = React.useState(() => {
+    try {
+      const saved = localStorage.getItem('cart-items')
+      return saved ? JSON.parse(saved) : []
+    } catch {
+      return []
+    }
+  })
+  React.useEffect(() => {
+    localStorage.setItem('cart-items', JSON.stringify(items))
+  }, [items])
+  const addItem = (product, qty = 1) => {
+    // Проверяем авторизацию через cookie и localStorage
+    const hasCookie = document.cookie.includes('profile_auth=1')
+    const hasLocalStorage = localStorage.getItem('profile-auth') === '1'
+    const authorized = hasCookie || hasLocalStorage
+    
+    if (!authorized) {
+      window.dispatchEvent(new Event('open-login'))
+      return
+    }
+    setItems(prev => {
+      const exists = prev.find(i => i.id === product.id)
+      if (exists) {
+        return prev.map(i => i.id === product.id ? { ...i, qty: i.qty + qty } : i)
+      }
+      return [...prev, { ...product, image: product.image || '', qty }]
+    })
+  }
+  const removeItem = (id) => setItems(prev => prev.filter(i => i.id !== id))
+  const updateQty = (id, qty) => setItems(prev => prev.map(i => i.id === id ? { ...i, qty: Math.max(1, qty) } : i))
+  const clear = () => setItems([])
+  const totalQuantity = items.reduce((sum, i) => sum + i.qty, 0)
+  const totalPrice = items.reduce((sum, i) => sum + i.price * i.qty, 0)
+  const value = { items, addItem, removeItem, updateQty, clear, totalQuantity, totalPrice }
+  return <CartContext.Provider value={value}>{children}</CartContext.Provider>
+}
+function useCart() { const ctx = React.useContext(CartContext); if (!ctx) throw new Error('useCart must be used within CartProvider'); return ctx }
+function CartBadge() {
+  const { totalQuantity } = useCart()
+  const isAuthorized = localStorage.getItem('profile-auth') === '1'
+  if (!isAuthorized || totalQuantity <= 0) return null
+  return (
+    <span className="absolute -top-1 -right-2 min-w-[18px] h-5 px-1 rounded-full bg-[#7e2aa8] text-xs flex items-center justify-center">
+      {totalQuantity}
+    </span>
+  )
+}
+
+// Языковой контекст: переключение языка и валюты, форматирование цен
+const LangContext = React.createContext(null)
+function LangProvider({ children }) {
+  const [lang, setLang] = React.useState(() => localStorage.getItem('lang') || 'ru')
+  React.useEffect(() => { localStorage.setItem('lang', lang) }, [lang])
+  const RATE = 90
+  const currency = lang === 'ru' ? 'RUB' : 'USD'
+  const formatPrice = (amountUsd) => {
+    try {
+      if (lang === 'ru') return new Intl.NumberFormat('ru-RU', { style: 'currency', currency: 'RUB' }).format(amountUsd * RATE)
+      return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amountUsd)
+    } catch {
+      return lang === 'ru' ? `${Math.round(amountUsd * RATE)} ₽` : `$${amountUsd.toFixed(2)}`
+    }
+  }
+  const toAmountInCurrency = (amountUsd) => lang === 'ru' ? amountUsd * RATE : amountUsd
+  const DICT = {
+    ru: { 'skins.title': 'Скины CS2' },
+    en: { 'skins.title': 'CS2 Skins' }
+  }
+  const t = (key) => (DICT[lang] && DICT[lang][key]) || key
+  const value = { lang, setLang, currency, rate: RATE, formatPrice, toAmountInCurrency, t }
+  return <LangContext.Provider value={value}>{children}</LangContext.Provider>
+}
+
+function useLang() { 
+  const ctx = React.useContext(LangContext); 
+  if (!ctx) throw new Error('useLang must be used within LangProvider'); 
+  return ctx; 
+}
+
+function Layout({ children }) {
+  const { lang, setLang, formatPrice } = useLang()
+  const [isAuthorized, setAuthorized] = React.useState(() => {
+    const hasCookie = typeof document !== 'undefined' && document.cookie.includes('profile_auth=1')
+    return hasCookie || localStorage.getItem('profile-auth') === '1'
+  })
+  const [showLogin, setShowLogin] = React.useState(false)
+  const [cookieConsent, setCookieConsent] = React.useState(() => typeof document !== 'undefined' && document.cookie.includes('cookie_consent=accepted'))
+  const [walletUsd, setWalletUsd] = React.useState(() => {
+    try { return parseFloat(localStorage.getItem('wallet-usd') || '0') } catch { return 0 }
+  })
+  React.useEffect(() => {
+    const syncWallet = () => setWalletUsd(parseFloat(localStorage.getItem('wallet-usd') || '0'))
+    window.addEventListener('wallet-updated', syncWallet)
+    window.addEventListener('storage', syncWallet)
+    return () => { window.removeEventListener('wallet-updated', syncWallet); window.removeEventListener('storage', syncWallet) }
+  }, [])
+  // Загрузка динамических товаров с сервера
+  React.useEffect(() => {
+    let aborted = false
+    const load = async () => {
+      try {
+        const res = await fetch('/products')
+        const json = await res.json().catch(() => ({ ok: false }))
+        const list = Array.isArray(json?.data) ? json.data : []
+        if (!aborted && list.length > 0) {
+          const existingIds = new Set(DATA.products.map(p => p.id))
+          const incoming = list.filter(p => p && p.id && !existingIds.has(p.id))
+          if (incoming.length > 0) {
+            DATA.products = [...incoming, ...DATA.products]
+            window.dispatchEvent(new Event('products-loaded'))
+          }
+        }
+      } catch (e) {
+        // ignore
+      }
+    }
+    load()
+    const interval = setInterval(load, 5 * 60 * 1000) // обновление каждые 5 минут
+    return () => { aborted = true; clearInterval(interval) }
+  }, [])
+  const navigate = useNavigate()
+  React.useEffect(() => {
+    const sync = () => {
+      const hasCookie = typeof document !== 'undefined' && document.cookie.includes('profile_auth=1')
+      setAuthorized(hasCookie || localStorage.getItem('profile-auth') === '1')
+    }
+    const onOpenLogin = () => setShowLogin(true)
+    window.addEventListener('storage', sync)
+    window.addEventListener('open-login', onOpenLogin)
+    return () => { window.removeEventListener('storage', sync); window.removeEventListener('open-login', onOpenLogin) }
+  }, [])
+  const startSteamLogin = () => { window.location.href = '/auth/steam' }
+  const [regularName, setRegularName] = React.useState('')
+  const [regularPassword, setRegularPassword] = React.useState('')
+  const [loginError, setLoginError] = React.useState('')
+  
+  // CMS состояние
+  const { cmsContent, updateCmsContent } = useCMS()
+  const [showCmsPanel, setShowCmsPanel] = React.useState(false)
+  
+  const acceptCookies = () => {
+    const d = new Date()
+    d.setTime(d.getTime() + (365 * 24 * 60 * 60 * 1000))
+    document.cookie = `cookie_consent=accepted; expires=${d.toUTCString()}; path=/`
+    setCookieConsent(true)
+  }
+  const doRegularLogin = () => {
+    const name = regularName
+    const password = regularPassword
+    if (!name || !name.trim()) { setLoginError('Введите логин'); return }
+    if (!password || !password.trim()) { setLoginError('Введите пароль'); return }
+    
+    // Проверяем дефолтные учетные данные
+    const isValidUser = (name.trim() === 'user' && password.trim() === 'password') || 
+                       (name.trim() === 'admin' && password.trim() === 'admin123')
+    
+    if (!isValidUser) {
+      setLoginError('Неверный логин или пароль')
+      return
+    }
+    
+    const isAdmin = name.trim() === 'admin'
+    
+    // Persist localStorage
+    localStorage.setItem('profile-auth', '1')
+    localStorage.setItem('profile-name', name.trim())
+    localStorage.setItem('auth-method', 'regular')
+    localStorage.setItem('role', isAdmin ? 'admin' : 'user')
+    // Persist cookies for 7 days
+    const d = new Date()
+    d.setTime(d.getTime() + (7 * 24 * 60 * 60 * 1000))
+    const expires = `expires=${d.toUTCString()}`
+    document.cookie = `profile_auth=1; ${expires}; path=/`
+    document.cookie = `profile_name=${encodeURIComponent(name.trim())}; ${expires}; path=/`
+    document.cookie = `auth_method=regular; ${expires}; path=/`
+    document.cookie = `role=${isAdmin ? 'admin' : 'user'}; ${expires}; path=/`
+    setAuthorized(true)
+    setShowLogin(false)
+    // Принудительно обновляем состояние авторизации
+    window.dispatchEvent(new Event('storage'))
+    navigate('/profile')
+  }
+
+  // State for mobile menu
+  const [showMobileMenu, setShowMobileMenu] = React.useState(false)
+
+  return (
+    <div className="min-h-screen bg-[#0D1A2F] text-white flex flex-col">
+      {/* Mobile Header - показывается только на мобильных и планшетах */}
+      <header className="mobile-header lg:hidden sticky top-0 z-50 bg-[#0D1A2F]/95 backdrop-blur border-b border-white/10">
+        <div className="flex items-center justify-between px-4 py-3">
+          {/* Logo */}
+          <NavLink to="/" className="flex items-center gap-2">
+            <LazyImage src="/images/logo/logo.png" alt="AI Game Store logo" className="h-8 w-auto object-contain" />
+            <span className="text-lg font-bold">AI Game</span>
+          </NavLink>
+          
+          {/* Burger Menu Button */}
+          <button 
+            onClick={() => setShowMobileMenu(!showMobileMenu)}
+            className="p-2 rounded-lg hover:bg-white/10 transition-colors"
+          >
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              {showMobileMenu ? (
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              ) : (
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              )}
+            </svg>
+          </button>
+        </div>
+        
+        {/* Mobile Menu Dropdown */}
+        {showMobileMenu && (
+          <div className="absolute top-full left-0 right-0 bg-[#0D1A2F]/95 backdrop-blur border-b border-white/10 shadow-lg">
+            <nav className="px-4 py-4 space-y-2">
+              <NavLink 
+                to="/store" 
+                className={({isActive}) => `block px-3 py-2 rounded ${isActive ? 'bg-white/10' : 'hover:bg-white/5'}`}
+                onClick={() => setShowMobileMenu(false)}
+              >
+                Каталог
+              </NavLink>
+              <NavLink 
+                to="/games" 
+                className={({isActive}) => `block px-3 py-2 rounded ${isActive ? 'bg-white/10' : 'hover:bg-white/5'}`}
+                onClick={() => setShowMobileMenu(false)}
+              >
+                Игры
+              </NavLink>
+              <NavLink 
+                to="/skins" 
+                className={({isActive}) => `block px-3 py-2 rounded ${isActive ? 'bg-white/10' : 'hover:bg-white/5'}`}
+                onClick={() => setShowMobileMenu(false)}
+              >
+                Скины
+              </NavLink>
+              <NavLink 
+                to="/blog" 
+                className={({isActive}) => `block px-3 py-2 rounded ${isActive ? 'bg-white/10' : 'hover:bg-white/5'}`}
+                onClick={() => setShowMobileMenu(false)}
+              >
+                Блог
+              </NavLink>
+              {isAuthorized && (
+                <>
+                  <NavLink 
+                    to="/cart" 
+                    className={({isActive}) => `block px-3 py-2 rounded ${isActive ? 'bg-white/10' : 'hover:bg-white/5'}`}
+                    onClick={() => setShowMobileMenu(false)}
+                  >
+                    Корзина
+                  </NavLink>
+                  <NavLink 
+                    to="/profile" 
+                    className={({isActive}) => `block px-3 py-2 rounded ${isActive ? 'bg-white/10' : 'hover:bg-white/5'}`}
+                    onClick={() => setShowMobileMenu(false)}
+                  >
+                    Профиль
+                  </NavLink>
+                </>
+              )}
+              {!isAuthorized && (
+                <button 
+                  onClick={() => { setShowLogin(true); setShowMobileMenu(false); }}
+                  className="block w-full text-left px-3 py-2 rounded hover:bg-white/5"
+                >
+                  Войти
+                </button>
+              )}
+            </nav>
+          </div>
+        )}
+      </header>
+
+      <div className="flex flex-1">
+        {/* Desktop Header - показывается только на десктопе */}
+        <header className="desktop-header hidden lg:block fixed top-0 left-0 right-0 z-50 bg-[#0D1A2F]/95 backdrop-blur border-b border-white/10">
+          <div className="flex items-center justify-between px-6 py-3">
+            {/* Logo */}
+            <NavLink to="/" className="flex items-center gap-3">
+              <LazyImage src="/images/logo/logo.png" alt="AI Game Store logo" className="h-10 w-auto object-contain" />
+              <span className="text-xl font-bold">AI Game Store</span>
+            </NavLink>
+            
+            {/* Desktop Navigation */}
+            <nav className="flex items-center gap-6">
+              <NavLink className={({isActive}) => `px-3 py-2 rounded transition-colors ${isActive ? 'bg-white/10' : 'hover:bg-white/5'}`} to="/store">
+                Каталог
+              </NavLink>
+              
+              {/* Games Dropdown */}
+              <div className="group relative">
+                <NavLink className={({isActive}) => `px-3 py-2 rounded transition-colors ${isActive ? 'bg-white/10' : 'hover:bg-white/5'}`} to="/games">
+                  Игры
+                </NavLink>
+                <div className="pointer-events-none absolute left-0 top-full z-20 hidden min-w-[180px] flex-col gap-1 rounded-lg border border-white/10 bg-[#0D1A2F] p-2 shadow-xl group-hover:flex group-hover:pointer-events-auto">
+                  <NavLink className={({isActive}) => `block w-full px-2 py-2 rounded ${isActive ? 'bg-white/10' : 'hover:bg-white/5'}`} to="/games/rpg">RPG</NavLink>
+                  <NavLink className={({isActive}) => `block w-full px-2 py-2 rounded ${isActive ? 'bg-white/10' : 'hover:bg-white/5'}`} to="/games/shooter">Шутер</NavLink>
+                  <NavLink className={({isActive}) => `block w-full px-2 py-2 rounded ${isActive ? 'bg-white/10' : 'hover:bg-white/5'}`} to="/games/racing">Гонки</NavLink>
+                  <NavLink className={({isActive}) => `block w-full px-2 py-2 rounded ${isActive ? 'bg-white/10' : 'hover:bg-white/5'}`} to="/games/strategy">Стратегии</NavLink>
+                </div>
+              </div>
+              
+              {/* Skins Dropdown */}
+              <div className="group relative">
+                <NavLink className={({isActive}) => `px-3 py-2 rounded transition-colors ${isActive ? 'bg-white/10' : 'hover:bg-white/5'}`} to="/skins">
+                  Скины
+                </NavLink>
+                <div className="pointer-events-none absolute left-0 top-full z-20 hidden min-w-[180px] flex-col gap-1 rounded-lg border border-white/10 bg-[#0D1A2F] p-2 shadow-xl group-hover:flex group-hover:pointer-events-auto">
+                  <NavLink className={({isActive}) => `block w-full px-2 py-2 rounded ${isActive ? 'bg-white/10' : 'hover:bg-white/5'}`} to="/skins/character">Персонажи</NavLink>
+                  <NavLink className={({isActive}) => `block w-full px-2 py-2 rounded ${isActive ? 'bg-white/10' : 'hover:bg-white/5'}`} to="/skins/weapon">Оружие</NavLink>
+                  <NavLink className={({isActive}) => `block w-full px-2 py-2 rounded ${isActive ? 'bg-white/10' : 'hover:bg-white/5'}`} to="/skins/armor">Броня</NavLink>
+                </div>
+              </div>
+              
+              <NavLink className={({isActive}) => `px-3 py-2 rounded transition-colors ${isActive ? 'bg-white/10' : 'hover:bg-white/5'}`} to="/blog">
+                Блог
+              </NavLink>
+            </nav>
+            
+            {/* User Actions */}
+            <div className="flex items-center gap-3">
+              {isAuthorized ? (
+                <>
+                  <NavLink to="/cart" className="flex items-center gap-2 px-3 py-2 rounded hover:bg-white/5 transition-colors">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4m0 0L7 13m0 0l-1.5 6M7 13l-1.5-6m0 0h15M17 21a2 2 0 100-4 2 2 0 000 4zM9 21a2 2 0 100-4 2 2 0 000 4z" />
+                    </svg>
+                    Корзина
+                  </NavLink>
+                  <NavLink to="/profile" className="flex items-center gap-2 px-3 py-2 rounded hover:bg-white/5 transition-colors">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    </svg>
+                    Профиль
+                  </NavLink>
+                </>
+              ) : (
+                <button 
+                  onClick={() => setShowLogin(true)}
+                  className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded transition-colors"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013 3v1" />
+                  </svg>
+                  Войти
+                </button>
+              )}
+            </div>
+          </div>
+        </header>
+
+      <div className="min-h-screen bg-[#0D1A2F] text-white flex">
+      {/* Левый сайдбар с местом под логотип и вертикальным меню - скрыт на мобильных и планшетах */}
+      <aside className="sidebar w-28 sm:w-36 md:w-48 z-50 fixed left-0 top-0 h-screen flex flex-col bg-[#0D1A2F]/80 backdrop-blur border-r border-white/10 hidden lg:flex">
+        <NavLink to="/" className="flex items-center gap-3 px-4 py-4 border-b border-white/10">
+          <LazyImage src="/images/logo/logo.png" alt="AI Game Store logo" className="h-12 sm:h-14 md:h-25 w-auto object-contain" />
+          <span className="text-lg font-bold leading-tight brand-title">AI<br />Game</span>
+        </NavLink>
+        <nav className="sidebar-nav flex-1 px-4 py-4 flex flex-col gap-2 overflow-y-auto">
+          {/* Кнопка входа убрана из сайдбара — вход доступен только в хэдере */}
+          <NavLink className={({isActive}) => `block w-full px-3 py-2 rounded ${isActive ? 'bg-white/10' : 'hover:bg-white/5'}`} to="/store">Каталог</NavLink>
+          {/* Раздел: Игры и подкатегории */}
+          <div className="group relative">
+            <NavLink className={({isActive}) => `block w-full px-3 py-2 rounded ${isActive ? 'bg-white/10' : 'hover:bg-white/5'}`} to="/games">Игры</NavLink>
+            <div className="pointer-events-none absolute left-0 top-full z-20 hidden min-w-[180px] flex-col gap-1 rounded-lg border border-white/10 bg-[#0D1A2F] p-2 shadow-xl group-hover:flex group-hover:pointer-events-auto">
+              <NavLink className={({isActive}) => `block w-full px-2 py-2 rounded ${isActive ? 'bg-white/10' : 'hover:bg-white/5'}`} to="/games/rpg">RPG</NavLink>
+              <NavLink className={({isActive}) => `block w-full px-2 py-2 rounded ${isActive ? 'bg-white/10' : 'hover:bg-white/5'}`} to="/games/shooter">Шутер</NavLink>
+              <NavLink className={({isActive}) => `block w-full px-2 py-2 rounded ${isActive ? 'bg-white/10' : 'hover:bg-white/5'}`} to="/games/racing">Гонки</NavLink>
+              <NavLink className={({isActive}) => `block w-full px-2 py-2 rounded ${isActive ? 'bg-white/10' : 'hover:bg-white/5'}`} to="/games/strategy">Стратегии</NavLink>
+            </div>
+          </div>
+          {/* Раздел: Скины и подкатегории */}
+          <div className="group relative">
+            <NavLink className={({isActive}) => `block w-full px-3 py-2 rounded ${isActive ? 'bg-white/10' : 'hover:bg-white/5'}`} to="/skins">Скины</NavLink>
+            <div className="pointer-events-none absolute left-0 top-full z-20 hidden min-w-[180px] flex-col gap-1 rounded-lg border border-white/10 bg-[#0D1A2F] p-2 shadow-xl group-hover:flex group-hover:pointer-events-auto">
+              <NavLink className={({isActive}) => `block w-full px-2 py-2 rounded ${isActive ? 'bg-white/10' : 'hover:bg-white/5'}`} to="/skins/character">Персонажи</NavLink>
+              <NavLink className={({isActive}) => `block w-full px-2 py-2 rounded ${isActive ? 'bg-white/10' : 'hover:bg-white/5'}`} to="/skins/weapon">Оружие</NavLink>
+              <NavLink className={({isActive}) => `block w-full px-2 py-2 rounded ${isActive ? 'bg-white/10' : 'hover:bg-white/5'}`} to="/skins/armor">Броня</NavLink>
+            </div>
+          </div>
+          <NavLink className={({isActive}) => `block w-full px-3 py-2 rounded ${isActive ? 'bg-white/10' : 'hover:bg-white/5'}`} to="/blog">Блог</NavLink>
+          <NavLink className={({isActive}) => `block w-full px-3 py-2 rounded ${isActive ? 'bg-white/10' : 'hover:bg-white/5'}`} to="/skin-trading">Торговля скинами</NavLink>
+          {/* Подпункты выводятся через hover-меню — статичный список удалён */}
+          {isAuthorized && (
+            <>
+              <NavLink className={({isActive}) => `block w-full px-3 py-2 rounded ${isActive ? 'bg-white/10' : 'hover:bg-white/5'}`} to="/cart">Корзина</NavLink>
+              <NavLink className={({isActive}) => `block w-full px-3 py-2 rounded ${isActive ? 'bg-white/10' : 'hover:bg-white/5'}`} to="/profile">Профиль</NavLink>
+              <NavLink className={({isActive}) => `block w-full px-3 py-2 rounded ${isActive ? 'bg-white/10' : 'hover:bg-white/5'}`} to="/checkout">Оплата</NavLink>
+              {localStorage.getItem('role') === 'admin' && (
+                <button onClick={() => setShowCmsPanel(true)} className="block w-full px-3 py-2 rounded text-left hover:bg-white/5 text-[#4A90E2]">
+                  Управление контентом
+                </button>
+              )}
+            </>
+          )}
+        </nav>
+        {/* Нижняя часть сайдбара без футера */}
+        <div className="px-4 py-4 text-xs text-white/50 border-t border-transparent"></div>
+      </aside>
+
+      {/* Правая колонка: контент + верхняя панель + футер */}
+      <div className="main-content flex-1 min-h-screen flex flex-col lg:pl-28 xl:pl-36 2xl:pl-48">
+        {/* Верхняя панель справа: корзина + профиль - скрыта на мобильных и планшетах */}
+        <div className="top-panel sticky top-0 z-10 border-b border-white/10 bg-[#0D1A2F]/70 backdrop-blur hidden lg:block">
+          <div className="px-6 py-3 flex justify-end items-center gap-2">
+          <div className="flex items-center gap-6">
+            {isAuthorized ? (
+              <>
+                <div className="hidden sm:flex items-center gap-2 mr-4 text-white/70">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="3" y="6" width="18" height="12" rx="2" stroke="currentColor" strokeWidth="2"/><circle cx="17" cy="12" r="2" fill="currentColor"/></svg>
+                  <span className="text-sm">{formatPrice(walletUsd)}</span>
+                </div>
+                <NavLink to="/profile" className={({isActive}) => `hover:text-white/90 ${isActive ? 'text-white' : 'text-white/70'}`}>Профиль</NavLink>
+                <NavLink to="/cart" aria-label="Корзина" className={({isActive}) => `relative hover:text-white/90 ${isActive ? 'text-white' : 'text-white/70'}`}>
+                  <span className="inline-flex items-center">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 6H4V4H2V6H4L6 14H18L21 8H7L6 6Z" fill="currentColor"/><circle cx="9" cy="20" r="2" fill="currentColor"/><circle cx="17" cy="20" r="2" fill="currentColor"/></svg>
+                  </span>
+                  <CartBadge />
+                </NavLink>
+              </>
+            ) : (
+              <button onClick={() => setShowLogin(true)} className="px-3 py-2 rounded bg-[#4A90E2] hover:bg-[#7e2aa8]">Войти</button>
+            )}
+          </div>
+          </div>
+        </div>
+        {/* Модальное окно выбора способа входа */}
+        {showLogin && !isAuthorized && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60">
+            <div className="w-[90%] max-w-md rounded-2xl border border-white/10 bg-[#0D1A2F] p-6 space-y-4">
+              <h3 className="text-xl font-bold">Выберите способ входа</h3>
+              <p className="text-white/60 text-sm">Чтобы продолжить покупки и видеть профиль/корзину, войдите.</p>
+              <div className="flex flex-col gap-3">
+                <div className="space-y-2">
+                  <div className="text-sm text-white/70">Обычная авторизация</div>
+                  <input value={regularName} onChange={e=>setRegularName(e.target.value)} placeholder="Логин" className="w-full px-3 py-2 rounded bg-[#0D1A2F] border border-white/10" />
+                  <input type="password" value={regularPassword} onChange={e=>setRegularPassword(e.target.value)} placeholder="Пароль" className="w-full px-3 py-2 rounded bg-[#0D1A2F] border border-white/10" />
+                  {loginError && (<div className="text-xs text-red-400">{loginError}</div>)}
+                  <button onClick={doRegularLogin} className="w-full px-3 py-2 rounded bg-[#4A90E2] hover:bg-[#7e2aa8]">Войти</button>
+                  <div className="text-xs text-white/50">Тестовые данные: user/password или admin/admin123</div>
+                </div>
+                <div className="space-y-2 pt-2 border-t border-white/10">
+                  <div className="text-sm text-white/70">Вход через Steam</div>
+                  <button onClick={startSteamLogin} className="w-full px-3 py-2 rounded bg-[#161f38] hover:bg-[#7e2aa8]">Войти через Steam</button>
+                </div>
+              </div>
+              <div className="flex justify-end gap-2 pt-2">
+                <button onClick={() => setShowLogin(false)} className="px-3 py-2 rounded bg-[#161f38] hover:bg-[#7e2aa8]">Закрыть</button>
+              </div>
+            </div>
+          </div>
+        )}
+        <main className="flex-1 px-6 py-6 overflow-y-auto pt-16 bg-[#0D1A2F] max-w-[1600px]">{children}</main>
+        {/* Cookie consent banner */}
+        {!cookieConsent && (
+          <div className="fixed bottom-4 left-4 right-4 z-[200]">
+            <div className="mx-auto max-w-4xl rounded-xl border border-white/10 bg-[#0D1A2F]/95 backdrop-blur px-4 py-4 shadow-xl">
+              <div className="text-sm text-white/80 mb-3">
+                <div className="font-semibold mb-2">Согласие на обработку персональных данных</div>
+                <div className="text-white/70 text-xs leading-relaxed">
+                  В соответствии с Федеральным законом №152-ФЗ "О персональных данных" мы уведомляем вас о том, что данный сайт использует файлы cookies и собирает следующие персональные данные: IP-адрес, данные браузера, информацию о покупках. 
+                  Обработка персональных данных осуществляется в целях функционирования сайта, обработки заказов и улучшения качества услуг.
+                </div>
+              </div>
+              <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center">
+                <div className="flex-1 text-xs text-white/60">
+                  Продолжая использование сайта, вы даете согласие на обработку ваших персональных данных в соответствии с нашей 
+                  <NavLink to="/privacy" className="text-blue-400 hover:text-blue-300 underline ml-1">Политикой конфиденциальности</NavLink>
+                </div>
+                <div className="flex gap-2">
+                  <button onClick={acceptCookies} className="px-4 py-2 rounded bg-[#4A90E2] hover:bg-[#7e2aa8] text-sm font-medium">
+                    Согласен
+                  </button>
+                  <button 
+                    onClick={() => window.location.href = 'https://google.com'} 
+                    className="px-4 py-2 rounded border border-white/20 hover:bg-white/10 text-sm"
+                  >
+                    Отклонить
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+        {/* Футер */}
+        <footer className="relative z-30 px-6 py-6 border-t border-white/10 text-sm text-white/70">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="space-y-3">
+              <div className="flex items-center gap-3">
+                <LazyImage src="/images/logo/logo.png" alt="AI Game Store logo" className="h-12 sm:h-14 md:h-20 w-auto object-contain" />
+                <div className="text-lg font-bold leading-tight brand-title">AI Game Store</div>
+              </div>
+              <p className="text-white/60 text-sm">{cmsContent.footerDescription}</p>
+              <div className="text-sm text-white/50">© {new Date().getFullYear()} AI Game Store</div>
+            </div>
+            <div className="space-y-2 text-sm">
+                <div className="font-semibold">Документы</div>
+                <div className="flex flex-col gap-1">
+                  <NavLink to="/privacy" className="underline hover:text-white">Политика конфиденциальности</NavLink>
+                  <NavLink to="/terms" className="underline hover:text-white">Условия использования</NavLink>
+                  <NavLink to="/offer" className="underline hover:text-white">Договор оферты</NavLink>
+                </div>
+              </div>
+            <div className="space-y-3">
+              <div className="font-semibold">Контакты организации</div>
+              <div className="text-xs text-white/60 space-y-1">
+                <div><strong>ООО "АИ Гейм Стор"</strong></div>
+                <div>ИНН: 7707123456</div>
+                <div>ОГРН: 1127746123456</div>
+                <div>Адрес: 123456, г. Москва, ул. Примерная, д. 1, оф. 100</div>
+                <div>Email: info@aigamestore.ru</div>
+                <div>Телефон: +7 (495) 123-45-67</div>
+                <div className="pt-2">
+                  <div className="font-semibold text-white/70">Способы оплаты:</div>
+                  <div className="flex flex-wrap gap-1 mt-1">
+                    <span className="px-2 py-1 rounded bg-[#161f38]/70 border border-white/10 text-xs">Visa</span>
+                    <span className="px-2 py-1 rounded bg-[#161f38]/70 border border-white/10 text-xs">Mastercard</span>
+                    <span className="px-2 py-1 rounded bg-[#161f38]/70 border border-white/10 text-xs">Мир</span>
+                  </div>
+                </div>
+              </div>
+              <div className="mt-3">
+                <div className="text-sm text-white/70">{lang === 'ru' ? 'Язык' : 'Language'}</div>
+                <button onClick={() => setLang(l => l === 'ru' ? 'en' : 'ru')} className="mt-1 px-2 py-1 rounded-md bg-[#161f38] hover:bg-[#7e2aa8] text-xs">
+                  {lang === 'ru' ? 'Русский' : 'English'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </footer>
+      </div>
+      
+      {/* Мобильное нижнее меню */}
+      <nav className="mobile-bottom-nav">
+        <NavLink to="/" className={({isActive}) => `mobile-nav-item ${isActive ? 'active' : ''}`}>
+          <svg className="mobile-nav-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M3 12L5 10L12 17L22 7L20 5L12 13L3 12Z" fill="currentColor"/>
+            <path d="M10 20V14H14V20H19V12H22L12 3L2 12H5V20H10Z" fill="currentColor"/>
+          </svg>
+          <span className="mobile-nav-text">Главная</span>
+        </NavLink>
+        
+        <NavLink to="/games" className={({isActive}) => `mobile-nav-item ${isActive ? 'active' : ''}`}>
+          <svg className="mobile-nav-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M7 6V2C7 1.45 7.45 1 8 1H16C16.55 1 17 1.45 17 2V6H20C20.55 6 21 6.45 21 7V19C21 19.55 20.55 20 20 20H4C3.45 20 3 19.55 3 19V7C3 6.45 3.45 6 4 6H7ZM9 3V6H15V3H9ZM5 8V18H19V8H5ZM8 10H10V12H12V14H10V16H8V14H6V12H8V10Z" fill="currentColor"/>
+          </svg>
+          <span className="mobile-nav-text">Игры</span>
+        </NavLink>
+        
+        <NavLink to="/skins" className={({isActive}) => `mobile-nav-item ${isActive ? 'active' : ''}`}>
+          <svg className="mobile-nav-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 2L13.09 8.26L22 9L13.09 9.74L12 16L10.91 9.74L2 9L10.91 8.26L12 2Z" fill="currentColor"/>
+            <path d="M12 2C12 2 15 5 15 9C15 11.21 13.21 13 11 13C8.79 13 7 11.21 7 9C7 5 10 2 10 2H12ZM11 15C13.76 15 16 17.24 16 20H6C6 17.24 8.24 15 11 15Z" fill="currentColor"/>
+          </svg>
+          <span className="mobile-nav-text">Скины</span>
+        </NavLink>
+        
+        <NavLink to="/blog" className={({isActive}) => `mobile-nav-item ${isActive ? 'active' : ''}`}>
+          <svg className="mobile-nav-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M4 4H20V6H4V4ZM4 8H20V10H4V8ZM4 12H14V14H4V12ZM4 16H12V18H4V16Z" fill="currentColor"/>
+          </svg>
+          <span className="mobile-nav-text">Блог</span>
+        </NavLink>
+        
+        <NavLink to="/skin-trading" className={({isActive}) => `mobile-nav-item ${isActive ? 'active' : ''}`}>
+          <svg className="mobile-nav-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 2L15.09 8.26L22 9L15.09 9.74L12 16L8.91 9.74L2 9L8.91 8.26L12 2ZM12 4.5L10.5 8.5L6.5 9L10.5 9.5L12 13.5L13.5 9.5L17.5 9L13.5 8.5L12 4.5Z" fill="currentColor"/>
+            <path d="M7 18C7 16.9 7.9 16 9 16S11 16.9 11 18 10.1 20 9 20 7 19.1 7 18ZM13 18C13 16.9 13.9 16 15 16S17 16.9 17 18 16.1 20 15 20 13 19.1 13 18Z" fill="currentColor"/>
+          </svg>
+          <span className="mobile-nav-text">Торговля</span>
+        </NavLink>
+        
+        {isAuthorized ? (
+          <NavLink to="/profile" className={({isActive}) => `mobile-nav-item ${isActive ? 'active' : ''}`}>
+            <svg className="mobile-nav-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12 12C14.21 12 16 10.21 16 8C16 5.79 14.21 4 12 4C9.79 4 8 5.79 8 8C8 10.21 9.79 12 12 12ZM12 14C9.33 14 4 15.34 4 18V20H20V18C20 15.34 14.67 14 12 14Z" fill="currentColor"/>
+            </svg>
+            <span className="mobile-nav-text">Профиль</span>
+          </NavLink>
+        ) : (
+          <button onClick={() => setShowLogin(true)} className="mobile-nav-item">
+            <svg className="mobile-nav-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12 12C14.21 12 16 10.21 16 8C16 5.79 14.21 4 12 4C9.79 4 8 5.79 8 8C8 10.21 9.79 12 12 12ZM12 14C9.33 14 4 15.34 4 18V20H20V18C20 15.34 14.67 14 12 14Z" fill="currentColor"/>
+            </svg>
+            <span className="mobile-nav-text">Войти</span>
+          </button>
+        )}
+      </nav>
+      
+      {/* CMS панель */}
+      {showCmsPanel && (
+        <CMSPanel 
+          cmsContent={cmsContent} 
+          updateCmsContent={updateCmsContent} 
+          onClose={() => setShowCmsPanel(false)} 
+        />
+      )}
+    </div>
+  );
+}
+
+}
+
+;function Home() {
+  let formatPrice = useLang().formatPrice
+  let cmsContent = useCMS().cmsContent
+
+  // Пересчитывать ленты при загрузке динамических товаров
+  const [version, setVersion] = React.useState(0)
+  React.useEffect(() => {
+    const onProductsLoaded = () => setVersion(v => v + 1)
+    window.addEventListener('products-loaded', onProductsLoaded)
+    return () => window.removeEventListener('products-loaded', onProductsLoaded)
+  }, [])
+
+  const [remaining, setRemaining] = React.useState('')
+  const endsAtRef = React.useRef(Date.now() + 24 * 60 * 60 * 1000) // акция 24 часа
+  React.useEffect(() => {
+    const update = () => {
+      const diff = endsAtRef.current - Date.now()
+      if (diff <= 0) { setRemaining('00:00:00'); return }
+      const h = Math.floor(diff / 3600000)
+      const m = Math.floor((diff % 3600000) / 60000)
+      const s = Math.floor((diff % 60000) / 1000)
+      setRemaining(`${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`)
+    }
+    update()
+    const t = setInterval(update, 1000)
+    return () => clearInterval(t)
+  }, [])
+
+  const { addItem } = useCart()
+  const addToCart = (product) => {
+    const qtyStr = window.prompt('Выберите количество', '1')
+    const qty = parseInt(qtyStr || '0', 10)
+    if (!Number.isNaN(qty) && qty > 0) {
+      addItem(product, qty)
+    }
+  }
+
+  // Промо-слайдер на главной: автопрокрутка без ручных контролов
+  const promoRef = React.useRef(null)
+  const promoTimerRef = React.useRef(null)
+  const promoStep = () => {
+    const el = promoRef.current
+    if (!el) return
+    const first = el.firstElementChild
+    const step = first ? first.getBoundingClientRect().width + 24 : 320
+    const nearEnd = el.scrollLeft + el.clientWidth + step >= el.scrollWidth - 4
+    if (nearEnd) {
+      el.scrollTo({ left: 0, behavior: 'smooth' })
+    } else {
+      el.scrollBy({ left: step, behavior: 'smooth' })
+    }
+  }
+  const startPromo = () => { if (!promoTimerRef.current) promoTimerRef.current = setInterval(promoStep, 2500) }
+  const stopPromo = () => { if (promoTimerRef.current) { clearInterval(promoTimerRef.current); promoTimerRef.current = null } }
+  React.useEffect(() => {
+    const el = promoRef.current
+    if (!el) return
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => { entry.isIntersecting ? startPromo() : stopPromo() })
+    }, { root: null, threshold: 0.1 })
+    observer.observe(el)
+    const onEnter = () => stopPromo()
+    const onLeave = () => startPromo()
+    el.addEventListener('mouseenter', onEnter)
+    el.addEventListener('mouseleave', onLeave)
+    startPromo()
+    return () => { observer.disconnect(); el.removeEventListener('mouseenter', onEnter); el.removeEventListener('mouseleave', onLeave); stopPromo() }
+  }, [])
+
+  const promoItems = React.useMemo(() => {
+    const items = DATA.products.filter(p => (p.introImage || p.image))
+    const arr = [...items]
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1))
+      ;[arr[i], arr[j]] = [arr[j], arr[i]]
+    }
+    return arr.slice(0, 10).map(p => ({ product: p, src: p.introImage || p.image, to: `/product/${p.id}` }))
+  }, [version])
+  
+  // Рандомизация игр на главной: две строки, разные при каждом обновлении
+  const gamesShuffled = React.useMemo(() => {
+    const list = DATA.products.filter(p => p.category === 'game')
+    const arr = [...list]
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1))
+      ;[arr[i], arr[j]] = [arr[j], arr[i]]
+    }
+    return arr
+  }, [version])
+  const gamesRow1 = React.useMemo(() => gamesShuffled.slice(0, 6), [gamesShuffled])
+  const gamesRow2 = React.useMemo(() => gamesShuffled.slice(6, 12), [gamesShuffled])
+
+  const scrollToRoulette = React.useCallback(() => {
+    const el = document.getElementById('roulette-anchor')
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }, [])
+  return (
+    <section className="space-y-6">
+      {/* Баннер: закреплён к верху, таймер + ссылка на товар со скидкой */}
+      <div className="sticky top-0 z-20 overflow-hidden rounded-2xl border border-white/10 p-8 bg-gradient-to-br from-[#0D1A2F] via-[#161f38] to-[#1f2a4a]">
+        <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight">{cmsContent.bannerTitle}</h1>
+        <p className="mt-2 text-white/70">{cmsContent.bannerDescription} <span className="font-mono">{remaining}</span></p>
+        <div className="mt-6 flex flex-col sm:flex-row gap-4">
+          <NavLink to="/product/cyberpunk" className="inline-flex items-center justify-center gap-2 w-full sm:w-auto px-5 py-3 rounded-lg bg-[#161f38] hover:bg-[#7e2aa8] transition">
+            {cmsContent.bannerButton1}
+          </NavLink>
+          <NavLink to="/store" className="inline-flex items-center justify-center gap-2 w-full sm:w-auto px-5 py-3 rounded-lg bg-[#161f38] hover:bg-[#7e2aa8] transition">
+            {cmsContent.bannerButton2}
+          </NavLink>
+        </div>
+        <div className="pointer-events-none absolute -bottom-6 -right-6 w-48 h-48 rounded-full blur-2xl opacity-30" style={{background:"radial-gradient(circle, #4A90E2 0%, transparent 60%)"}} />
+      </div>
+
+
+      {/* Слайдшоу промо на главной */}
+      <div className="relative">
+        <div ref={promoRef} className="flex gap-6 overflow-x-auto snap-x snap-mandatory scroll-smooth pb-3">
+          {promoItems.map((item, i) => (
+            <NavLink to={item.to} key={i} className="snap-start shrink-0 w-[280px] sm:w-[320px]">
+              <div className="relative h-36 w-full rounded-lg overflow-hidden bg-[#161f38]">
+                <img src={item.src} alt={item.product.name} className="h-full w-full object-cover" loading="lazy" decoding="async" />
+                {/* Бейдж скидки, повернутый на 45° */}
+                <div className="absolute top-2 left-2 px-2 py-1 bg-red-600 text-white text-xs font-bold origin-left rotate-45 shadow-md">Скидка</div>
+                {/* Цены поверх баннера */}
+                <div className="absolute bottom-2 left-2 right-2 flex items-end justify-between">
+                  <div className="bg-[#0D1A2F]/70 backdrop-blur-sm px-2 py-1 rounded-md">
+                    <div className="text-xs text-white/80">{item.product.name}</div>
+                    <div className="flex items-baseline gap-2">
+                      <span className="text-white/60 line-through text-xl">{formatPrice(Math.round(item.product.price * 1.25))}</span>
+                      <span className="text-[#4A90E2] font-bold text-sm">{formatPrice(item.product.price)}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </NavLink>
+          ))}
+        </div>
+      </div>
+
+      {/* Популярные скины - карусель */}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-2xl font-bold">🔥 Популярные скины</h2>
+          <NavLink to="/skins" className="text-blue-400 hover:text-blue-300 text-sm">
+            Смотреть все →
+          </NavLink>
+        </div>
+        
+        <div className="relative">
+          {/* Navigation Buttons */}
+          <button 
+            onClick={() => {
+              const container = document.getElementById('popular-skins-carousel');
+              container.scrollBy({ left: -300, behavior: 'smooth' });
+            }}
+            className="absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-blue-600/80 hover:bg-blue-700 text-white p-2 rounded-full shadow-lg transition-all carousel-nav-btn"
+            style={{ marginLeft: '-20px' }}
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+          </button>
+          
+          <button 
+            onClick={() => {
+              const container = document.getElementById('popular-skins-carousel');
+              container.scrollBy({ left: 300, behavior: 'smooth' });
+            }}
+            className="absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-blue-600/80 hover:bg-blue-700 text-white p-2 rounded-full shadow-lg transition-all carousel-nav-btn"
+            style={{ marginRight: '-20px' }}
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
+
+          {/* Popular Skins Carousel */}
+          <div 
+            id="popular-skins-carousel"
+            className="flex gap-4 overflow-x-auto scroll-smooth pb-4 px-2"
+            style={{ 
+              scrollbarWidth: 'none', 
+              msOverflowStyle: 'none',
+              scrollSnapType: 'x mandatory'
+            }}
+          >
+            {DATA.products
+              .filter(p => p.category === 'skin')
+              .sort((a, b) => b.price - a.price)
+              .slice(0, 12)
+              .map(p => (
+                <NavLink 
+                  key={p.id} 
+                  to={`/product/${p.id}`} 
+                  className="shrink-0 w-56 rounded-xl border border-white/10 bg-[#0D1A2F] hover:border-blue-400/50 hover:scale-105 p-3 flex flex-col gap-3 transition-all duration-300 carousel-item"
+                  style={{ scrollSnapAlign: 'start' }}
+                >
+                  <LazyImage 
+                    src={p.image || '/vite.svg'} 
+                    alt={p.name} 
+                    className="aspect-video w-full object-cover rounded-md bg-[#161f38]" 
+                  />
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm opacity-80 truncate flex-1 mr-2">{p.name}</span>
+                    <span className="text-sm font-semibold text-green-400">{formatPrice ? formatPrice(p.price) : `${p.price} ₽`}</span>
+                  </div>
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="opacity-70">{p.type}</span>
+                    {p.source === 'steam_market' && (
+                      <span className="bg-blue-500/20 px-2 py-1 rounded text-blue-300">Steam</span>
+                    )}
+                  </div>
+                  <button 
+                    onClick={(e) => {
+                      e.preventDefault();
+                      addToCart(p);
+                    }}
+                    className="w-full py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm font-medium transition-colors"
+                  >
+                    В корзину
+                  </button>
+                </NavLink>
+              ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Кнопка: прокрутка вниз к рулетке */}
+      <div className="flex justify-center">
+        <button onClick={scrollToRoulette} className="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-[#161f38] hover:bg-[#7e2aa8] transition border border-white/10">
+          {cmsContent.rouletteButton}
+        </button>
+      </div>
+      {/* Игры на главной */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        {gamesRow1.map(p => (
+          <GameCard key={p.id} product={p} addItem={addItem} fullSlider />
+        ))}
+      </div>
+      {/* Вторая строка игр */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        {gamesRow2.map(p => (
+          <GameCard key={p.id} product={p} addItem={addItem} fullSlider />
+        ))}
+      </div>
+
+      {/* Рулетка скинов (снизу) */}
+      <div id="roulette-anchor" className="mt-8">
+        <SkinRoulette />
+      </div>
+
+
+    </section>
+  )
+}
+
+// Политика конфиденциальности
+function PrivacyPolicy() {
+  return (
+    <section className="space-y-6">
+      <h1 className="text-3xl font-bold">Политика конфиденциальности</h1>
+      
+      <div className="space-y-6 text-white/80">
+        <div>
+          <h2 className="text-xl font-semibold mb-3">1. Общие положения</h2>
+          <p className="text-sm leading-relaxed">
+            Настоящая Политика конфиденциальности (далее — «Политика») действует в отношении всей информации, 
+            которую AI Game Store может получить о пользователе во время использования им сайта gamesale.shop.
+          </p>
+        </div>
+
+        <div>
+          <h2 className="text-xl font-semibold mb-3">2. Персональные данные пользователей</h2>
+          <p className="text-sm leading-relaxed mb-2">
+            В рамках настоящей Политики под «персональными данными пользователя» понимаются:
+          </p>
+          <ul className="list-disc list-inside text-sm space-y-1 ml-4">
+            <li>Персональные данные, которые пользователь предоставляет о себе самостоятельно при регистрации или в процессе использования сайта</li>
+            <li>IP-адрес пользователя</li>
+            <li>Информация о браузере пользователя</li>
+            <li>Данные о покупках и транзакциях</li>
+            <li>Email адрес для отправки чеков</li>
+          </ul>
+        </div>
+
+        <div>
+          <h2 className="text-xl font-semibold mb-3">3. Цели обработки персональных данных</h2>
+          <p className="text-sm leading-relaxed mb-2">
+            Персональные данные пользователей обрабатываются в следующих целях:
+          </p>
+          <ul className="list-disc list-inside text-sm space-y-1 ml-4">
+            <li>Обеспечение функционирования сайта</li>
+            <li>Обработка и выполнение заказов</li>
+            <li>Отправка электронных чеков</li>
+            <li>Улучшение качества услуг</li>
+            <li>Техническая поддержка пользователей</li>
+          </ul>
+        </div>
+
+        <div>
+          <h2 className="text-xl font-semibold mb-3">4. Правовые основания обработки</h2>
+          <p className="text-sm leading-relaxed">
+            Обработка персональных данных осуществляется на основании согласия пользователя, 
+            полученного при первом посещении сайта, а также в соответствии с Федеральным законом 
+            от 27.07.2006 № 152-ФЗ «О персональных данных».
+          </p>
+        </div>
+
+        <div>
+          <h2 className="text-xl font-semibold mb-3">5. Сроки обработки персональных данных</h2>
+          <p className="text-sm leading-relaxed">
+            Персональные данные обрабатываются в течение срока, необходимого для достижения целей обработки, 
+            но не более 5 лет с момента последнего взаимодействия с пользователем.
+          </p>
+        </div>
+
+        <div>
+          <h2 className="text-xl font-semibold mb-3">6. Права субъекта персональных данных</h2>
+          <p className="text-sm leading-relaxed mb-2">
+            Пользователь имеет право:
+          </p>
+          <ul className="list-disc list-inside text-sm space-y-1 ml-4">
+            <li>Получать информацию об обработке своих персональных данных</li>
+            <li>Требовать уточнения, блокирования или уничтожения персональных данных</li>
+            <li>Отзывать согласие на обработку персональных данных</li>
+            <li>Обращаться в уполномоченный орган по защите прав субъектов персональных данных</li>
+          </ul>
+        </div>
+
+        <div>
+          <h2 className="text-xl font-semibold mb-3">7. Контактная информация</h2>
+          <div className="text-sm leading-relaxed space-y-2">
+            <p>По всем вопросам, связанным с обработкой персональных данных, вы можете обратиться к нам:</p>
+            <div className="bg-[#161f38]/50 p-4 rounded-lg border border-white/10">
+              <div className="space-y-1">
+                <div><strong>ООО "АИ Гейм Стор"</strong></div>
+                <div>ИНН: 7707123456</div>
+                <div>ОГРН: 1127746123456</div>
+                <div>Юридический адрес: 123456, г. Москва, ул. Примерная, д. 1, оф. 100</div>
+                <div>Email: <a href="mailto:privacy@aigamestore.ru" className="text-blue-400 hover:text-blue-300">privacy@aigamestore.ru</a></div>
+                <div>Общий Email: <a href="mailto:info@aigamestore.ru" className="text-blue-400 hover:text-blue-300">info@aigamestore.ru</a></div>
+                <div>Телефон: <a href="tel:+74951234567" className="text-blue-400 hover:text-blue-300">+7 (495) 123-45-67</a></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="text-xs text-white/60 pt-4 border-t border-white/10">
+          Дата последнего обновления: {new Date().toLocaleDateString('ru-RU')}
+        </div>
+      </div>
+    </section>
+  )
+}
+
+function Product() {
+  const { id } = useParams()
+  const { addItem } = useCart()
+  const { formatPrice } = useLang()
+  const [version, setVersion] = React.useState(0)
+  React.useEffect(() => {
+    const onProductsLoaded = () => setVersion(v => v + 1)
+    window.addEventListener('products-loaded', onProductsLoaded)
+    return () => window.removeEventListener('products-loaded', onProductsLoaded)
+  }, [])
+  const product = React.useMemo(() => {
+    const byId = DATA.products.find(p => p.id === id)
+    if (byId) return byId
+    return DATA.products.find(p => String(p.id) === String(id)) || null
+  }, [id, version])
+  const requestedRef = React.useRef(false)
+  React.useEffect(() => {
+    if (product || requestedRef.current) return
+    requestedRef.current = true
+    ;(async () => {
+      try {
+        const res = await fetch('/products')
+        const json = await res.json().catch(() => ({ ok: false }))
+        const list = Array.isArray(json?.data) ? json.data : []
+        if (list.length > 0) {
+          const existingIds = new Set(DATA.products.map(p => p.id))
+          const incoming = list.filter(p => p && p.id && !existingIds.has(p.id))
+          if (incoming.length > 0) {
+            DATA.products = [...incoming, ...DATA.products]
+            window.dispatchEvent(new Event('products-loaded'))
+            setVersion(v => v + 1)
+          }
+        }
+      } catch {}
+    })()
+  }, [product])
+
+  const images = React.useMemo(() => {
+    if (!product) return ['/images/logo/logo.png','/images/logo/logo.png','/images/logo/logo.png']
+    const base = Array.isArray(product.images) ? product.images.filter(Boolean) : []
+    if (base.length === 0 && product.image) base.push(product.image)
+    const fallback = '/images/logo/logo.png'
+    while (base.length < 3) base.push(fallback)
+    return base.slice(0, 10)
+  }, [product])
+  const [idx, setIdx] = React.useState(0)
+  const go = (d) => setIdx(i => (i + d + images.length) % images.length)
+
+  const recommendations = React.useMemo(() => {
+    const list = DATA.products.filter(p => p.id !== (product?.id || ''))
+    const arr = [...list]
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1))
+      ;[arr[i], arr[j]] = [arr[j], arr[i]]
+    }
+    return arr.slice(0, 4)
+  }, [product])
+
+  const [sellStatus, setSellStatus] = React.useState('')
+  const sellSkin = () => {
+    try {
+      const isAuth = localStorage.getItem('profile-auth') === '1'
+      if (!isAuth) {
+        window.dispatchEvent(new Event('open-login'))
+        return
+      }
+      if (!product || product.category !== 'skin') return
+      const credit = Math.round(product.price * 0.7 * 100) / 100
+      const prev = parseFloat(localStorage.getItem('wallet-usd') || '0')
+      const next = Math.round((prev + credit) * 100) / 100
+      localStorage.setItem('wallet-usd', String(next))
+      let hist = []
+      try { hist = JSON.parse(localStorage.getItem('wallet-history') || '[]') } catch { hist = [] }
+      const item = { id: `SELL-${Date.now()}`, type: 'sell', amountUsd: credit, name: product.name, ts: Date.now() }
+      localStorage.setItem('wallet-history', JSON.stringify([item, ...hist]))
+      window.dispatchEvent(new Event('wallet-updated'))
+      setSellStatus('sold')
+    } catch (e) {
+      console.error('sellSkin error', e)
+    }
+  }
+
+  if (!product) {
+    return (
+      <section className="space-y-6">
+        <h2 className="text-2xl font-bold">Товар не найден</h2>
+        <div className="text-white/60">Похоже, такого товара нет в каталоге.</div>
+      </section>
+    )
+  }
+
+  return (
+    <section className="space-y-6">
+      <h2 className="text-2xl font-bold">{product.name}</h2>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+        <div className="p-4 rounded-lg border border-white/10 bg-[#0D1A2F]">
+          <div className="h-72 rounded-lg bg-[#161f38] overflow-hidden">
+            <div className="relative w-full h-full">
+              <LazyImage 
+            src={images[idx]} 
+            alt={`${product.name}-${idx+1}`} 
+            className="w-full h-full object-cover transition-opacity duration-300" 
+          />
+              <button aria-label="prev" onClick={() => go(-1)} className="absolute left-2 top-1/2 -translate-y-1/2 px-2 py-1 rounded bg-[#0D1A2F] border border-white/10">‹</button>
+              <button aria-label="next" onClick={() => go(1)} className="absolute right-2 top-1/2 -translate-y-1/2 px-2 py-1 rounded bg-[#0D1A2F] border border-white/10">›</button>
+              <div className="absolute bottom-2 left-0 right-0 flex justify-center gap-2">
+                {images.map((_, i) => (
+                  <button key={i} onClick={() => setIdx(i)} aria-label={`go-${i}`} className={`h-2 w-2 rounded-full ${i===idx?'bg-[#4A90E2]':'bg-white/30'}`}></button>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+        <div className="p-4 rounded-lg border border-white/10 bg-[#0D1A2F] lg:col-span-2 flex flex-col">
+          <div className="text-white/80">Цена: {formatPrice(product.price)}</div>
+          <div className="mt-2 text-white/60 text-sm">Категория: {product.category || '—'}{product.type ? ` • ${product.type}` : ''}</div>
+          <div className="mt-4 flex items-center gap-2">
+            <button onClick={() => addItem(product, 1)} className="px-4 py-2 rounded-md bg-[#161f38] hover:bg-[#7e2aa8]">В корзину</button>
+            {product.category === 'skin' && (
+              <button onClick={sellSkin} className="px-4 py-2 rounded-md bg-[#4A90E2] hover:bg-[#7e2aa8]">Продать скин (70%)</button>
+            )}
+            {sellStatus === 'sold' && (
+              <div className="ml-2 text-xs text-green-400">Зачислено: {formatPrice(product.price * 0.7)}</div>
+            )}
+          </div>
+          {/* Описание игры */}
+          <div className="mt-6">
+            <h3 className="text-lg font-semibold">Описание</h3>
+            <p className="mt-2 text-white/70 text-sm">{product.description || 'Описание будет добавлено позже.'}</p>
+          </div>
+          {/* Технические характеристики для игр */}
+          {product.category === 'game' && (
+            <div className="mt-6">
+              <h3 className="text-lg font-semibold">Технические характеристики</h3>
+              <ul className="mt-2 text-white/70 text-sm space-y-1">
+                <li>Разработчик: {product.specs?.developer || '—'}</li>
+                <li>Год выпуска: {product.specs?.release || '—'}</li>
+                <li>Платформа: {product.specs?.platform || '—'}</li>
+                <li>Минимальные требования: {product.specs?.min || '—'}</li>
+              </ul>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* С этим еще покупают */}
+      {recommendations.length > 0 && (
+        <div className="space-y-3">
+          <h3 className="text-xl font-bold">С этим еще покупают</h3>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            {recommendations.map(p => (
+              <GameCard key={p.id} product={p} addItem={addItem} fullSlider />
+            ))}
+          </div>
+        </div>
+      )}
+    </section>
+  )
+}
+
+function ProductCard({ product, onAdd }) {
+  const { formatPrice } = useLang()
+  return (
+    <div className="rounded-xl border border-white/10 p-4 bg-[#0D1A2F] hover:border-blue-400/50 transition">
+      <LazyImage 
+          src={product.introImage || product.image} 
+          alt={product.name} 
+          className="h-36 w-full object-cover rounded-lg bg-[#161f38]" 
+        />
+      <h3 className="mt-3 font-semibold">{product.name}</h3>
+      <p className="text-white/60 text-sm">Цена: {formatPrice(product.price)}</p>
+      <button onClick={() => onAdd(product)} className="mt-3 px-3 py-2 rounded-md bg-[#161f38] hover:bg-[#7e2aa8]">В корзину</button>
+    </div>
+  )
+}
+
+function Store() {
+  const [query, setQuery] = React.useState('')
+  const [type, setType] = React.useState('')
+  const { addItem } = useCart()
+  const { formatPrice } = useLang()
+  const products = DATA.products
+  const filtered = products.filter(p => (p.name.toLowerCase().includes(query.toLowerCase())) && (!type || p.type === type))
+
+  const listRef = React.useRef(null)
+  // Автопрокрутка: старт при видимости карусели, стоп при скрытии
+  const autoTimerRef = React.useRef(null)
+  const scrollStep = () => {
+    const el = listRef.current
+    if (!el) return
+    const first = el.firstElementChild
+    const step = first ? first.getBoundingClientRect().width + 24 : 320
+    // если почти конец — возвращаемся в начало, иначе крутим дальше
+    const nearEnd = el.scrollLeft + el.clientWidth + step >= el.scrollWidth - 4
+    if (nearEnd) {
+      el.scrollTo({ left: 0, behavior: 'smooth' })
+    } else {
+      el.scrollBy({ left: step, behavior: 'smooth' })
+    }
+  }
+  const startAuto = () => {
+    if (autoTimerRef.current) return
+    autoTimerRef.current = setInterval(scrollStep, 2500)
+  }
+  const stopAuto = () => {
+    if (autoTimerRef.current) {
+      clearInterval(autoTimerRef.current)
+      autoTimerRef.current = null
+    }
+  }
+  React.useEffect(() => {
+    const el = listRef.current
+    if (!el) return
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            startAuto()
+          } else {
+            stopAuto()
+          }
+        })
+      },
+      { root: null, threshold: 0.5 }
+    )
+    observer.observe(el)
+    const onEnter = () => stopAuto()
+    const onLeave = () => startAuto()
+    el.addEventListener('mouseenter', onEnter)
+    el.addEventListener('mouseleave', onLeave)
+    return () => {
+      observer.disconnect()
+      el.removeEventListener('mouseenter', onEnter)
+      el.removeEventListener('mouseleave', onLeave)
+      stopAuto()
+    }
+  }, [])
+
+  const scrollByItems = (dir) => {
+    const el = listRef.current
+    if (!el) return
+    const first = el.firstElementChild
+    const step = first ? first.getBoundingClientRect().width + 24 : 320
+    el.scrollBy({ left: dir * step, behavior: 'smooth' })
+  }
+
+  return (
+    <section className="space-y-6">
+      <h2 className="text-2xl font-bold">Каталог</h2>
+      <div className="flex gap-3">
+        <input value={query} onChange={e => setQuery(e.target.value)} placeholder="Поиск" className="px-3 py-2 rounded bg-[#0D1A2F] border border-white/10 w-64" />
+      </div>
+      {filtered.length > 0 ? (
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          {filtered.map(p => (
+            <NavLink to={`/product/${p.id}`} key={p.id} className="flex flex-col p-4 rounded-lg border border-white/10 bg-[#0D1A2F] hover:border-blue-400/50 transition">
+              <div className="h-36 rounded-lg bg-[#161f38] overflow-hidden">
+                <LazyImage 
+              src={p.image || '/vite.svg'} 
+              alt={p.name} 
+              className="w-full h-full object-cover" 
+            />
+              </div>
+              <h3 className="mt-3 font-semibold">{p.name}</h3>
+              <p className="text-white/60 text-sm">Цена: {formatPrice(p.price)}</p>
+              <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); addItem(p, 1) }} className="mt-auto px-3 py-2 rounded-md bg-[#161f38] hover:bg-[#7e2aa8]">В корзину</button>
+            </NavLink>
+          ))}
+        </div>
+      ) : (
+        <div className="text-white/60">Ничего не найдено</div>
+      )}
+    </section>
+  )
+}
+
+function CMSPanel({ cmsContent, updateCmsContent, onClose }) {
+  const [editingField, setEditingField] = React.useState(null)
+  const [tempValue, setTempValue] = React.useState('')
+
+  const startEdit = (field) => {
+    setEditingField(field)
+    setTempValue(cmsContent[field] || '')
+  }
+
+  const saveEdit = () => {
+    if (editingField) {
+      updateCmsContent(editingField, tempValue)
+      setEditingField(null)
+      setTempValue('')
+    }
+  }
+
+  const cancelEdit = () => {
+    setEditingField(null)
+    setTempValue('')
+  }
+
+  const fields = [
+    { key: 'bannerTitle', label: 'Заголовок баннера', type: 'text' },
+    { key: 'bannerDescription', label: 'Описание баннера', type: 'text' },
+    { key: 'bannerButton1', label: 'Кнопка 1 баннера', type: 'text' },
+    { key: 'bannerButton2', label: 'Кнопка 2 баннера', type: 'text' },
+    { key: 'rouletteButton', label: 'Кнопка рулетки', type: 'text' },
+    { key: 'footerDescription', label: 'Описание в футере', type: 'text' }
+  ]
+
+  return (
+    <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60">
+      <div className="w-[90%] max-w-2xl max-h-[80vh] overflow-y-auto rounded-2xl border border-white/10 bg-[#0D1A2F] p-6">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-2xl font-bold">Управление контентом</h2>
+          <button onClick={onClose} className="px-3 py-2 rounded bg-[#161f38] hover:bg-[#7e2aa8]">
+            Закрыть
+          </button>
+        </div>
+        
+        <div className="space-y-4">
+          {fields.map(field => (
+            <div key={field.key} className="p-4 rounded-lg border border-white/10 bg-[#161f38]/50">
+              <div className="flex items-center justify-between mb-2">
+                <label className="text-sm font-medium text-white/80">{field.label}</label>
+                {editingField === field.key ? (
+                  <div className="flex gap-2">
+                    <button onClick={saveEdit} className="px-2 py-1 text-xs rounded bg-green-600 hover:bg-green-700">
+                      Сохранить
+                    </button>
+                    <button onClick={cancelEdit} className="px-2 py-1 text-xs rounded bg-red-600 hover:bg-red-700">
+                      Отмена
+                    </button>
+                  </div>
+                ) : (
+                  <button onClick={() => startEdit(field.key)} className="px-2 py-1 text-xs rounded bg-[#4A90E2] hover:bg-[#7e2aa8]">
+                    Редактировать
+                  </button>
+                )}
+              </div>
+              
+              {editingField === field.key ? (
+                <input
+                  type={field.type}
+                  value={tempValue}
+                  onChange={(e) => setTempValue(e.target.value)}
+                  className="w-full px-3 py-2 rounded bg-[#0D1A2F] border border-white/10"
+                  autoFocus
+                />
+              ) : (
+                <div className="px-3 py-2 rounded bg-[#0D1A2F] border border-white/10 text-white/70">
+                  {cmsContent[field.key] || 'Не задано'}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function Profile() {
+  const [name, setName] = React.useState(() => localStorage.getItem('profile-name') || '')
+  const [avatar, setAvatar] = React.useState(() => localStorage.getItem('profile-avatar') || '👾')
+  const [authorized, setAuthorized] = React.useState(() => localStorage.getItem('profile-auth') === '1')
+  const avatars = ['👾','🦾','🎮','🚀','🧠','🐉']
+  const startSteamLogin = () => { window.location.href = '/auth/steam' }
+  const navigate = useNavigate()
+  const [photo, setPhoto] = React.useState(() => localStorage.getItem('profile-photo') || '')
+  const [steamidState, setSteamidState] = React.useState(() => localStorage.getItem('steamid') || '')
+  const [authMethod, setAuthMethod] = React.useState(() => localStorage.getItem('auth-method') || '')
+  React.useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const login = params.get('login')
+    if (login === 'steam') {
+      const steamid = params.get('steamid')
+      const nm = params.get('name')
+      const photo = params.get('photo')
+      if (nm) setName(nm)
+      if (photo) { localStorage.setItem('profile-photo', photo); setPhoto(photo) }
+      if (steamid) { localStorage.setItem('steamid', steamid); setSteamidState(steamid) }
+      localStorage.setItem('auth-method', 'steam'); setAuthMethod('steam')
+      localStorage.setItem('role', 'user') // Steam users are regular users
+      
+      // Set cookies for 7 days like in regular login
+      const d = new Date()
+      d.setTime(d.getTime() + (7 * 24 * 60 * 60 * 1000))
+      const expires = `expires=${d.toUTCString()}`
+      document.cookie = `profile_auth=1; ${expires}; path=/`
+      document.cookie = `profile_name=${encodeURIComponent(nm || '')}; ${expires}; path=/`
+      document.cookie = `auth_method=steam; ${expires}; path=/`
+      document.cookie = `role=user; ${expires}; path=/`
+      
+      setAuthorized(true)
+      // Принудительно обновляем состояние авторизации в Layout
+      window.dispatchEvent(new Event('storage'))
+      navigate('/profile', { replace: true })
+    }
+  }, [])
+  React.useEffect(() => { localStorage.setItem('profile-name', name) }, [name])
+  React.useEffect(() => { localStorage.setItem('profile-avatar', avatar) }, [avatar])
+  React.useEffect(() => { localStorage.setItem('profile-auth', authorized ? '1' : '0') }, [authorized])
+  return (
+    <section className="space-y-6">
+      <h2 className="text-2xl font-bold">Профиль</h2>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+        <div className="p-4 rounded-lg border border-white/10 bg-[#0D1A2F]">
+          <div className="text-sm text-white/70">Аватар</div>
+          <div className="mt-3 grid grid-cols-6 gap-2">
+            {avatars.map(a => (
+              <button key={a} onClick={() => setAvatar(a)} className={`h-12 rounded border ${avatar===a ? 'border-blue-400 bg-blue-400/10' : 'border-white/10 bg-[#161f38]'}`}>
+                <span className="text-xl">{a}</span>
+              </button>
+            ))}
+          </div>
+          <div className="mt-4 flex items-center gap-3">
+            <div className="w-14 h-14 rounded-full bg-[#161f38] flex items-center justify-center text-2xl border border-white/10">{avatar}</div>
+            <div className="text-white/60 text-sm">Выбранный аватар</div>
+          </div>
+        </div>
+        <div className="p-4 rounded-lg border border-white/10 bg-[#0D1A2F]">
+          <div className="text-sm text-white/70">Имя</div>
+          <input value={name} onChange={e => setName(e.target.value)} placeholder="Введите имя" className="mt-2 w-full px-3 py-2 rounded bg-[#0D1A2F] border border-white/10" />
+          <div className="mt-2 text-xs text-white/60">Подсказка: это имя будет показываться рядом с аватаром.</div>
+        </div>
+        <div className="p-4 rounded-lg border border-white/10 bg-[#0D1A2F]">
+          <div className="text-sm text-white/70">Авторизация</div>
+          {authorized ? (
+            <div className="space-y-3">
+              <div className="text-white/80">Вы вошли как <span className="font-semibold">{name || 'Гость'}</span></div>
+              {authMethod === 'steam' && (
+                <div className="flex items-center gap-3">
+                  {photo && (<img src={photo} alt="Steam avatar" className="w-10 h-10 rounded-full border border-white/10" />)}
+                  <div className="text-xs text-white/70">SteamID: {steamidState || '—'} • Вход через Steam</div>
+                </div>
+              )}
+              <button onClick={() => { setAuthorized(false); localStorage.removeItem('auth-method'); localStorage.removeItem('steamid'); localStorage.removeItem('profile-photo'); localStorage.removeItem('profile-auth'); localStorage.removeItem('profile-name'); localStorage.removeItem('role'); setAuthMethod(''); setSteamidState(''); setPhoto(''); document.cookie = 'profile_auth=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/'; document.cookie = 'auth_method=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/'; document.cookie = 'role=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/'; document.cookie = 'profile_name=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/'; }} className="px-3 py-2 rounded bg-[#161f38] hover:bg-[#7e2aa8]">Выйти</button>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              <div className="text-white/80">Вы не авторизованы</div>
+
+              <button onClick={startSteamLogin} className="px-3 py-2 rounded bg-[#1b2838] hover:bg-[#2a475e]">Войти через Steam</button>
+              <div className="text-xs text-white/60">Вы будете перенаправлены на страницу входа Steam.</div>
+            </div>
+          )}
+        </div>
+        <div className="p-4 rounded-lg border border-white/10 bg-[#0D1A2F]">
+          <div className="text-sm text-white/70">Кошелёк</div>
+          <WalletSection />
+        </div>
+      </div>
+    </section>
+  )
+}
+function Checkout() {
+  const { totalPrice } = useCart()
+  const { formatPrice, currency, toAmountInCurrency } = useLang()
+  const [acquirerConnected, setAcquirerConnected] = React.useState(() => localStorage.getItem('acquirer') === '1')
+  React.useEffect(() => { localStorage.setItem('acquirer', acquirerConnected ? '1' : '0') }, [acquirerConnected])
+  const [orderId] = React.useState(() => `ORD-${Date.now()}`)
+  const [status, setStatus] = React.useState('waiting')
+  const [email, setEmail] = React.useState('')
+  const [emailError, setEmailError] = React.useState('')
+  const amountInCurr = toAmountInCurrency(totalPrice)
+  const dataStr = `aigame://pay?order=${orderId}&amount=${amountInCurr.toFixed(2)}&currency=${currency}`
+  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(dataStr)}`
+
+  React.useEffect(() => {
+    const t = setTimeout(() => setStatus('paid'), 15000)
+    return () => clearTimeout(t)
+  }, [orderId])
+
+  const validateEmail = (email) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    return emailRegex.test(email)
+  }
+
+  const handleEmailChange = (e) => {
+    const value = e.target.value
+    setEmail(value)
+    if (value && !validateEmail(value)) {
+      setEmailError('Введите корректный email адрес')
+    } else {
+      setEmailError('')
+    }
+  }
+
+  const markPaid = () => {
+    if (!email || !validateEmail(email)) {
+      setEmailError('Введите корректный email для получения чека')
+      return
+    }
+    setStatus('paid')
+    // Здесь можно добавить отправку чека на email
+    console.log(`Чек отправлен на email: ${email}`)
+  }
+
+  return (
+    <section className="space-y-6">
+      <h2 className="text-2xl font-bold">Оплата по QR</h2>
+      
+      {/* Поле для email */}
+      <div className="p-4 rounded-lg border border-white/10 bg-[#0D1A2F]">
+        <label className="block text-sm font-medium text-white/80 mb-2">
+          Email для получения чека *
+        </label>
+        <input
+          type="email"
+          value={email}
+          onChange={handleEmailChange}
+          placeholder="example@email.com"
+          className="w-full px-3 py-2 rounded-md bg-[#161f38] border border-white/10 text-white placeholder-white/50 focus:border-blue-400 focus:outline-none"
+          required
+        />
+        {emailError && (
+          <p className="mt-1 text-sm text-red-400">{emailError}</p>
+        )}
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+        {acquirerConnected ? (
+          <div className="p-4 rounded-lg border border-white/10 bg-[#0D1A2F] flex flex-col items-center">
+            <img src={qrUrl} alt="QR для оплаты" className="w-[220px] h-[220px] rounded bg-[#161f38]" />
+            <a href={qrUrl} download={`AI-Game-Store-${orderId}.png`} className="mt-3 px-3 py-2 rounded-md bg-[#161f38] hover:bg-[#7e2aa8]">Скачать QR</a>
+          </div>
+        ) : (
+          <div className="p-4 rounded-lg border border-white/10 bg-[#0D1A2F]">
+            <div className="text-white/60">QR-код будет доступен после подключения эквайринга.</div>
+            <button onClick={() => setAcquirerConnected(true)} className="mt-3 px-3 py-2 rounded-md bg-[#4A90E2] hover:bg-[#7e2aa8]">Подключить эквайринг</button>
+          </div>
+        )}
+        <div className="p-4 rounded-lg border border-white/10 bg-[#0D1A2F]">
+          <div className="text-sm text-white/80">Инструкция</div>
+          <ol className="mt-2 list-decimal list-inside space-y-1 text-white/70 text-sm">
+            <li>Откройте банковское приложение с поддержкой оплаты по QR.</li>
+            <li>Сканируйте QR-код слева.</li>
+            <li>Проверьте сумму: {formatPrice(totalPrice)} и подтвердите оплату.</li>
+          </ol>
+          <button onClick={markPaid} className="mt-3 px-3 py-2 rounded-md bg-[#161f38] hover:bg-[#4A90E2]">Я оплатил</button>
+        </div>
+        <div className="p-4 rounded-lg border border-white/10 bg-[#0D1A2F]">
+          <div className="text-sm text-white/80">Статус</div>
+          <div className="mt-2 text-white/70">{status === 'paid' ? 'Оплачено' : 'Ожидание оплаты...'}</div>
+        </div>
+      </div>
+    </section>
+  )
+}
+
+// Киберпанк-виджет карточки игры с мини-слайдером и кнопками
+function GameCard({ product, addItem, fullSlider = false }) {
+  const { formatPrice } = useLang()
+  const previews = React.useMemo(() => getPreviewImages(product), [product])
+  const [idx, setIdx] = React.useState(0)
+  const prev = () => setIdx(i => (i - 1 + previews.length) % previews.length)
+  const next = () => setIdx(i => (i + 1) % previews.length)
+  const navigate = useNavigate()
+
+  return (
+    <div onClick={() => navigate(`/product/${product.id}`)} className="group relative flex flex-col p-4 rounded-lg border border-white/10 bg-[#0D1A2F] hover:border-blue-400/50 transition cursor-pointer">
+      <div className={`${fullSlider ? 'h-60 sm:h-64' : 'h-36'} rounded-lg bg-[#161f38] overflow-hidden relative`}>
+        {fullSlider ? (
+          <>
+            <LazyImage 
+              src={previews[idx]} 
+              alt={`${product.name}-preview-${idx+1}`} 
+              className="w-full h-full object-cover" 
+            />
+            <button onClick={(e) => { e.stopPropagation(); prev() }} className="absolute left-2 top-1/2 -translate-y-1/2 px-2 py-1 rounded bg-[#0D1A2F] border border-white/10">‹</button>
+            <button onClick={(e) => { e.stopPropagation(); next() }} className="absolute right-2 top-1/2 -translate-y-1/2 px-2 py-1 rounded bg-[#0D1A2F] border border-white/10">›</button>
+            <div className="absolute bottom-2 left-0 right-0 flex justify-center gap-2">
+              {previews.map((_, i) => (
+                <button key={i} onClick={(e) => { e.stopPropagation(); setIdx(i) }} aria-label={`go-${i}`} className={`h-2 w-2 rounded-full ${i===idx?'bg-[#4A90E2]':'bg-white/30'}`}></button>
+              ))}
+            </div>
+          </>
+        ) : (
+          <>
+            <LazyImage 
+              src={product.image || '/vite.svg'} 
+              alt={product.name} 
+              className="w-full h-full object-cover" 
+            />
+            <div className="absolute bottom-2 left-2 right-2">
+              <div className="flex items-center gap-2">
+                <button onClick={(e) => { e.stopPropagation(); prev() }} className="px-2 py-1 rounded bg-[#161f38] hover:bg-[#7e2aa8]">&lsaquo;</button>
+                <div className="flex-1 h-14 rounded border border-white/10 overflow-hidden bg-[#0D1A2F]">
+                  <img src={previews[idx]} alt={`${product.name}-preview`} className="w-full h-full object-cover" loading="lazy" decoding="async" />
+                </div>
+                <button onClick={(e) => { e.stopPropagation(); next() }} className="px-2 py-1 rounded bg-[#161f38] hover:bg-[#7e2aa8]">&rsaquo;</button>
+              </div>
+            </div>
+          </>
+        )}
+      </div>
+      <h3 className="mt-3 font-semibold">{product.name}</h3>
+      <p className="text-white/60 text-sm">{formatPrice(product.price)}</p>
+      <div className="mt-auto flex items-center gap-2">
+        <button onClick={(e) => { e.stopPropagation(); addItem(product, 1) }} className="px-3 py-2 rounded-md bg-[#161f38] hover:bg-[#7e2aa8]">В корзину</button>
+      </div>
+    </div>
+  )
+}
+function Games() {
+  const { addItem } = useCart()
+  const games = DATA.products.filter(p => p.category === 'game')
+  return (
+    <section className="space-y-6">
+      <h2 className="text-2xl font-bold">Игры</h2>
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+        {games.map(p => (
+          <GameCard key={p.id} product={p} addItem={addItem} fullSlider />
+        ))}
+      </div>
+    </section>
+  )
+}
+
+function GameCategory() {
+  const { type } = useParams()
+  const { addItem } = useCart()
+  const games = DATA.products.filter(p => p.category === 'game' && p.type === type)
+  return (
+    <section className="space-y-6">
+      <h2 className="text-2xl font-bold">Игры · {type?.toUpperCase()}</h2>
+      {games.length > 0 ? (
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          {games.map(p => (
+            <GameCard key={p.id} product={p} addItem={addItem} fullSlider />
+          ))}
+        </div>
+      ) : (
+        <div className="text-white/60">В этой категории пока нет товаров</div>
+      )}
+    </section>
+  )
+}
+
+function Skins() {
+  const { t, formatPrice } = useLang();
+  const skins = DATA.products.filter(p => p.category === 'skin');
+  const [query, setQuery] = React.useState('')
+  const [typeFilter, setTypeFilter] = React.useState('all')
+  const [minPrice, setMinPrice] = React.useState('')
+  const [maxPrice, setMaxPrice] = React.useState('')
+  const [sourceFilter, setSourceFilter] = React.useState('all') // all | steam_market | local
+  const [hasRealPhoto, setHasRealPhoto] = React.useState(false)
+  const [selectedTags, setSelectedTags] = React.useState([])
+  const types = Array.from(new Set(skins.map(s => s.type))).filter(Boolean)
+  const TAGS = ['StatTrak', 'Doppler', 'Fade', 'Tiger Tooth', 'Crimson Web', 'Case Hardened', 'Printstream', 'Dragon Lore', 'Asiimov']
+  const hasTag = (p, tag) => {
+    const name = String(p.cs2MarketName || p.name || '').toLowerCase()
+    const t = tag.toLowerCase()
+    return name.includes(t.replace(/\s+/g, ' '))
+  }
+  const hasHttpImage = (p) => {
+    const img = String(p.image || '')
+    if (img.startsWith('http://') || img.startsWith('https://')) return true
+    if (Array.isArray(p.images)) {
+      return p.images.some(u => typeof u === 'string' && (u.startsWith('http://') || u.startsWith('https://')))
+    }
+    return false
+  }
+  const q = query.trim().toLowerCase()
+  const min = parseFloat(minPrice)
+  const max = parseFloat(maxPrice)
+  const filtered = skins.filter(p => {
+    if (q && !String(p.name).toLowerCase().includes(q)) return false
+    if (typeFilter !== 'all' && p.type !== typeFilter) return false
+    if (sourceFilter === 'steam_market' && p.source !== 'steam_market') return false
+    if (sourceFilter === 'local' && p.source === 'steam_market') return false
+    if (!isNaN(min) && p.price < min) return false
+    if (!isNaN(max) && p.price > max) return false
+    if (hasRealPhoto && !hasHttpImage(p)) return false
+    if (selectedTags.length > 0) {
+      for (const tag of selectedTags) {
+        if (!hasTag(p, tag)) return false
+      }
+    }
+    return true
+  })
+  return (
+    <div className="space-y-4">
+      <h1 className="text-2xl font-bold">{t('skins.title') || 'Скины'}</h1>
+      <div className="flex flex-wrap items-end gap-3 p-3 rounded-lg border border-white/10 bg-[#0D1A2F]">
+        <div className="flex-1 min-w-[200px]">
+          <label className="text-xs opacity-70">Поиск</label>
+          <input value={query} onChange={e => setQuery(e.target.value)} placeholder="Название скина"
+                 className="w-full px-3 py-2 rounded bg-[#161f38] border border-white/10" />
+        </div>
+        <div>
+          <label className="text-xs opacity-70">Тип</label>
+          <select value={typeFilter} onChange={e => setTypeFilter(e.target.value)}
+                  className="w-[160px] px-3 py-2 rounded bg-[#161f38] border border-white/10">
+            <option value="all">Все</option>
+            {types.map(t => (<option key={t} value={t}>{t}</option>))}
+          </select>
+        </div>
+        <div>
+          <label className="text-xs opacity-70">Источник</label>
+          <select value={sourceFilter} onChange={e => setSourceFilter(e.target.value)}
+                  className="w-[160px] px-3 py-2 rounded bg-[#161f38] border border-white/10">
+            <option value="all">Все</option>
+            <option value="steam_market">Steam Market</option>
+            <option value="local">Локальные</option>
+          </select>
+        </div>
+        <div>
+          <label className="text-xs opacity-70">Цена от</label>
+          <input value={minPrice} onChange={e => setMinPrice(e.target.value)} type="number" min="0" step="0.01"
+                 className="w-[120px] px-3 py-2 rounded bg-[#161f38] border border-white/10" />
+        </div>
+        <div>
+          <label className="text-xs opacity-70">Цена до</label>
+          <input value={maxPrice} onChange={e => setMaxPrice(e.target.value)} type="number" min="0" step="0.01"
+                 className="w-[120px] px-3 py-2 rounded bg-[#161f38] border border-white/10" />
+        </div>
+        <label className="flex items-center gap-2 text-xs opacity-80">
+          <input type="checkbox" checked={hasRealPhoto} onChange={e => setHasRealPhoto(e.target.checked)} />
+          Только реальные фото
+        </label>
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-xs opacity-70">Узоры:</span>
+          {TAGS.map(tag => {
+            const checked = selectedTags.includes(tag)
+            return (
+              <label key={tag} className={`text-xs px-2 py-1 rounded border cursor-pointer ${checked ? 'bg-blue-500/20 border-blue-400/50' : 'bg-[#161f38] border-white/10'}`}>
+                <input type="checkbox" className="mr-1" checked={checked} onChange={e => {
+                  setSelectedTags(prev => {
+                    if (e.target.checked) return [...prev, tag]
+                    return prev.filter(x => x !== tag)
+                  })
+                }} />
+                {tag}
+              </label>
+            )
+          })}
+        </div>
+      </div>
+      {/* Carousel Container */}
+      <div className="relative">
+        {/* Navigation Buttons */}
+        <button 
+          onClick={() => {
+            const container = document.getElementById('skins-carousel');
+            container.scrollBy({ left: -300, behavior: 'smooth' });
+          }}
+          className="absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-full shadow-lg transition-colors"
+          style={{ marginLeft: '-20px' }}
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+          </svg>
+        </button>
+        
+        <button 
+          onClick={() => {
+            const container = document.getElementById('skins-carousel');
+            container.scrollBy({ left: 300, behavior: 'smooth' });
+          }}
+          className="absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-full shadow-lg transition-colors"
+          style={{ marginRight: '-20px' }}
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          </svg>
+        </button>
+
+        {/* Carousel */}
+        <div 
+          id="skins-carousel"
+          className="flex gap-4 overflow-x-auto scroll-smooth pb-4 px-2"
+          style={{ 
+            scrollbarWidth: 'none', 
+            msOverflowStyle: 'none',
+            scrollSnapType: 'x mandatory'
+          }}
+        >
+          {filtered.map(p => (
+            <NavLink 
+              key={p.id} 
+              to={`/product/${p.id}`} 
+              className="shrink-0 w-64 rounded-xl border border-white/10 bg-[#0D1A2F] hover:border-blue-400/50 hover:scale-105 p-3 flex flex-col gap-3 transition-all duration-300"
+              style={{ scrollSnapAlign: 'start' }}
+            >
+              <LazyImage 
+                src={p.image || '/vite.svg'} 
+                alt={p.name} 
+                className="aspect-video w-full object-cover rounded-md bg-[#161f38]" 
+              />
+              <div className="flex items-center justify-between">
+                <span className="text-sm opacity-80 truncate flex-1 mr-2">{p.name}</span>
+                <span className="text-sm font-semibold text-green-400">{formatPrice ? formatPrice(p.price) : `${p.price} ₽`}</span>
+              </div>
+              {p.source === 'steam_market' && (
+                <div className="text-[11px] opacity-60 bg-blue-500/20 px-2 py-1 rounded text-center">Steam Market</div>
+              )}
+              <div className="text-xs opacity-70 text-center">{p.type}</div>
+            </NavLink>
+          ))}
+        </div>
+
+        {/* Fallback Grid for Mobile */}
+        <div className="md:hidden mt-4">
+          <div className="text-sm opacity-70 mb-2">Или просмотр в сетке:</div>
+          <div className="grid grid-cols-2 gap-3">
+            {filtered.slice(0, 6).map(p => (
+              <NavLink key={`grid-${p.id}`} to={`/product/${p.id}`} className="rounded-lg border border-white/10 bg-[#0D1A2F] hover:border-blue-400/50 p-2 flex flex-col gap-2">
+                <LazyImage 
+                  src={p.image || '/vite.svg'} 
+                  alt={p.name} 
+                  className="aspect-video w-full object-cover rounded-md bg-[#161f38]" 
+                />
+                <div className="flex items-center justify-between">
+                  <span className="text-xs opacity-80 truncate">{p.name}</span>
+                  <span className="text-xs font-semibold">{formatPrice ? formatPrice(p.price) : `${p.price} ₽`}</span>
+                </div>
+              </NavLink>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function SkinsCategory() {
+  const { type } = useParams()
+  const { t, formatPrice } = useLang()
+  const items = DATA.products.filter(p => p.category === 'skin' && p.type === type)
+  return (
+    <div className="space-y-4">
+      <h1 className="text-2xl font-bold">{t('skins.title') || 'Скины'}: {type}</h1>
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+        {items.map(p => (
+          <NavLink key={p.id} to={`/product/${p.id}`} className="rounded-xl border border-white/10 bg-[#0D1A2F] hover:border-blue-400/50 p-2 flex flex-col gap-2">
+            <LazyImage 
+            src={p.image || '/vite.svg'} 
+            alt={p.name} 
+            className="aspect-video w-full object-cover rounded-md bg-[#161f38]" 
+          />
+            <div className="flex items-center justify-between">
+              <span className="text-sm opacity-80">{p.name}</span>
+              <span className="text-sm font-semibold">{formatPrice ? formatPrice(p.price) : `${p.price} ₽`}</span>
+            </div>
+          </NavLink>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function Cart() {
+  const { items, totalPrice, removeItem, updateQty, clear } = useCart()
+  const { formatPrice } = useLang()
+  const totalText = "\u0418\u0442\u043E\u0433\u043E: " + formatPrice(totalPrice)
+
+  if (items.length === 0) {
+    return (
+      <section className="space-y-6">
+        <h2 className="text-2xl font-bold">Корзина пуста</h2>
+        <div className="text-white/60">Добавьте товары из каталога, чтобы оформить заказ.</div>
+      </section>
+    )
+  }
+
+  return (
+    <section className="space-y-6">
+      <h2 className="text-2xl font-bold">Корзина</h2>
+      <div className="space-y-4">
+        {items.map(item => (
+          <div key={item.id} className="flex items-center gap-4 p-4 rounded-lg border border-white/10 bg-[#0D1A2F]">
+            <LazyImage 
+            src={item.image} 
+            alt={item.name} 
+            className="w-16 h-16 rounded bg-[#161f38] object-cover" 
+          />
+            <div className="flex-1">
+              <div className="font-semibold">{item.name}</div>
+              <div className="text-white/60 text-sm">{formatPrice(item.price)} &times; {item.qty}</div>
+            </div>
+            <div className="flex items-center gap-2">
+              <button onClick={() => updateQty(item.id, item.qty - 1)} className="px-2 py-1 rounded bg-[#161f38] hover:bg-[#7e2aa8]">-</button>
+              <span className="px-3 py-1 rounded bg-[#161f38] border border-white/10">{item.qty}</span>
+              <button onClick={() => updateQty(item.id, item.qty + 1)} className="px-2 py-1 rounded bg-[#161f38] hover:bg-[#7e2aa8]">+</button>
+              <button onClick={() => removeItem(item.id)} className="px-3 py-2 rounded bg-[#161f38] hover:bg-[#7e2aa8]">Удалить</button>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="flex items-center justify-between p-4 rounded-lg border border-white/10 bg-[#0D1A2F]">
+        <span className="text-lg font-semibold">Итого: {formatPrice(totalPrice)}</span>
+        <div className="flex items-center gap-3">
+          <button onClick={clear} className="px-3 py-2 rounded bg-[#161f38] hover:bg-[#7e2aa8]">Очистить</button>
+          <NavLink to="/checkout" className="px-3 py-2 rounded bg-[#7e2aa8] hover:bg-[#8e3bc5] text-white">Оформить</NavLink>
+        </div>
+      </div>
+
+    </section>
+  )
+}
+
+// Компонент блога
+function Blog() {
+  const [posts, setPosts] = React.useState([
+    {
+      id: 1,
+      title: "Новые игры в нашем каталоге",
+      content: "Мы добавили множество новых игр в наш каталог. Теперь вы можете найти последние релизы и популярные инди-игры.",
+      date: "2024-01-15",
+      author: "Администратор"
+    },
+    {
+      id: 2,
+      title: "Обновление системы скинов",
+      content: "Система скинов была обновлена. Теперь доступны новые редкие скины для популярных игр.",
+      date: "2024-01-10",
+      author: "Администратор"
+    },
+    {
+      id: 3,
+      title: "Зимняя распродажа",
+      content: "Стартовала зимняя распродажа! Скидки до 70% на популярные игры и скины.",
+      date: "2024-01-05",
+      author: "Администратор"
+    }
+  ])
+  
+  const [newPost, setNewPost] = React.useState({ title: '', content: '' })
+  const [showForm, setShowForm] = React.useState(false)
+  const isAdmin = localStorage.getItem('role') === 'admin'
+  
+  const addPost = () => {
+    if (!newPost.title.trim() || !newPost.content.trim()) return
+    
+    const post = {
+      id: Date.now(),
+      title: newPost.title,
+      content: newPost.content,
+      date: new Date().toISOString().split('T')[0],
+      author: localStorage.getItem('profile-name') || 'Администратор'
+    }
+    
+    setPosts(prev => [post, ...prev])
+    setNewPost({ title: '', content: '' })
+    setShowForm(false)
+  }
+  
+  return (
+    <section className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h2 className="text-2xl font-bold">Блог</h2>
+        {isAdmin && (
+          <button 
+            onClick={() => setShowForm(!showForm)}
+            className="px-4 py-2 rounded bg-[#7e2aa8] hover:bg-[#8e3bc5]"
+          >
+            {showForm ? 'Отменить' : 'Добавить пост'}
+          </button>
+        )}
+      </div>
+      
+      {showForm && isAdmin && (
+        <div className="p-4 rounded-lg border border-white/10 bg-[#0D1A2F] space-y-4">
+          <h3 className="text-lg font-semibold">Новый пост</h3>
+          <input
+            type="text"
+            placeholder="Заголовок поста"
+            value={newPost.title}
+            onChange={(e) => setNewPost(prev => ({ ...prev, title: e.target.value }))}
+            className="w-full px-3 py-2 rounded bg-[#161f38] border border-white/10"
+          />
+          <textarea
+            placeholder="Содержание поста"
+            value={newPost.content}
+            onChange={(e) => setNewPost(prev => ({ ...prev, content: e.target.value }))}
+            rows={4}
+            className="w-full px-3 py-2 rounded bg-[#161f38] border border-white/10"
+          />
+          <div className="flex gap-2">
+            <button 
+              onClick={addPost}
+              className="px-4 py-2 rounded bg-[#7e2aa8] hover:bg-[#8e3bc5]"
+            >
+              Опубликовать
+            </button>
+            <button 
+              onClick={() => setShowForm(false)}
+              className="px-4 py-2 rounded bg-[#161f38] hover:bg-[#2a3f5f]"
+            >
+              Отменить
+            </button>
+          </div>
+        </div>
+      )}
+      
+      <div className="space-y-4">
+        {posts.map(post => (
+          <article key={post.id} className="p-4 rounded-lg border border-white/10 bg-[#0D1A2F]">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-xl font-semibold">{post.title}</h3>
+              <div className="text-sm text-white/60">
+                {post.date} • {post.author}
+              </div>
+            </div>
+            <p className="text-white/80 leading-relaxed">{post.content}</p>
+          </article>
+        ))}
+      </div>
+    </section>
+  )
+}
+
+// Компонент торговли скинами
+function SkinTrading() {
+  const [userSkins, setUserSkins] = React.useState([])
+  const [sellingSkins, setSellingSkins] = React.useState([
+    {
+      id: 1,
+      name: "AK-47 | Redline",
+      game: "CS:GO",
+      rarity: "Classified",
+      condition: "Field-Tested",
+      price: 45.99,
+      seller: "ProGamer123",
+      image: "/images/skins/ak47-redline.jpg",
+      sellDate: "2024-01-15"
+    },
+    {
+      id: 2,
+      name: "AWP | Dragon Lore",
+      game: "CS:GO", 
+      rarity: "Covert",
+      condition: "Factory New",
+      price: 2499.99,
+      seller: "SkinCollector",
+      image: "/images/skins/awp-dragonlore.jpg",
+      sellDate: "2024-01-14"
+    },
+    {
+      id: 3,
+      name: "Karambit | Fade",
+      game: "CS:GO",
+      rarity: "★ Covert",
+      condition: "Minimal Wear",
+      price: 899.99,
+      seller: "KnifeExpert",
+      image: "/images/skins/karambit-fade.jpg",
+      sellDate: "2024-01-13"
+    }
+  ])
+  
+  const [newSkin, setNewSkin] = React.useState({
+    name: '',
+    game: 'CS:GO',
+    rarity: 'Consumer Grade',
+    condition: 'Factory New',
+    price: '',
+    image: ''
+  })
+  
+  const [showSellForm, setShowSellForm] = React.useState(false)
+  const [activeTab, setActiveTab] = React.useState('marketplace')
+  const isAuthorized = localStorage.getItem('profile-auth') === 'true'
+  const userName = localStorage.getItem('profile-name') || 'Пользователь'
+  
+  const rarityColors = {
+    'Consumer Grade': '#B0C3D9',
+    'Industrial Grade': '#5E98D9', 
+    'Mil-Spec': '#4B69FF',
+    'Restricted': '#8847FF',
+    'Classified': '#D32CE6',
+    'Covert': '#EB4B4B',
+    '★ Covert': '#FFD700'
+  }
+  
+  const sellSkin = () => {
+    if (!newSkin.name.trim() || !newSkin.price) return
+    
+    const skin = {
+      id: Date.now(),
+      ...newSkin,
+      price: parseFloat(newSkin.price),
+      seller: userName,
+      sellDate: new Date().toISOString().split('T')[0]
+    }
+    
+    setSellingSkins(prev => [skin, ...prev])
+    setNewSkin({
+      name: '',
+      game: 'CS:GO',
+      rarity: 'Consumer Grade',
+      condition: 'Factory New',
+      price: '',
+      image: ''
+    })
+    setShowSellForm(false)
+  }
+  
+  const buySkin = (skinId) => {
+    const skin = sellingSkins.find(s => s.id === skinId)
+    if (skin) {
+      // Добавляем скин в инвентарь пользователя
+      setUserSkins(prev => [...prev, { ...skin, purchaseDate: new Date().toISOString().split('T')[0] }])
+      // Удаляем скин с торговой площадки
+      setSellingSkins(prev => prev.filter(s => s.id !== skinId))
+      alert(`Вы успешно купили ${skin.name} за $${skin.price}!`)
+    }
+  }
+  
+  return (
+    <section className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h2 className="text-2xl font-bold">Торговля скинами</h2>
+        <div className="flex gap-2">
+          <button 
+            onClick={() => setActiveTab('marketplace')}
+            className={`px-4 py-2 rounded ${activeTab === 'marketplace' ? 'bg-[#7e2aa8]' : 'bg-[#161f38] hover:bg-[#2a3f5f]'}`}
+          >
+            Торговая площадка
+          </button>
+          <button 
+            onClick={() => setActiveTab('inventory')}
+            className={`px-4 py-2 rounded ${activeTab === 'inventory' ? 'bg-[#7e2aa8]' : 'bg-[#161f38] hover:bg-[#2a3f5f]'}`}
+          >
+            Мой инвентарь
+          </button>
+        </div>
+      </div>
+      
+      {!isAuthorized && (
+        <div className="p-4 rounded-lg border border-yellow-500/20 bg-yellow-500/10">
+          <p className="text-yellow-400">Для торговли скинами необходимо войти в систему.</p>
+        </div>
+      )}
+      
+      {activeTab === 'marketplace' && (
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h3 className="text-xl font-semibold">Скины на продажу</h3>
+            {isAuthorized && (
+              <button 
+                onClick={() => setShowSellForm(!showSellForm)}
+                className="px-4 py-2 rounded bg-green-600 hover:bg-green-700"
+              >
+                {showSellForm ? 'Отменить' : 'Продать скин'}
+              </button>
+            )}
+          </div>
+          
+          {showSellForm && isAuthorized && (
+            <div className="p-4 rounded-lg border border-white/10 bg-[#0D1A2F] space-y-4">
+              <h4 className="text-lg font-semibold">Выставить скин на продажу</h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <input
+                  type="text"
+                  placeholder="Название скина"
+                  value={newSkin.name}
+                  onChange={(e) => setNewSkin(prev => ({ ...prev, name: e.target.value }))}
+                  className="px-3 py-2 rounded bg-[#161f38] border border-white/10"
+                />
+                <select
+                  value={newSkin.game}
+                  onChange={(e) => setNewSkin(prev => ({ ...prev, game: e.target.value }))}
+                  className="px-3 py-2 rounded bg-[#161f38] border border-white/10"
+                >
+                  <option value="CS:GO">CS:GO</option>
+                  <option value="Dota 2">Dota 2</option>
+                  <option value="Rust">Rust</option>
+                  <option value="TF2">Team Fortress 2</option>
+                </select>
+                <select
+                  value={newSkin.rarity}
+                  onChange={(e) => setNewSkin(prev => ({ ...prev, rarity: e.target.value }))}
+                  className="px-3 py-2 rounded bg-[#161f38] border border-white/10"
+                >
+                  <option value="Consumer Grade">Consumer Grade</option>
+                  <option value="Industrial Grade">Industrial Grade</option>
+                  <option value="Mil-Spec">Mil-Spec</option>
+                  <option value="Restricted">Restricted</option>
+                  <option value="Classified">Classified</option>
+                  <option value="Covert">Covert</option>
+                  <option value="★ Covert">★ Covert</option>
+                </select>
+                <select
+                  value={newSkin.condition}
+                  onChange={(e) => setNewSkin(prev => ({ ...prev, condition: e.target.value }))}
+                  className="px-3 py-2 rounded bg-[#161f38] border border-white/10"
+                >
+                  <option value="Factory New">Factory New</option>
+                  <option value="Minimal Wear">Minimal Wear</option>
+                  <option value="Field-Tested">Field-Tested</option>
+                  <option value="Well-Worn">Well-Worn</option>
+                  <option value="Battle-Scarred">Battle-Scarred</option>
+                </select>
+                <input
+                  type="number"
+                  step="0.01"
+                  placeholder="Цена ($)"
+                  value={newSkin.price}
+                  onChange={(e) => setNewSkin(prev => ({ ...prev, price: e.target.value }))}
+                  className="px-3 py-2 rounded bg-[#161f38] border border-white/10"
+                />
+                <input
+                  type="url"
+                  placeholder="Ссылка на изображение"
+                  value={newSkin.image}
+                  onChange={(e) => setNewSkin(prev => ({ ...prev, image: e.target.value }))}
+                  className="px-3 py-2 rounded bg-[#161f38] border border-white/10"
+                />
+              </div>
+              <div className="flex gap-2">
+                <button 
+                  onClick={sellSkin}
+                  className="px-4 py-2 rounded bg-green-600 hover:bg-green-700"
+                >
+                  Выставить на продажу
+                </button>
+                <button 
+                  onClick={() => setShowSellForm(false)}
+                  className="px-4 py-2 rounded bg-[#161f38] hover:bg-[#2a3f5f]"
+                >
+                  Отменить
+                </button>
+              </div>
+            </div>
+          )}
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {sellingSkins.map(skin => (
+              <div key={skin.id} className="p-4 rounded-lg border border-white/10 bg-[#0D1A2F] space-y-3">
+                <div className="aspect-video bg-[#161f38] rounded-lg flex items-center justify-center">
+                  {skin.image ? (
+                    <LazyImage src={skin.image} alt={skin.name} className="w-full h-full object-cover rounded-lg" />
+                  ) : (
+                    <div className="text-white/50">Нет изображения</div>
+                  )}
+                </div>
+                <div>
+                  <h4 className="font-semibold">{skin.name}</h4>
+                  <div className="text-sm text-white/70 space-y-1">
+                    <div>Игра: {skin.game}</div>
+                    <div>Состояние: {skin.condition}</div>
+                    <div style={{ color: rarityColors[skin.rarity] }}>
+                      Редкость: {skin.rarity}
+                    </div>
+                    <div>Продавец: {skin.seller}</div>
+                  </div>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-xl font-bold text-green-400">${skin.price}</span>
+                  {isAuthorized && skin.seller !== userName && (
+                    <button 
+                      onClick={() => buySkin(skin.id)}
+                      className="px-3 py-1 rounded bg-[#7e2aa8] hover:bg-[#8e3bc5] text-sm"
+                    >
+                      Купить
+                    </button>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+      
+      {activeTab === 'inventory' && (
+        <div className="space-y-4">
+          <h3 className="text-xl font-semibold">Мой инвентарь</h3>
+          {!isAuthorized ? (
+            <p className="text-white/70">Войдите в систему, чтобы увидеть свой инвентарь.</p>
+          ) : userSkins.length === 0 ? (
+            <p className="text-white/70">Ваш инвентарь пуст. Купите скины на торговой площадке!</p>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {userSkins.map(skin => (
+                <div key={`${skin.id}-${skin.purchaseDate}`} className="p-4 rounded-lg border border-white/10 bg-[#0D1A2F] space-y-3">
+                  <div className="aspect-video bg-[#161f38] rounded-lg flex items-center justify-center">
+                    {skin.image ? (
+                      <LazyImage src={skin.image} alt={skin.name} className="w-full h-full object-cover rounded-lg" />
+                    ) : (
+                      <div className="text-white/50">Нет изображения</div>
+                    )}
+                  </div>
+                  <div>
+                    <h4 className="font-semibold">{skin.name}</h4>
+                    <div className="text-sm text-white/70 space-y-1">
+                      <div>Игра: {skin.game}</div>
+                      <div>Состояние: {skin.condition}</div>
+                      <div style={{ color: rarityColors[skin.rarity] }}>
+                        Редкость: {skin.rarity}
+                      </div>
+                      <div>Куплен: {skin.purchaseDate}</div>
+                    </div>
+                  </div>
+                  <div className="text-lg font-bold text-blue-400">
+                    Куплен за: ${skin.price}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+    </section>
+  )
+}
+
+// Компоненты для страниц из футера
+function TermsOfService() {
+  return (
+    <section className="space-y-6">
+      <h2 className="text-2xl font-bold">Условия использования</h2>
+      <div className="prose prose-invert max-w-none">
+        <p>Настоящие Условия использования регулируют использование сайта AI Game Store.</p>
+        <h3 className="text-lg font-semibold mt-6 mb-3">1. Общие положения</h3>
+        <p>Используя наш сайт, вы соглашаетесь с данными условиями использования.</p>
+        <h3 className="text-lg font-semibold mt-6 mb-3">2. Права и обязанности пользователей</h3>
+        <p>Пользователи обязуются использовать сайт в соответствии с законодательством.</p>
+      </div>
+    </section>
+  )
+}
+
+function OfferAgreement() {
+  return (
+    <section className="space-y-6">
+      <h2 className="text-2xl font-bold">Договор оферты</h2>
+      <div className="prose prose-invert max-w-none">
+        <p>Настоящий договор является публичной офертой в соответствии со статьей 437 ГК РФ.</p>
+        <h3 className="text-lg font-semibold mt-6 mb-3">1. Предмет договора</h3>
+        <p>Продавец обязуется передать товар, а покупатель принять и оплатить его.</p>
+        <h3 className="text-lg font-semibold mt-6 mb-3">2. Порядок оплаты</h3>
+        <p>Оплата производится через доступные на сайте способы оплаты.</p>
+      </div>
+    </section>
+  )
+}
+
+function App() {
+  return (
+    <LangProvider>
+      <CMSProvider>
+        <CartProvider>
+          <BrowserRouter>
+            <Routes>
+              <Route path="/" element={<Layout><Home/></Layout>} />
+              <Route path="/store" element={<Layout><Store/></Layout>} />
+              <Route path="/games" element={<Layout><Games/></Layout>} />
+              <Route path="/games/:type" element={<Layout><GameCategory/></Layout>} />
+              <Route path="/skins" element={<Layout><Skins/></Layout>} />
+              <Route path="/skins/:type" element={<Layout><SkinsCategory/></Layout>} />
+              <Route path="/product/:id" element={<Layout><Product/></Layout>} />
+              <Route path="/cart" element={<Layout><Cart/></Layout>} />
+              <Route path="/profile" element={<Layout><Profile/></Layout>} />
+              <Route path="/checkout" element={<Layout><Checkout/></Layout>} />
+              <Route path="/privacy" element={<Layout><PrivacyPolicy/></Layout>} />
+              <Route path="/terms" element={<Layout><TermsOfService/></Layout>} />
+              <Route path="/offer" element={<Layout><OfferAgreement/></Layout>} />
+              <Route path="/blog" element={<Layout><Blog/></Layout>} />
+              <Route path="/skin-trading" element={<Layout><SkinTrading/></Layout>} />
+            </Routes>
+          </BrowserRouter>
+        </CartProvider>
+      </CMSProvider>
+    </LangProvider>
+  )
+}
+
+createRoot(document.getElementById('app')).render(<App />)
+
+function getPreviewImages(product) {
+  const images = []
+  // если есть массив изображений у товара — используем его
+  if (Array.isArray(product.images) && product.images.length > 0) {
+    images.push(...product.images)
+  }
+  // основное изображение товара
+  if (product.image) images.push(product.image)
+  // безопасные локальные фоллбеки
+  const fallback = '/images/logo/logo.png'
+  while (images.length < 5) {
+    images.push(fallback)
+  }
+  return images.slice(0, 5)
+}

@@ -1,0 +1,2903 @@
+import React from 'react'
+import { createRoot } from 'react-dom/client'
+import { BrowserRouter, Routes, Route, Link, NavLink, useNavigate, useParams } from 'react-router-dom'
+import './style.css'
+
+// Р В�Р С�Р С—Р С•РЎР‚РЎвЂљ РЎРѓРЎвЂљРЎР‚Р В°Р Р…Р С‘РЎвЂ 
+import FAQ from './pages/FAQ.jsx'
+import Support from './pages/Support.jsx'
+import Privacy from './pages/Privacy.jsx'
+import Terms from './pages/Terms.jsx'
+import About from './pages/About.jsx'
+import BlogPage from './pages/Blog.jsx'
+import Contacts from './pages/Contacts.jsx'
+import SellSkins from './pages/SellSkins.jsx'
+
+// Р В�Р С�Р С—Р С•РЎР‚РЎвЂљ РЎРѓР ВµРЎР‚Р Р†Р С‘РЎРѓР С•Р Р†
+import { sendPurchaseEmail } from './services/emailService.js'
+
+// Р СџРЎР‚Р С•РЎвЂћР С‘Р В»РЎРЉ Р С—Р С•Р В»РЎРЉР В·Р С•Р Р†Р В°РЎвЂљР ВµР В»РЎРЏ
+function Profile() {
+  const [name, setName] = React.useState(() => localStorage.getItem('profile-name') || '')
+  const [avatar, setAvatar] = React.useState(() => localStorage.getItem('profile-avatar') || 'СЂСџвЂ�С•')
+  const [authorized, setAuthorized] = React.useState(() => localStorage.getItem('profile-auth') === '1')
+  const avatars = ['СЂСџвЂ�С•','СЂСџВ¦С•','СЂСџР‹В®','СЂСџС™Р‚','СЂСџВ§В ','СЂСџС’вЂ°']
+  const startSteamLogin = () => { window.location.href = '/auth/steam' }
+  const navigate = useNavigate()
+  const [photo, setPhoto] = React.useState(() => localStorage.getItem('profile-photo') || '')
+  const [steamidState, setSteamidState] = React.useState(() => localStorage.getItem('steamid') || '')
+  const [authMethod, setAuthMethod] = React.useState(() => localStorage.getItem('auth-method') || '')
+
+  React.useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const login = params.get('login')
+    if (login === 'steam') {
+      const steamid = params.get('steamid')
+      const nm = params.get('name')
+      const photo = params.get('photo')
+      if (nm) setName(nm)
+      if (photo) { localStorage.setItem('profile-photo', photo); setPhoto(photo) }
+      if (steamid) { localStorage.setItem('steamid', steamid); setSteamidState(steamid) }
+      localStorage.setItem('auth-method', 'steam'); setAuthMethod('steam')
+      localStorage.setItem('role', 'user')
+      
+      const d = new Date()
+      d.setTime(d.getTime() + (7 * 24 * 60 * 60 * 1000))
+      const expires = `expires=${d.toUTCString()}`
+      document.cookie = `profile_auth=1; ${expires}; path=/`
+      document.cookie = `profile_name=${encodeURIComponent(nm || '')}; ${expires}; path=/`
+      document.cookie = `auth_method=steam; ${expires}; path=/`
+      document.cookie = `role=user; ${expires}; path=/`
+      
+      setAuthorized(true)
+      window.dispatchEvent(new Event('storage'))
+      navigate('/profile', { replace: true })
+    }
+  }, [])
+
+  React.useEffect(() => { localStorage.setItem('profile-name', name) }, [name])
+  React.useEffect(() => { localStorage.setItem('profile-avatar', avatar) }, [avatar])
+  React.useEffect(() => { localStorage.setItem('profile-auth', authorized ? '1' : '0') }, [authorized])
+
+  return (
+    <section className="space-y-6">
+      <h2 className="text-2xl font-bold">Р СџРЎР‚Р С•РЎвЂћР С‘Р В»РЎРЉ</h2>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+        <div className="p-4 rounded-lg border border-white/10 bg-[#0D1A2F]">
+          <div className="text-sm text-white/70">Р С’Р Р†Р В°РЎвЂљР В°РЎР‚</div>
+          <div className="mt-3 grid grid-cols-6 gap-2">
+            {avatars.map(a => (
+              <button key={a} onClick={() => setAvatar(a)} className={`h-12 rounded border ${avatar===a ? 'border-blue-400 bg-blue-400/10' : 'border-white/10 bg-[#161f38]'}`}>
+                <span className="text-xl">{a}</span>
+              </button>
+            ))}
+          </div>
+          <div className="mt-4 flex items-center gap-3">
+            <div className="w-14 h-14 rounded-full bg-[#161f38] flex items-center justify-center text-2xl border border-white/10">{avatar}</div>
+            <div className="text-white/60 text-sm">Р вЂ™РЎвЂ№Р В±РЎР‚Р В°Р Р…Р Р…РЎвЂ№Р в„– Р В°Р Р†Р В°РЎвЂљР В°РЎР‚</div>
+          </div>
+        </div>
+        <div className="p-4 rounded-lg border border-white/10 bg-[#0D1A2F]">
+          <div className="text-sm text-white/70">Р В�Р С�РЎРЏ</div>
+          <input value={name} onChange={e => setName(e.target.value)} placeholder="Р вЂ™Р Р†Р ВµР Т‘Р С‘РЎвЂљР Вµ Р С‘Р С�РЎРЏ" className="mt-2 w-full px-3 py-2 rounded bg-[#0D1A2F] border border-white/10" />
+          <div className="mt-2 text-xs text-white/60">Р СџР С•Р Т‘РЎРѓР С”Р В°Р В·Р С”Р В°: РЎРЊРЎвЂљР С• Р С‘Р С�РЎРЏ Р В±РЎС“Р Т‘Р ВµРЎвЂљ Р С—Р С•Р С”Р В°Р В·РЎвЂ№Р Р†Р В°РЎвЂљРЎРЉРЎРѓРЎРЏ РЎР‚РЎРЏР Т‘Р С•Р С� РЎРѓ Р В°Р Р†Р В°РЎвЂљР В°РЎР‚Р С•Р С�.</div>
+        </div>
+        <div className="p-4 rounded-lg border border-white/10 bg-[#0D1A2F]">
+          <div className="text-sm text-white/70">Р С’Р Р†РЎвЂљР С•РЎР‚Р С‘Р В·Р В°РЎвЂ Р С‘РЎРЏ</div>
+          {authorized ? (
+            <div className="space-y-3">
+              <div className="text-white/80">Р вЂ™РЎвЂ№ Р Р†Р С•РЎв‚¬Р В»Р С‘ Р С”Р В°Р С” <span className="font-semibold">{name || 'Р вЂњР С•РЎРѓРЎвЂљРЎРЉ'}</span></div>
+              {authMethod === 'steam' && (
+                <div className="flex items-center gap-3">
+                  {photo && (<img src={photo} alt="Steam avatar" className="w-10 h-10 rounded-full border border-white/10" />)}
+                  <div className="text-xs text-white/70">SteamID: {steamidState || 'РІР‚вЂќ'} РІР‚Сћ Р вЂ™РЎвЂ¦Р С•Р Т‘ РЎвЂЎР ВµРЎР‚Р ВµР В· Steam</div>
+                </div>
+              )}
+              <button onClick={() => { 
+                setAuthorized(false); 
+                localStorage.removeItem('auth-method'); 
+                localStorage.removeItem('steamid'); 
+                localStorage.removeItem('profile-photo'); 
+                localStorage.removeItem('profile-auth'); 
+                localStorage.removeItem('profile-name'); 
+                localStorage.removeItem('role'); 
+                setAuthMethod(''); 
+                setSteamidState(''); 
+                setPhoto(''); 
+                document.cookie = 'profile_auth=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/'; 
+                document.cookie = 'auth_method=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/'; 
+                document.cookie = 'role=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/'; 
+                document.cookie = 'profile_name=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/'; 
+              }} className="px-3 py-2 rounded bg-[#161f38] hover:bg-[#7e2aa8]">Р вЂ™РЎвЂ№Р в„–РЎвЂљР С‘</button>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              <div className="text-white/80">Р вЂ™РЎвЂ№ Р Р…Р Вµ Р В°Р Р†РЎвЂљР С•РЎР‚Р С‘Р В·Р С•Р Р†Р В°Р Р…РЎвЂ№</div>
+              <button onClick={startSteamLogin} className="px-3 py-2 rounded bg-[#1b2838] hover:bg-[#2a475e]">Р вЂ™Р С•Р в„–РЎвЂљР С‘ РЎвЂЎР ВµРЎР‚Р ВµР В· Steam</button>
+              <div className="text-xs text-white/60">Р вЂ™РЎвЂ№ Р В±РЎС“Р Т‘Р ВµРЎвЂљР Вµ Р С—Р ВµРЎР‚Р ВµР Р…Р В°Р С—РЎР‚Р В°Р Р†Р В»Р ВµР Р…РЎвЂ№ Р Р…Р В° РЎРѓРЎвЂљРЎР‚Р В°Р Р…Р С‘РЎвЂ РЎС“ Р Р†РЎвЂ¦Р С•Р Т‘Р В° Steam.</div>
+            </div>
+          )}
+        </div>
+       </div>
+
+       {/* Р В¤Р С•РЎР‚Р С�Р В° Р Т‘Р В»РЎРЏ Р С•РЎвЂљР В·РЎвЂ№Р Р†Р С•Р Р† */}
+       <div className="bg-gradient-to-br from-[#1a1a2e] via-[#16213e] to-[#0f172a] rounded-3xl p-8 border border-white/10">
+         <div className="text-center space-y-4 mb-8">
+           <h3 className="text-3xl font-bold bg-gradient-to-r from-white via-blue-200 to-purple-200 bg-clip-text text-transparent">
+             РІСљРЊРїС‘РЏ Р С›РЎРѓРЎвЂљР В°Р Р†РЎРЉРЎвЂљР Вµ РЎРѓР Р†Р С•Р в„– Р С•РЎвЂљР В·РЎвЂ№Р Р†
+           </h3>
+           <p className="text-white/70">
+             Р СџР С•Р Т‘Р ВµР В»Р С‘РЎвЂљР ВµРЎРѓРЎРЉ РЎРѓР Р†Р С•Р С‘Р С� Р С•Р С—РЎвЂ№РЎвЂљР С•Р С� Р С‘РЎРѓР С—Р С•Р В»РЎРЉР В·Р С•Р Р†Р В°Р Р…Р С‘РЎРЏ Р Р…Р В°РЎв‚¬Р ВµР С–Р С• РЎРѓР ВµРЎР‚Р Р†Р С‘РЎРѓР В°
+           </p>
+         </div>
+
+         <form className="max-w-2xl mx-auto space-y-6">
+           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+             {/* Р В�Р С�РЎРЏ Р С—Р С•Р В»РЎРЉР В·Р С•Р Р†Р В°РЎвЂљР ВµР В»РЎРЏ */}
+             <div className="space-y-2">
+               <label className="block text-sm font-medium text-white/80">
+                 Р вЂ™Р В°РЎв‚¬Р Вµ Р С‘Р С�РЎРЏ *
+               </label>
+               <input
+                 type="text"
+                 placeholder="Р вЂ™Р Р†Р ВµР Т‘Р С‘РЎвЂљР Вµ Р Р†Р В°РЎв‚¬Р Вµ Р С‘Р С�РЎРЏ"
+                 className="w-full px-4 py-3 bg-[#0f172a] border border-white/20 rounded-xl text-white placeholder-white/50 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
+                 required
+               />
+             </div>
+
+             {/* Р В Р ВµР в„–РЎвЂљР С‘Р Р…Р С– */}
+             <div className="space-y-2">
+               <label className="block text-sm font-medium text-white/80">
+                 Р С›РЎвЂ Р ВµР Р…Р С”Р В° *
+               </label>
+               <div className="flex gap-2">
+                 {[1, 2, 3, 4, 5].map((star) => (
+                   <button
+                     key={star}
+                     type="button"
+                     className="text-2xl text-white/30 hover:text-yellow-400 transition-colors focus:text-yellow-400"
+                     onClick={(e) => {
+                       const stars = e.target.parentElement.children
+                       for (let i = 0; i < stars.length; i++) {
+                         stars[i].classList.toggle('text-yellow-400', i < star)
+                         stars[i].classList.toggle('text-white/30', i >= star)
+                       }
+                     }}
+                   >
+                     РІВ­С’
+                   </button>
+                 ))}
+               </div>
+             </div>
+           </div>
+
+           {/* Р СћР ВµР С”РЎРѓРЎвЂљ Р С•РЎвЂљР В·РЎвЂ№Р Р†Р В° */}
+           <div className="space-y-2">
+             <label className="block text-sm font-medium text-white/80">
+               Р вЂ™Р В°РЎв‚¬ Р С•РЎвЂљР В·РЎвЂ№Р Р† *
+             </label>
+             <textarea
+               placeholder="Р В Р В°РЎРѓРЎРѓР С”Р В°Р В¶Р С‘РЎвЂљР Вµ Р С• РЎРѓР Р†Р С•Р ВµР С� Р С•Р С—РЎвЂ№РЎвЂљР Вµ Р С‘РЎРѓР С—Р С•Р В»РЎРЉР В·Р С•Р Р†Р В°Р Р…Р С‘РЎРЏ Р Р…Р В°РЎв‚¬Р ВµР С–Р С• РЎРѓР ВµРЎР‚Р Р†Р С‘РЎРѓР В°..."
+               rows="5"
+               className="w-full px-4 py-3 bg-[#0f172a] border border-white/20 rounded-xl text-white placeholder-white/50 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all resize-none"
+               required
+             ></textarea>
+           </div>
+
+           {/* Р вЂќР С•Р С—Р С•Р В»Р Р…Р С‘РЎвЂљР ВµР В»РЎРЉР Р…Р В°РЎРЏ Р С‘Р Р…РЎвЂћР С•РЎР‚Р С�Р В°РЎвЂ Р С‘РЎРЏ */}
+           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+             <div className="space-y-2">
+               <label className="block text-sm font-medium text-white/80">
+                 Р В�Р С–РЎР‚Р В° (Р Р…Р ВµР С•Р В±РЎРЏР В·Р В°РЎвЂљР ВµР В»РЎРЉР Р…Р С•)
+               </label>
+               <select className="w-full px-4 py-3 bg-[#0f172a] border border-white/20 rounded-xl text-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all">
+                 <option value="">Р вЂ™РЎвЂ№Р В±Р ВµРЎР‚Р С‘РЎвЂљР Вµ Р С‘Р С–РЎР‚РЎС“</option>
+                 <option value="cs2">Counter-Strike 2</option>
+                 <option value="dota2">Dota 2</option>
+                 <option value="rust">Rust</option>
+                 <option value="tf2">Team Fortress 2</option>
+               </select>
+             </div>
+
+             <div className="space-y-2">
+               <label className="block text-sm font-medium text-white/80">
+                 Р РЋРЎС“Р С�Р С�Р В° Р С—Р С•Р С”РЎС“Р С—Р С”Р С‘ (Р Р…Р ВµР С•Р В±РЎРЏР В·Р В°РЎвЂљР ВµР В»РЎРЉР Р…Р С•)
+               </label>
+               <input
+                 type="number"
+                 placeholder="0.00"
+                 min="0"
+                 step="0.01"
+                 className="w-full px-4 py-3 bg-[#0f172a] border border-white/20 rounded-xl text-white placeholder-white/50 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
+               />
+             </div>
+           </div>
+
+           {/* Р РЋР С•Р С–Р В»Р В°РЎРѓР С‘Р Вµ */}
+           <div className="flex items-start gap-3">
+             <input
+               type="checkbox"
+               id="review-consent"
+               className="mt-1 w-4 h-4 text-blue-600 bg-[#0f172a] border-white/20 rounded focus:ring-blue-500 focus:ring-2"
+               required
+             />
+             <label htmlFor="review-consent" className="text-sm text-white/70">
+               Р Р‡ РЎРѓР С•Р С–Р В»Р В°РЎРѓР ВµР Р… РЎРѓ{' '}
+               <a href="#" className="text-blue-400 hover:text-blue-300">
+                 Р С—РЎР‚Р В°Р Р†Р С‘Р В»Р В°Р С�Р С‘ Р С—РЎС“Р В±Р В»Р С‘Р С”Р В°РЎвЂ Р С‘Р С‘ Р С•РЎвЂљР В·РЎвЂ№Р Р†Р С•Р Р†
+               </a>{' '}
+               Р С‘ Р Т‘Р В°РЎР‹ РЎРѓР С•Р С–Р В»Р В°РЎРѓР С‘Р Вµ Р Р…Р В° Р С•Р В±РЎР‚Р В°Р В±Р С•РЎвЂљР С”РЎС“ Р С—Р ВµРЎР‚РЎРѓР С•Р Р…Р В°Р В»РЎРЉР Р…РЎвЂ№РЎвЂ¦ Р Т‘Р В°Р Р…Р Р…РЎвЂ№РЎвЂ¦
+             </label>
+           </div>
+
+           {/* Р С™Р Р…Р С•Р С—Р С”Р В° Р С•РЎвЂљР С—РЎР‚Р В°Р Р†Р С”Р С‘ */}
+           <div className="text-center">
+             <button
+               type="submit"
+               className="group relative px-8 py-4 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 hover:from-blue-500 hover:via-purple-500 hover:to-pink-500 rounded-xl font-bold text-white transition-all duration-300 transform hover:scale-105 hover:shadow-2xl hover:shadow-purple-500/25 min-w-[200px]"
+             >
+               <span className="relative z-10">СЂСџвЂњСњ Р С›РЎвЂљР С—РЎР‚Р В°Р Р†Р С‘РЎвЂљРЎРЉ Р С•РЎвЂљР В·РЎвЂ№Р Р†</span>
+               <div className="absolute inset-0 bg-gradient-to-r from-blue-400 to-pink-400 rounded-xl blur opacity-0 group-hover:opacity-30 transition-opacity duration-300"></div>
+             </button>
+           </div>
+         </form>
+       </div>
+     </section>
+   )
+}
+
+// Р С›Р С—Р В»Р В°РЎвЂљР В°
+function Checkout() {
+  const { items, totalPrice, clear } = useCart()
+  const { formatPrice, currency, toAmountInCurrency } = useLang()
+  const [acquirerConnected, setAcquirerConnected] = React.useState(() => localStorage.getItem('acquirer') === '1')
+  React.useEffect(() => { localStorage.setItem('acquirer', acquirerConnected ? '1' : '0') }, [acquirerConnected])
+  const [orderId] = React.useState(() => `ORD-${Date.now()}`)
+  const [status, setStatus] = React.useState('waiting')
+  const [email, setEmail] = React.useState('')
+  const [emailError, setEmailError] = React.useState('')
+  const amountInCurr = toAmountInCurrency(totalPrice)
+  const dataStr = `aigame://pay?order=${orderId}&amount=${amountInCurr.toFixed(2)}&currency=${currency}`
+  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(dataStr)}`
+
+  React.useEffect(() => {
+    const t = setTimeout(() => setStatus('paid'), 15000)
+    return () => clearTimeout(t)
+  }, [orderId])
+
+  const validateEmail = (email) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    return emailRegex.test(email)
+  }
+
+  const handleEmailChange = (e) => {
+    const value = e.target.value
+    setEmail(value)
+    if (value && !validateEmail(value)) {
+      setEmailError('Р вЂ™Р Р†Р ВµР Т‘Р С‘РЎвЂљР Вµ Р С”Р С•РЎР‚РЎР‚Р ВµР С”РЎвЂљР Р…РЎвЂ№Р в„– email Р В°Р Т‘РЎР‚Р ВµРЎРѓ')
+    } else {
+      setEmailError('')
+    }
+  }
+
+  const markPaid = async () => {
+    if (!email || !validateEmail(email)) {
+      setEmailError('Р вЂ™Р Р†Р ВµР Т‘Р С‘РЎвЂљР Вµ Р С”Р С•РЎР‚РЎР‚Р ВµР С”РЎвЂљР Р…РЎвЂ№Р в„– email Р Т‘Р В»РЎРЏ Р С—Р С•Р В»РЎС“РЎвЂЎР ВµР Р…Р С‘РЎРЏ РЎвЂЎР ВµР С”Р В°')
+      return
+    }
+    setStatus('paid')
+    const userName = localStorage.getItem('profile-name') || ''
+    const game = items && items.length > 0 ? (items[0].type || 'cs2') : 'cs2'
+    const orderData = {
+      userEmail: email,
+      userName,
+      items: (items || []).map(i => ({ name: i.name, price: i.price, quality: i.quality })),
+      totalAmount: totalPrice,
+      orderId,
+      game
+    }
+    try {
+      const res = await sendPurchaseEmail(orderData)
+      console.log('Р В Р ВµР В·РЎС“Р В»РЎРЉРЎвЂљР В°РЎвЂљ Р С•РЎвЂљР С—РЎР‚Р В°Р Р†Р С”Р С‘ email:', res)
+      // Р С›РЎвЂЎР С‘РЎвЂ°Р В°Р ВµР С� Р С”Р С•РЎР‚Р В·Р С‘Р Р…РЎС“ Р С—Р С•РЎРѓР В»Р Вµ РЎС“РЎРѓР С—Р ВµРЎв‚¬Р Р…Р С•Р в„– Р С•Р С—Р В»Р В°РЎвЂљРЎвЂ№
+      clear()
+    } catch (err) {
+      console.error('Р СњР Вµ РЎС“Р Т‘Р В°Р В»Р С•РЎРѓРЎРЉ Р С•РЎвЂљР С—РЎР‚Р В°Р Р†Р С‘РЎвЂљРЎРЉ email:', err)
+    }
+  }
+
+  return (
+    <section className="space-y-6">
+      <h2 className="text-2xl font-bold">Р С›Р С—Р В»Р В°РЎвЂљР В° Р С—Р С• QR</h2>
+      
+      <div className="p-4 rounded-lg border border-white/10 bg-[#0D1A2F]">
+        <label className="block text-sm font-medium text-white/80 mb-2">
+          Email Р Т‘Р В»РЎРЏ Р С—Р С•Р В»РЎС“РЎвЂЎР ВµР Р…Р С‘РЎРЏ РЎвЂЎР ВµР С”Р В° *
+        </label>
+        <input
+          type="email"
+          value={email}
+          onChange={handleEmailChange}
+          placeholder="example@email.com"
+          className="w-full px-3 py-2 rounded-md bg-[#161f38] border border-white/10 text-white placeholder-white/50 focus:border-blue-400 focus:outline-none"
+          required
+        />
+        {emailError && (
+          <p className="mt-1 text-sm text-red-400">{emailError}</p>
+        )}
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+        {acquirerConnected ? (
+          <div className="p-4 rounded-lg border border-white/10 bg-[#0D1A2F] flex flex-col items-center">
+            <img src={qrUrl} alt="QR Р Т‘Р В»РЎРЏ Р С•Р С—Р В»Р В°РЎвЂљРЎвЂ№" className="w-[220px] h-[220px] rounded bg-[#161f38]" />
+            <a href={qrUrl} download={`AI-Game-Store-${orderId}.png`} className="mt-3 px-3 py-2 rounded-md bg-[#161f38] hover:bg-[#7e2aa8]">Р РЋР С”Р В°РЎвЂЎР В°РЎвЂљРЎРЉ QR</a>
+          </div>
+        ) : (
+          <div className="p-4 rounded-lg border border-white/10 bg-[#0D1A2F]">
+            <div className="text-white/60">QR-Р С”Р С•Р Т‘ Р В±РЎС“Р Т‘Р ВµРЎвЂљ Р Т‘Р С•РЎРѓРЎвЂљРЎС“Р С—Р ВµР Р… Р С—Р С•РЎРѓР В»Р Вµ Р С—Р С•Р Т‘Р С”Р В»РЎР‹РЎвЂЎР ВµР Р…Р С‘РЎРЏ РЎРЊР С”Р Р†Р В°Р в„–РЎР‚Р С‘Р Р…Р С–Р В°.</div>
+            <button onClick={() => setAcquirerConnected(true)} className="mt-3 px-3 py-2 rounded-md bg-[#4A90E2] hover:bg-[#7e2aa8]">Р СџР С•Р Т‘Р С”Р В»РЎР‹РЎвЂЎР С‘РЎвЂљРЎРЉ РЎРЊР С”Р Р†Р В°Р в„–РЎР‚Р С‘Р Р…Р С–</button>
+          </div>
+        )}
+        <div className="p-4 rounded-lg border border-white/10 bg-[#0D1A2F]">
+          <div className="text-sm text-white/80">Р В�Р Р…РЎРѓРЎвЂљРЎР‚РЎС“Р С”РЎвЂ Р С‘РЎРЏ</div>
+          <ol className="mt-2 list-decimal list-inside space-y-1 text-white/70 text-sm">
+            <li>Р С›РЎвЂљР С”РЎР‚Р С•Р в„–РЎвЂљР Вµ Р В±Р В°Р Р…Р С”Р С•Р Р†РЎРѓР С”Р С•Р Вµ Р С—РЎР‚Р С‘Р В»Р С•Р В¶Р ВµР Р…Р С‘Р Вµ РЎРѓ Р С—Р С•Р Т‘Р Т‘Р ВµРЎР‚Р В¶Р С”Р С•Р в„– Р С•Р С—Р В»Р В°РЎвЂљРЎвЂ№ Р С—Р С• QR.</li>
+            <li>Р РЋР С”Р В°Р Р…Р С‘РЎР‚РЎС“Р в„–РЎвЂљР Вµ QR-Р С”Р С•Р Т‘ РЎРѓР В»Р ВµР Р†Р В°.</li>
+            <li>Р СџРЎР‚Р С•Р Р†Р ВµРЎР‚РЎРЉРЎвЂљР Вµ РЎРѓРЎС“Р С�Р С�РЎС“: {formatPrice(totalPrice)} Р С‘ Р С—Р С•Р Т‘РЎвЂљР Р†Р ВµРЎР‚Р Т‘Р С‘РЎвЂљР Вµ Р С•Р С—Р В»Р В°РЎвЂљРЎС“.</li>
+          </ol>
+          <button onClick={markPaid} className="mt-3 px-3 py-2 rounded-md bg-[#161f38] hover:bg-[#4A90E2]">Р Р‡ Р С•Р С—Р В»Р В°РЎвЂљР С‘Р В»</button>
+        </div>
+        <div className="p-4 rounded-lg border border-white/10 bg-[#0D1A2F]">
+          <div className="text-sm text-white/80">Р РЋРЎвЂљР В°РЎвЂљРЎС“РЎРѓ</div>
+          <div className="mt-2 text-white/70">{status === 'paid' ? 'Р С›Р С—Р В»Р В°РЎвЂЎР ВµР Р…Р С•' : 'Р С›Р В¶Р С‘Р Т‘Р В°Р Р…Р С‘Р Вµ Р С•Р С—Р В»Р В°РЎвЂљРЎвЂ№...'}</div>
+        </div>
+      </div>
+    </section>
+  )
+}
+
+// Р С™Р В°РЎР‚РЎвЂљР С•РЎвЂЎР С”Р В° Р С‘Р С–РЎР‚РЎвЂ№
+function GameCard({ product, addItem, fullSlider = false }) {
+  const { formatPrice } = useLang()
+  const previews = React.useMemo(() => getPreviewImages(product), [product])
+  const [idx, setIdx] = React.useState(0)
+  const prev = () => setIdx(i => (i - 1 + previews.length) % previews.length)
+  const next = () => setIdx(i => (i + 1) % previews.length)
+  const navigate = useNavigate()
+
+  return (
+    <div onClick={() => navigate(`/product/${product.id}`)} className="group relative flex flex-col p-4 rounded-lg border border-white/10 bg-[#0D1A2F] hover:border-blue-400/50 transition cursor-pointer">
+      <div className={`${fullSlider ? 'h-60 sm:h-64' : 'h-36'} rounded-lg bg-[#161f38] overflow-hidden relative`}>
+        {fullSlider ? (
+          <>
+            <LazyImage 
+              src={previews[idx]} 
+              alt={`${product.name}-preview-${idx+1}`} 
+              className="w-full h-full object-cover" 
+            />
+            <button onClick={(e) => { e.stopPropagation(); prev() }} className="absolute left-2 top-1/2 -translate-y-1/2 px-2 py-1 rounded bg-[#0D1A2F] border border-white/10">РІР‚в„–</button>
+            <button onClick={(e) => { e.stopPropagation(); next() }} className="absolute right-2 top-1/2 -translate-y-1/2 px-2 py-1 rounded bg-[#0D1A2F] border border-white/10">РІР‚С”</button>
+            <div className="absolute bottom-2 left-0 right-0 flex justify-center gap-2">
+              {previews.map((_, i) => (
+                <button key={i} onClick={(e) => { e.stopPropagation(); setIdx(i) }} aria-label={`go-${i}`} className={`h-2 w-2 rounded-full ${i===idx?'bg-[#4A90E2]':'bg-white/30'}`}></button>
+              ))}
+            </div>
+          </>
+        ) : (
+          <>
+            <LazyImage 
+              src={product.image || '/vite.svg'} 
+              alt={product.name} 
+              className="w-full h-full object-cover" 
+            />
+            <div className="absolute bottom-2 left-2 right-2">
+              <div className="flex items-center gap-2">
+                <button onClick={(e) => { e.stopPropagation(); prev() }} className="px-2 py-1 rounded bg-[#161f38] hover:bg-[#7e2aa8]">&lsaquo;</button>
+                <div className="flex-1 h-14 rounded border border-white/10 overflow-hidden bg-[#0D1A2F]">
+                  <img src={previews[idx]} alt={`${product.name}-preview`} className="w-full h-full object-cover" loading="lazy" decoding="async" />
+                </div>
+                <button onClick={(e) => { e.stopPropagation(); next() }} className="px-2 py-1 rounded bg-[#161f38] hover:bg-[#7e2aa8]">&rsaquo;</button>
+              </div>
+            </div>
+          </>
+        )}
+      </div>
+      <h3 className="mt-3 font-semibold">{product.name}</h3>
+      <p className="text-white/60 text-sm">{formatPrice(product.price)}</p>
+      <div className="mt-auto flex items-center gap-2">
+        <button onClick={(e) => { e.stopPropagation(); addItem(product, 1) }} className="px-3 py-2 rounded-md bg-[#161f38] hover:bg-[#7e2aa8]">Р вЂ™ Р С”Р С•РЎР‚Р В·Р С‘Р Р…РЎС“</button>
+      </div>
+    </div>
+  )
+}
+
+// Р С™Р В°РЎвЂљР ВµР С–Р С•РЎР‚Р С‘РЎРЏ Р С‘Р С–РЎР‚
+function GameCategory() {
+  const { type } = useParams()
+  const { addItem } = useCart()
+  const games = DATA.products.filter(p => p.category === 'game' && p.type === type)
+  return (
+    <section className="space-y-6">
+      <h2 className="text-2xl font-bold">Р В�Р С–РЎР‚РЎвЂ№ Р’В· {type?.toUpperCase()}</h2>
+      {games.length > 0 ? (
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          {games.map(p => (
+            <GameCard key={p.id} product={p} addItem={addItem} fullSlider />
+          ))}
+        </div>
+      ) : (
+        <div className="text-white/60">Р вЂ™ РЎРЊРЎвЂљР С•Р в„– Р С”Р В°РЎвЂљР ВµР С–Р С•РЎР‚Р С‘Р С‘ Р С—Р С•Р С”Р В° Р Р…Р ВµРЎвЂљ РЎвЂљР С•Р Р†Р В°РЎР‚Р С•Р Р†</div>
+      )}
+    </section>
+  )
+}
+
+// Р С™Р В°РЎвЂљР ВµР С–Р С•РЎР‚Р С‘РЎРЏ РЎРѓР С”Р С‘Р Р…Р С•Р Р†
+function SkinsCategory() {
+  const { type } = useParams()
+  const { addItem } = useCart()
+  const { formatPrice } = useLang()
+  const skins = DATA.products.filter(p => p.category === 'skin' && p.type === type)
+  const getRarityClasses = (rarity) => {
+    switch (String(rarity || '').toLowerCase()) {
+      case 'в�… covert':
+      case 'covert':
+        return 'bg-red-600 text-white'
+      case 'classified':
+        return 'bg-pink-600 text-white'
+      case 'restricted':
+        return 'bg-purple-600 text-white'
+      case 'mil-spec':
+        return 'bg-blue-600 text-white'
+      case 'consumer grade':
+        return 'bg-gray-600 text-white'
+      case 'rare':
+        return 'bg-green-600 text-white'
+      case 'unusual':
+        return 'bg-fuchsia-600 text-white'
+      case 'immortal':
+        return 'bg-amber-500 text-black'
+      case 'souvenir':
+        return 'bg-yellow-400 text-black'
+      default:
+        return 'bg-[#0D1A2F] text-white/70 border border-white/10'
+    }
+  }
+  
+  return (
+    <section className="space-y-6">
+      <h2 className="text-2xl font-bold">Р РЋР С”Р С‘Р Р…РЎвЂ№ Р’В· {type?.toUpperCase()}</h2>
+      {skins.length > 0 ? (
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+          {skins.map(product => (
+            <div key={product.id} className="bg-[#161f38] rounded-lg overflow-hidden border border-white/10 hover:border-blue-500/50 transition-colors">
+              <div className="relative aspect-square">
+                <LazyImage src={product.image} alt={product.name} className="absolute inset-0 w-full h-full object-cover" />
+                <div className="absolute top-2 right-2 bg-red-600 text-white text-xs px-2 py-1 rounded">
+                  -{Math.floor(Math.random() * 30 + 10)}%
+                </div>
+                {product.rarity && (
+                  <span className={`absolute top-2 left-2 px-2 py-1 rounded text-xs ${getRarityClasses(product.rarity)}`}>
+                    {product.rarity}
+                  </span>
+                )}
+              </div>
+              <div className="p-3">
+                <h3 className="text-sm font-medium text-white/90 truncate">{product.name}</h3>
+                {product.rarity && (
+                  <div className="mt-1">
+                    <span className={`inline-block px-2 py-0.5 rounded text-xs ${getRarityClasses(product.rarity)}`}>
+                      {product.rarity}
+                    </span>
+                  </div>
+                )}
+                <div className="flex items-center justify-between mt-2">
+                  <span className="text-blue-400 font-bold text-sm">{formatPrice(product.price)}</span>
+                  <button 
+                    onClick={() => addItem(product, 1)}
+                    className="px-2 py-1 bg-blue-600 hover:bg-blue-700 rounded text-xs transition-colors"
+                  >
+                    Р вЂ™ Р С”Р С•РЎР‚Р В·Р С‘Р Р…РЎС“
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="text-white/60">Р вЂ™ РЎРЊРЎвЂљР С•Р в„– Р С”Р В°РЎвЂљР ВµР С–Р С•РЎР‚Р С‘Р С‘ Р С—Р С•Р С”Р В° Р Р…Р ВµРЎвЂљ РЎвЂљР С•Р Р†Р В°РЎР‚Р С•Р Р†</div>
+      )}
+    </section>
+  )
+}
+
+// Р Р€РЎРѓР В»Р С•Р Р†Р С‘РЎРЏ Р С‘РЎРѓР С—Р С•Р В»РЎРЉР В·Р С•Р Р†Р В°Р Р…Р С‘РЎРЏ
+function TermsOfService() {
+  return (
+    <section className="space-y-6">
+      <h2 className="text-2xl font-bold">Р Р€РЎРѓР В»Р С•Р Р†Р С‘РЎРЏ Р С‘РЎРѓР С—Р С•Р В»РЎРЉР В·Р С•Р Р†Р В°Р Р…Р С‘РЎРЏ</h2>
+      <div className="prose prose-invert max-w-none">
+        <p>Р СњР В°РЎРѓРЎвЂљР С•РЎРЏРЎвЂ°Р С‘Р Вµ Р Р€РЎРѓР В»Р С•Р Р†Р С‘РЎРЏ Р С‘РЎРѓР С—Р С•Р В»РЎРЉР В·Р С•Р Р†Р В°Р Р…Р С‘РЎРЏ РЎР‚Р ВµР С–РЎС“Р В»Р С‘РЎР‚РЎС“РЎР‹РЎвЂљ Р С‘РЎРѓР С—Р С•Р В»РЎРЉР В·Р С•Р Р†Р В°Р Р…Р С‘Р Вµ РЎРѓР В°Р в„–РЎвЂљР В° AI Game Store.</p>
+        <h3 className="text-lg font-semibold mt-6 mb-3">1. Р С›Р В±РЎвЂ°Р С‘Р Вµ Р С—Р С•Р В»Р С•Р В¶Р ВµР Р…Р С‘РЎРЏ</h3>
+        <p>Р В�РЎРѓР С—Р С•Р В»РЎРЉР В·РЎС“РЎРЏ Р Р…Р В°РЎв‚¬ РЎРѓР В°Р в„–РЎвЂљ, Р Р†РЎвЂ№ РЎРѓР С•Р С–Р В»Р В°РЎв‚¬Р В°Р ВµРЎвЂљР ВµРЎРѓРЎРЉ РЎРѓ Р Т‘Р В°Р Р…Р Р…РЎвЂ№Р С�Р С‘ РЎС“РЎРѓР В»Р С•Р Р†Р С‘РЎРЏР С�Р С‘ Р С‘РЎРѓР С—Р С•Р В»РЎРЉР В·Р С•Р Р†Р В°Р Р…Р С‘РЎРЏ.</p>
+        <h3 className="text-lg font-semibold mt-6 mb-3">2. Р СџРЎР‚Р В°Р Р†Р В° Р С‘ Р С•Р В±РЎРЏР В·Р В°Р Р…Р Р…Р С•РЎРѓРЎвЂљР С‘ Р С—Р С•Р В»РЎРЉР В·Р С•Р Р†Р В°РЎвЂљР ВµР В»Р ВµР в„–</h3>
+        <p>Р СџР С•Р В»РЎРЉР В·Р С•Р Р†Р В°РЎвЂљР ВµР В»Р С‘ Р С•Р В±РЎРЏР В·РЎС“РЎР‹РЎвЂљРЎРѓРЎРЏ Р С‘РЎРѓР С—Р С•Р В»РЎРЉР В·Р С•Р Р†Р В°РЎвЂљРЎРЉ РЎРѓР В°Р в„–РЎвЂљ Р Р† РЎРѓР С•Р С•РЎвЂљР Р†Р ВµРЎвЂљРЎРѓРЎвЂљР Р†Р С‘Р С‘ РЎРѓ Р В·Р В°Р С”Р С•Р Р…Р С•Р Т‘Р В°РЎвЂљР ВµР В»РЎРЉРЎРѓРЎвЂљР Р†Р С•Р С�.</p>
+      </div>
+    </section>
+  )
+}
+
+// Р вЂќР С•Р С–Р С•Р Р†Р С•РЎР‚ Р С•РЎвЂћР ВµРЎР‚РЎвЂљРЎвЂ№
+function OfferAgreement() {
+  return (
+    <section className="space-y-6">
+      <h2 className="text-2xl font-bold">Р вЂќР С•Р С–Р С•Р Р†Р С•РЎР‚ Р С•РЎвЂћР ВµРЎР‚РЎвЂљРЎвЂ№</h2>
+      <div className="prose prose-invert max-w-none">
+        <p>Р СњР В°РЎРѓРЎвЂљР С•РЎРЏРЎвЂ°Р С‘Р в„– Р Т‘Р С•Р С–Р С•Р Р†Р С•РЎР‚ РЎРЏР Р†Р В»РЎРЏР ВµРЎвЂљРЎРѓРЎРЏ Р С—РЎС“Р В±Р В»Р С‘РЎвЂЎР Р…Р С•Р в„– Р С•РЎвЂћР ВµРЎР‚РЎвЂљР С•Р в„– Р Р† РЎРѓР С•Р С•РЎвЂљР Р†Р ВµРЎвЂљРЎРѓРЎвЂљР Р†Р С‘Р С‘ РЎРѓР С• РЎРѓРЎвЂљР В°РЎвЂљРЎРЉР ВµР в„– 437 Р вЂњР С™ Р В Р В¤.</p>
+        <h3 className="text-lg font-semibold mt-6 mb-3">1. Р СџРЎР‚Р ВµР Т‘Р С�Р ВµРЎвЂљ Р Т‘Р С•Р С–Р С•Р Р†Р С•РЎР‚Р В°</h3>
+        <p>Р СџРЎР‚Р С•Р Т‘Р В°Р Р†Р ВµРЎвЂ  Р С•Р В±РЎРЏР В·РЎС“Р ВµРЎвЂљРЎРѓРЎРЏ Р С—Р ВµРЎР‚Р ВµР Т‘Р В°РЎвЂљРЎРЉ РЎвЂљР С•Р Р†Р В°РЎР‚, Р В° Р С—Р С•Р С”РЎС“Р С—Р В°РЎвЂљР ВµР В»РЎРЉ Р С—РЎР‚Р С‘Р Р…РЎРЏРЎвЂљРЎРЉ Р С‘ Р С•Р С—Р В»Р В°РЎвЂљР С‘РЎвЂљРЎРЉ Р ВµР С–Р С•.</p>
+        <h3 className="text-lg font-semibold mt-6 mb-3">2. Р СџР С•РЎР‚РЎРЏР Т‘Р С•Р С” Р С•Р С—Р В»Р В°РЎвЂљРЎвЂ№</h3>
+        <p>Р С›Р С—Р В»Р В°РЎвЂљР В° Р С—РЎР‚Р С•Р С‘Р В·Р Р†Р С•Р Т‘Р С‘РЎвЂљРЎРѓРЎРЏ РЎвЂЎР ВµРЎР‚Р ВµР В· Р Т‘Р С•РЎРѓРЎвЂљРЎС“Р С—Р Р…РЎвЂ№Р Вµ Р Р…Р В° РЎРѓР В°Р в„–РЎвЂљР Вµ РЎРѓР С—Р С•РЎРѓР С•Р В±РЎвЂ№ Р С•Р С—Р В»Р В°РЎвЂљРЎвЂ№.</p>
+      </div>
+    </section>
+  )
+}
+
+// Р С›РЎРѓР Р…Р С•Р Р†Р Р…Р С•Р Вµ Р С—РЎР‚Р С‘Р В»Р С•Р В¶Р ВµР Р…Р С‘Р Вµ РЎРѓ Р С�Р В°РЎР‚РЎв‚¬РЎР‚РЎС“РЎвЂљР С‘Р В·Р В°РЎвЂ Р С‘Р ВµР в„–
+function App() {
+  return (
+    <LangProvider>
+      <CMSProvider>
+        <CartProvider>
+          <BrowserRouter>
+            <Routes>
+              <Route path="/" element={<Layout><Home/></Layout>} />
+              <Route path="/store" element={<Layout><Store/></Layout>} />
+              <Route path="/skins" element={<Layout><Skins/></Layout>} />
+              <Route path="/skins/:type" element={<Layout><SkinsCategory/></Layout>} />
+              <Route path="/product/:id" element={<Layout><Product/></Layout>} />
+              <Route path="/cart" element={<Layout><Cart/></Layout>} />
+              <Route path="/profile" element={<Layout><Profile/></Layout>} />
+              <Route path="/checkout" element={<Layout><Checkout/></Layout>} />
+              <Route path="/sell" element={<Layout><SellSkins/></Layout>} />
+              <Route path="/privacy" element={<Layout><Privacy/></Layout>} />
+              <Route path="/terms" element={<Layout><Terms/></Layout>} />
+              <Route path="/offer" element={<Layout><OfferAgreement/></Layout>} />
+              <Route path="/blog" element={<Layout><BlogPage/></Layout>} />
+              <Route path="/blog/:slug" element={<Layout><BlogPost/></Layout>} />
+              <Route path="/help" element={<Layout><Help/></Layout>} />
+              <Route path="/roulette" element={<Layout><SkinRoulette/></Layout>} />
+              <Route path="/faq" element={<Layout><FAQ/></Layout>} />
+              <Route path="/support" element={<Layout><Support/></Layout>} />
+              <Route path="/about" element={<Layout><About/></Layout>} />
+              <Route path="/contacts" element={<Layout><Contacts/></Layout>} />
+            </Routes>
+          </BrowserRouter>
+        </CartProvider>
+      </CMSProvider>
+    </LangProvider>
+  )
+}
+
+// Р В�Р Р…Р С‘РЎвЂ Р С‘Р В°Р В»Р С‘Р В·Р В°РЎвЂ Р С‘РЎРЏ Р С—РЎР‚Р С‘Р В»Р С•Р В¶Р ВµР Р…Р С‘РЎРЏ
+createRoot(document.getElementById('app')).render(<App />)
+
+// Р вЂ™РЎРѓР С—Р С•Р С�Р С•Р С–Р В°РЎвЂљР ВµР В»РЎРЉР Р…Р В°РЎРЏ РЎвЂћРЎС“Р Р…Р С”РЎвЂ Р С‘РЎРЏ Р Т‘Р В»РЎРЏ Р С—Р С•Р В»РЎС“РЎвЂЎР ВµР Р…Р С‘РЎРЏ Р С‘Р В·Р С•Р В±РЎР‚Р В°Р В¶Р ВµР Р…Р С‘Р в„–
+function getPreviewImages(product) {
+  const images = []
+  if (Array.isArray(product.images) && product.images.length > 0) {
+    images.push(...product.images)
+  }
+  if (product.image) images.push(product.image)
+  const fallback = '/vite.svg'
+  while (images.length < 5) {
+    images.push(fallback)
+  }
+  return images.slice(0, 5)
+}
+
+// Р С™Р В°РЎвЂљР В°Р В»Р С•Р С– РЎвЂљР С•Р Р†Р В°РЎР‚Р С•Р Р†
+function Store() {
+  const [query, setQuery] = React.useState('')
+  const [type, setType] = React.useState('')
+  const { addItem } = useCart()
+  const { formatPrice } = useLang()
+  const products = DATA.products
+  const filtered = products.filter(p => (p.name.toLowerCase().includes(query.toLowerCase())) && (!type || p.type === type))
+
+  return (
+    <section className="space-y-6">
+      <h2 className="text-2xl font-bold">Р С™Р В°РЎвЂљР В°Р В»Р С•Р С–</h2>
+      <div className="flex gap-3">
+        <input 
+          value={query} 
+          onChange={e => setQuery(e.target.value)} 
+          placeholder="Р СџР С•Р С‘РЎРѓР С”" 
+          className="px-3 py-2 rounded bg-[#0D1A2F] border border-white/10 w-64" 
+        />
+      </div>
+      {filtered.length > 0 ? (
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          {filtered.map(p => (
+            <NavLink to={`/product/${p.id}`} key={p.id} className="flex flex-col p-4 rounded-lg border border-white/10 bg-[#0D1A2F] hover:border-blue-400/50 transition">
+              <div className="h-36 rounded-lg bg-[#161f38] overflow-hidden">
+                <LazyImage 
+                  src={p.image || '/vite.svg'} 
+                  alt={p.name} 
+                  className="w-full h-full object-cover" 
+                />
+              </div>
+              <h3 className="mt-3 font-semibold">{p.name}</h3>
+              <p className="text-white/60 text-sm">Р В¦Р ВµР Р…Р В°: {formatPrice(p.price)}</p>
+              <button 
+                onClick={(e) => { e.preventDefault(); e.stopPropagation(); addItem(p, 1) }} 
+                className="mt-auto px-3 py-2 rounded-md bg-[#161f38] hover:bg-[#7e2aa8]"
+              >
+                Р вЂ™ Р С”Р С•РЎР‚Р В·Р С‘Р Р…РЎС“
+              </button>
+            </NavLink>
+          ))}
+        </div>
+      ) : (
+        <div className="text-white/60">Р СњР С‘РЎвЂЎР ВµР С–Р С• Р Р…Р Вµ Р Р…Р В°Р в„–Р Т‘Р ВµР Р…Р С•</div>
+      )}
+    </section>
+  )
+}
+
+// Р РЋРЎвЂљРЎР‚Р В°Р Р…Р С‘РЎвЂ Р В° Р С‘Р С–РЎР‚
+function Games() {
+  const { addItem } = useCart()
+  const { formatPrice } = useLang()
+  const games = DATA.products.filter(p => p.category === 'game')
+
+  return (
+    <section className="space-y-6">
+      <h2 className="text-2xl font-bold">Р В�Р С–РЎР‚РЎвЂ№</h2>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        {games.map(product => (
+          <NavLink key={product.id} to={`/product/${product.id}`} className="group">
+            <div className="bg-[#161f38] rounded-lg overflow-hidden border border-white/10 hover:border-blue-500/50 transition-colors">
+              <div className="relative h-40">
+                <LazyImage src={product.image} alt={product.name} className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                <div className="absolute bottom-2 left-2 right-2">
+                  <h3 className="text-white font-medium text-sm">{product.name}</h3>
+                  <div className="flex items-center justify-between mt-1">
+                    <span className="text-blue-400 font-bold text-sm">{formatPrice(product.price)}</span>
+                    <span className="text-xs text-white/70">{product.type}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </NavLink>
+        ))}
+      </div>
+    </section>
+  )
+}
+
+// Р РЋРЎвЂљРЎР‚Р В°Р Р…Р С‘РЎвЂ Р В° РЎРѓР С”Р С‘Р Р…Р С•Р Р†
+function Skins() {
+  const { addItem } = useCart()
+  const { formatPrice } = useLang()
+  const skins = DATA.products.filter(p => p.category === 'skin')
+
+  return (
+    <section className="space-y-6">
+      <h2 className="text-2xl font-bold">Р РЋР С”Р С‘Р Р…РЎвЂ№</h2>
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+        {skins.map(product => (
+          <div key={product.id} className="bg-[#161f38] rounded-lg overflow-hidden border border-white/10 hover:border-blue-500/50 transition-colors">
+            <div className="relative aspect-square">
+              <LazyImage src={product.image} alt={product.name} className="absolute inset-0 w-full h-full object-cover" />
+              <div className="absolute top-2 right-2 bg-red-600 text-white text-xs px-2 py-1 rounded">
+                -{Math.floor(Math.random() * 30 + 10)}%
+              </div>
+            </div>
+            <div className="p-3">
+              <h3 className="text-sm font-medium text-white/90 truncate">{product.name}</h3>
+              <div className="flex items-center justify-between mt-2">
+                <span className="text-blue-400 font-bold text-sm">{formatPrice(product.price)}</span>
+                <button 
+                  onClick={() => addItem(product, 1)}
+                  className="px-2 py-1 bg-blue-600 hover:bg-blue-700 rounded text-xs transition-colors"
+                >
+                  Р вЂ™ Р С”Р С•РЎР‚Р В·Р С‘Р Р…РЎС“
+                </button>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
+  )
+}
+
+// Р В РЎС“Р В»Р ВµРЎвЂљР С”Р В° РЎРѓР С”Р С‘Р Р…Р С•Р Р†
+function SkinRoulette() {
+  const [isSpinning, setIsSpinning] = React.useState(false)
+  const [result, setResult] = React.useState(null)
+  const { formatPrice } = useLang()
+  
+  const skins = DATA.products.filter(p => p.category === 'skin').slice(0, 10)
+  
+  const spin = () => {
+    if (isSpinning) return
+    
+    setIsSpinning(true)
+    setResult(null)
+    
+    setTimeout(() => {
+      const randomSkin = skins[Math.floor(Math.random() * skins.length)]
+      setResult(randomSkin)
+      setIsSpinning(false)
+    }, 3000)
+  }
+
+  return (
+    <div className="bg-gradient-to-br from-[#161f38] to-[#1f2a4a] rounded-lg p-6 border border-white/10">
+      <div className="text-center space-y-6">
+        <h2 className="text-2xl font-bold">СЂСџР‹В° Р В РЎС“Р В»Р ВµРЎвЂљР С”Р В° РЎРѓР С”Р С‘Р Р…Р С•Р Р†</h2>
+        
+        <div className="relative h-32 bg-[#0D1A2F] rounded-lg overflow-hidden border border-white/20">
+          <div className={`flex transition-transform duration-3000 ease-out ${isSpinning ? 'animate-spin-roulette' : ''}`}>
+            {[...skins, ...skins, ...skins].map((skin, i) => (
+              <div key={i} className="flex-shrink-0 w-24 h-32 p-2 border-r border-white/10">
+                <LazyImage src={skin.image} alt={skin.name} className="w-full h-20 object-cover rounded" />
+                <div className="text-xs mt-1 truncate">{skin.name}</div>
+              </div>
+            ))}
+          </div>
+          <div className="absolute top-0 left-1/2 transform -translate-x-1/2 w-1 h-full bg-red-500 z-10"></div>
+        </div>
+
+        {result && (
+          <div className="bg-[#0D1A2F] rounded-lg p-4 border border-green-500/50">
+            <h3 className="text-lg font-bold text-green-400">Р СџР С•Р В·Р Т‘РЎР‚Р В°Р Р†Р В»РЎРЏР ВµР С�!</h3>
+            <div className="flex items-center justify-center gap-4 mt-2">
+              <LazyImage src={result.image} alt={result.name} className="w-16 h-16 object-cover rounded" />
+              <div>
+                <div className="font-medium">{result.name}</div>
+                <div className="text-blue-400">{formatPrice(result.price)}</div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        <button 
+          onClick={spin}
+          disabled={isSpinning}
+          className={`px-8 py-3 rounded-lg font-medium transition-all transform hover:scale-105 ${
+            isSpinning 
+              ? 'bg-gray-600 cursor-not-allowed' 
+              : 'bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700'
+          }`}
+        >
+          {isSpinning ? 'Р С™РЎР‚РЎС“РЎвЂљР С‘РЎвЂљРЎРѓРЎРЏ...' : 'Р С™РЎР‚РЎС“РЎвЂљР С‘РЎвЂљРЎРЉ РЎР‚РЎС“Р В»Р ВµРЎвЂљР С”РЎС“ (100РІвЂљР…)'}
+        </button>
+      </div>
+    </div>
+  )
+}
+
+// Р С™Р С•РЎР‚Р В·Р С‘Р Р…Р В°
+function Cart() {
+  const { items, removeItem, updateQty, clear, totalPrice } = useCart()
+  const { formatPrice } = useLang()
+  const navigate = useNavigate()
+
+  if (items.length === 0) {
+    return (
+      <section className="space-y-6">
+        <h2 className="text-2xl font-bold">Р С™Р С•РЎР‚Р В·Р С‘Р Р…Р В°</h2>
+        <div className="text-center py-12">
+          <div className="text-6xl mb-4">СЂСџвЂєвЂ™</div>
+          <h3 className="text-xl font-medium mb-2">Р С™Р С•РЎР‚Р В·Р С‘Р Р…Р В° Р С—РЎС“РЎРѓРЎвЂљР В°</h3>
+          <p className="text-white/60 mb-6">Р вЂќР С•Р В±Р В°Р Р†РЎРЉРЎвЂљР Вµ РЎвЂљР С•Р Р†Р В°РЎР‚РЎвЂ№ Р Р† Р С”Р С•РЎР‚Р В·Р С‘Р Р…РЎС“, РЎвЂЎРЎвЂљР С•Р В±РЎвЂ№ Р С—РЎР‚Р С•Р Т‘Р С•Р В»Р В¶Р С‘РЎвЂљРЎРЉ Р С—Р С•Р С”РЎС“Р С—Р С”Р С‘</p>
+          <button 
+            onClick={() => navigate('/store')}
+            className="px-6 py-3 bg-blue-600 hover:bg-blue-700 rounded-lg font-medium transition-colors"
+          >
+            Р СџР ВµРЎР‚Р ВµР в„–РЎвЂљР С‘ Р Р† Р С”Р В°РЎвЂљР В°Р В»Р С•Р С–
+          </button>
+        </div>
+      </section>
+    )
+  }
+
+  return (
+    <section className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h2 className="text-2xl font-bold">Р С™Р С•РЎР‚Р В·Р С‘Р Р…Р В°</h2>
+        <button 
+          onClick={clear}
+          className="px-4 py-2 bg-red-600 hover:bg-red-700 rounded-lg text-sm transition-colors"
+        >
+          Р С›РЎвЂЎР С‘РЎРѓРЎвЂљР С‘РЎвЂљРЎРЉ Р С”Р С•РЎР‚Р В·Р С‘Р Р…РЎС“
+        </button>
+      </div>
+
+      <div className="space-y-4">
+        {items.map(item => (
+          <div key={item.id} className="flex items-center gap-4 p-4 bg-[#161f38] rounded-lg border border-white/10">
+            <LazyImage 
+              src={item.image} 
+              alt={item.name} 
+              className="w-16 h-16 object-cover rounded" 
+            />
+            <div className="flex-1">
+              <h3 className="font-medium">{item.name}</h3>
+              <p className="text-white/60 text-sm">{formatPrice(item.price)}</p>
+            </div>
+            <div className="flex items-center gap-2">
+              <button 
+                onClick={() => updateQty(item.id, Math.max(0, item.qty - 1))}
+                className="w-8 h-8 bg-[#0D1A2F] hover:bg-[#7e2aa8] rounded border border-white/10"
+              >
+                -
+              </button>
+              <span className="w-8 text-center">{item.qty}</span>
+              <button 
+                onClick={() => updateQty(item.id, item.qty + 1)}
+                className="w-8 h-8 bg-[#0D1A2F] hover:bg-[#7e2aa8] rounded border border-white/10"
+              >
+                +
+              </button>
+            </div>
+            <div className="text-right">
+              <div className="font-medium">{formatPrice(item.price * item.qty)}</div>
+              <button 
+                onClick={() => removeItem(item.id)}
+                className="text-red-400 hover:text-red-300 text-sm"
+              >
+                Р Р€Р Т‘Р В°Р В»Р С‘РЎвЂљРЎРЉ
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="border-t border-white/10 pt-4">
+        <div className="flex items-center justify-between text-xl font-bold">
+          <span>Р В�РЎвЂљР С•Р С–Р С•:</span>
+          <span>{formatPrice(totalPrice)}</span>
+        </div>
+        <button className="w-full mt-4 px-6 py-3 bg-green-600 hover:bg-green-700 rounded-lg font-medium transition-colors">
+          Р С›РЎвЂћР С•РЎР‚Р С�Р С‘РЎвЂљРЎРЉ Р В·Р В°Р С”Р В°Р В·
+        </button>
+      </div>
+    </section>
+  )
+}
+
+// Р вЂ�Р В»Р С•Р С–
+function Blog() {
+  const blogPosts = BLOG_POSTS
+
+  return (
+    <section className="space-y-6">
+      <h2 className="text-2xl font-bold">Р вЂ�Р В»Р С•Р С–</h2>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {blogPosts.map(post => (
+          <NavLink key={post.id} to={`/blog/${post.slug}`} className="block group">
+            <article className="bg-[#161f38] rounded-lg overflow-hidden border border-white/10 group-hover:border-blue-500/50 transition-colors">
+              <div className="h-48 bg-[#0D1A2F]">
+                <LazyImage 
+                  src={post.image} 
+                  alt={post.title} 
+                  className="w-full h-full object-cover"
+                  fallback="/vite.svg"
+                />
+              </div>
+              <div className="p-4">
+                <h3 className="font-semibold mb-2">{post.title}</h3>
+                <p className="text-white/70 text-sm mb-3">{post.excerpt}</p>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-white/50">{new Date(post.date).toLocaleDateString('ru-RU')}</span>
+                  <span className="text-blue-400 group-hover:text-blue-300 text-sm">Р В§Р С‘РЎвЂљР В°РЎвЂљРЎРЉ Р Т‘Р В°Р В»Р ВµР Вµ РІвЂ вЂ™</span>
+                </div>
+              </div>
+            </article>
+          </NavLink>
+        ))}
+      </div>
+    </section>
+  )
+}
+
+// Р СџРЎС“Р В±Р В»Р С‘Р С”Р В°РЎвЂ Р С‘Р С‘ Р В±Р В»Р С•Р С–Р В° (Р С•Р В±РЎвЂ°Р С‘Р в„– Р С‘РЎРѓРЎвЂљР С•РЎвЂЎР Р…Р С‘Р С” Р Т‘Р В°Р Р…Р Р…РЎвЂ№РЎвЂ¦)
+const BLOG_POSTS = [
+  { id: 1, slug: 'best-games-2025', title: 'Р вЂєРЎС“РЎвЂЎРЎв‚¬Р С‘Р Вµ Р С‘Р С–РЎР‚РЎвЂ№ 2025 Р С–Р С•Р Т‘Р В°', excerpt: 'Р С›Р В±Р В·Р С•РЎР‚ РЎРѓР В°Р С�РЎвЂ№РЎвЂ¦ Р С•Р В¶Р С‘Р Т‘Р В°Р ВµР С�РЎвЂ№РЎвЂ¦ Р С‘ Р С—Р С•Р С—РЎС“Р В»РЎРЏРЎР‚Р Р…РЎвЂ№РЎвЂ¦ Р С‘Р С–РЎР‚ 2025 Р С–Р С•Р Т‘Р В°.', content: 'Р СљРЎвЂ№ РЎРѓР С•Р В±РЎР‚Р В°Р В»Р С‘ Р С—Р С•Р Т‘Р В±Р С•РЎР‚Р С”РЎС“ Р В»РЎС“РЎвЂЎРЎв‚¬Р С‘РЎвЂ¦ Р С‘Р С–РЎР‚ 2025 Р С–Р С•Р Т‘Р В°: Р С”РЎР‚РЎС“Р С—Р Р…РЎвЂ№Р Вµ РЎР‚Р ВµР В»Р С‘Р В·РЎвЂ№, Р С‘Р Р…Р Т‘Р С‘-РЎвЂ¦Р С‘РЎвЂљРЎвЂ№ Р С‘ Р С—РЎР‚Р С•Р ВµР С”РЎвЂљРЎвЂ№, Р С”Р С•РЎвЂљР С•РЎР‚РЎвЂ№Р Вµ РЎС“Р В¶Р Вµ РЎС“РЎРѓР С—Р ВµР В»Р С‘ Р С—Р С•Р В»РЎС“РЎвЂЎР С‘РЎвЂљРЎРЉ Р С—РЎР‚Р С‘Р В·Р Р…Р В°Р Р…Р С‘Р Вµ Р С‘Р С–РЎР‚Р С•Р С”Р С•Р Р†. Р вЂ™ РЎРѓРЎвЂљР В°РЎвЂљРЎРЉР Вµ РІР‚вЂќ Р С”РЎР‚Р В°РЎвЂљР С”Р С‘Р Вµ Р С•Р В±Р В·Р С•РЎР‚РЎвЂ№, РЎРѓР С‘Р В»РЎРЉР Р…РЎвЂ№Р Вµ РЎРѓРЎвЂљР С•РЎР‚Р С•Р Р…РЎвЂ№ Р С‘ Р Р…Р В° РЎвЂЎРЎвЂљР С• Р С•Р В±РЎР‚Р В°РЎвЂљР С‘РЎвЂљРЎРЉ Р Р†Р Р…Р С‘Р С�Р В°Р Р…Р С‘Р Вµ Р С—РЎР‚Р С‘ Р С—Р С•Р С”РЎС“Р С—Р С”Р Вµ.', date: '2025-01-15', image: '/images/blog/games-2024.jpg' },
+  { id: 2, slug: 'choose-skins-cs2-2025', title: 'Р С™Р В°Р С” Р Р†РЎвЂ№Р В±РЎР‚Р В°РЎвЂљРЎРЉ РЎРѓР С”Р С‘Р Р…РЎвЂ№ Р Р† CS2 Р Р† 2025', excerpt: 'Р С’Р С”РЎвЂљРЎС“Р В°Р В»РЎРЉР Р…Р С•Р Вµ РЎР‚РЎС“Р С”Р С•Р Р†Р С•Р Т‘РЎРѓРЎвЂљР Р†Р С• Р С—Р С• Р Р†РЎвЂ№Р В±Р С•РЎР‚РЎС“ РЎРѓР С”Р С‘Р Р…Р С•Р Р† Р Т‘Р В»РЎРЏ Counter-Strike 2.', content: 'Р В Р В°РЎРѓРЎРѓР С”Р В°Р В·РЎвЂ№Р Р†Р В°Р ВµР С�, Р С”Р В°Р С” Р С—Р С•Р Т‘Р С•Р В±РЎР‚Р В°РЎвЂљРЎРЉ РЎвЂ¦Р С•РЎР‚Р С•РЎв‚¬Р С‘Р Вµ РЎРѓР С”Р С‘Р Р…РЎвЂ№ Р Р† CS2: РЎР‚Р ВµР Т‘Р С”Р С•РЎРѓРЎвЂљРЎРЉ, РЎРѓР С•РЎРѓРЎвЂљР С•РЎРЏР Р…Р С‘Р Вµ, Р В»Р С‘Р С”Р Р†Р С‘Р Т‘Р Р…Р С•РЎРѓРЎвЂљРЎРЉ Р С‘ Р Р†Р С‘Р В·РЎС“Р В°Р В»РЎРЉР Р…РЎвЂ№Р в„– РЎРѓРЎвЂљР С‘Р В»РЎРЉ. Р РЋР С•Р Р†Р ВµРЎвЂљРЎвЂ№ Р Т‘Р В»РЎРЏ Р Р…Р В°РЎвЂЎР С‘Р Р…Р В°РЎР‹РЎвЂ°Р С‘РЎвЂ¦ Р С‘ Р С•Р С—РЎвЂ№РЎвЂљР Р…РЎвЂ№РЎвЂ¦ Р С”Р С•Р В»Р В»Р ВµР С”РЎвЂ Р С‘Р С•Р Р…Р ВµРЎР‚Р С•Р Р†, РЎвЂЎРЎвЂљР С•Р В±РЎвЂ№ Р Р…Р Вµ Р С—Р ВµРЎР‚Р ВµР С—Р В»Р В°РЎвЂЎР С‘Р Р†Р В°РЎвЂљРЎРЉ Р С‘ РЎР‚Р В°Р Т‘Р С•Р Р†Р В°РЎвЂљРЎРЉРЎРѓРЎРЏ Р С—Р С•Р С”РЎС“Р С—Р С”Р Вµ.', date: '2025-01-10', image: '/images/blog/cs2-skins.jpg' },
+  { id: 3, slug: 'gaming-industry-news-2025', title: 'Р СњР С•Р Р†Р С•РЎРѓРЎвЂљР С‘ Р С‘Р С–РЎР‚Р С•Р Р†Р С•Р в„– Р С‘Р Р…Р Т‘РЎС“РЎРѓРЎвЂљРЎР‚Р С‘Р С‘ РІР‚вЂќ 2025', excerpt: 'Р СџР С•РЎРѓР В»Р ВµР Т‘Р Р…Р С‘Р Вµ РЎвЂљРЎР‚Р ВµР Р…Р Т‘РЎвЂ№, Р В°Р Р…Р С•Р Р…РЎРѓРЎвЂ№ Р С‘ РЎРѓР С•Р В±РЎвЂ№РЎвЂљР С‘РЎРЏ Р Р…Р В°РЎвЂЎР В°Р В»Р В° Р С–Р С•Р Т‘Р В°.', content: 'Р С™РЎР‚Р В°РЎвЂљР С”Р С• Р С• Р С–Р В»Р В°Р Р†Р Р…РЎвЂ№РЎвЂ¦ РЎвЂљРЎР‚Р ВµР Р…Р Т‘Р В°РЎвЂ¦ Р С‘Р Р…Р Т‘РЎС“РЎРѓРЎвЂљРЎР‚Р С‘Р С‘: РЎР‚Р В°Р В·Р Р†Р С‘РЎвЂљР С‘Р Вµ РЎРѓР ВµРЎР‚Р Р†Р С‘РЎРѓР С•Р Р†, Р Р…Р С•Р Р†РЎвЂ№Р Вµ Р С�Р С•Р Т‘Р ВµР В»Р С‘ Р С�Р С•Р Р…Р ВµРЎвЂљР С‘Р В·Р В°РЎвЂ Р С‘Р С‘, Р С”РЎР‚Р С•РЎРѓРЎРѓР С—Р В»Р ВµР в„– Р С‘ Р С—Р С•Р Т‘Р Т‘Р ВµРЎР‚Р В¶Р С”Р В° Р С�Р С•Р Т‘Р С‘РЎвЂћР С‘Р С”Р В°РЎвЂ Р С‘Р в„–. Р СџР В»РЎР‹РЎРѓ Р С—Р С•Р Т‘Р В±Р С•РЎР‚Р С”Р В° Р В·Р В°Р С�Р ВµРЎвЂљР Р…РЎвЂ№РЎвЂ¦ Р В°Р Р…Р С•Р Р…РЎРѓР С•Р Р† Р С‘ РЎРѓР С•Р В±РЎвЂ№РЎвЂљР С‘Р в„–.', date: '2025-01-05', image: '/images/blog/gaming-news.jpg' },
+  { id: 4, slug: 'top-skins-january-2025', title: 'Р СћР С•Р С— РЎРѓР С”Р С‘Р Р…Р С•Р Р† РЎРЏР Р…Р Р†Р В°РЎР‚РЎРЏ 2025', excerpt: 'Р РЋР В°Р С�РЎвЂ№Р Вµ Р С—Р С•Р С—РЎС“Р В»РЎРЏРЎР‚Р Р…РЎвЂ№Р Вµ Р С‘ Р Р†РЎвЂ№Р С–Р С•Р Т‘Р Р…РЎвЂ№Р Вµ РЎРѓР С”Р С‘Р Р…РЎвЂ№ Р Р† Р Р…Р В°РЎвЂЎР В°Р В»Р Вµ Р С–Р С•Р Т‘Р В°.', content: 'Р РЋР Р†Р С•Р Т‘Р С”Р В° РЎРѓР В°Р С�РЎвЂ№РЎвЂ¦ Р В»Р С‘Р С”Р Р†Р С‘Р Т‘Р Р…РЎвЂ№РЎвЂ¦ РЎРѓР С”Р С‘Р Р…Р С•Р Р† РЎРЏР Р…Р Р†Р В°РЎР‚РЎРЏ 2025 Р С—Р С• Р Т‘Р В°Р Р…Р Р…РЎвЂ№Р С� Р С—Р В»Р С•РЎвЂ°Р В°Р Т‘Р С•Р С” Р С‘ Р Р…Р В°РЎв‚¬Р С‘РЎвЂ¦ Р С—РЎР‚Р С•Р Т‘Р В°Р В¶. Р С™Р В°Р С”Р С‘Р Вµ Р С�Р С•Р Т‘Р ВµР В»Р С‘ РЎвЂЎР В°РЎвЂ°Р Вµ Р С—Р С•Р С”РЎС“Р С—Р В°РЎР‹РЎвЂљ Р С‘ Р С—Р С•РЎвЂЎР ВµР С�РЎС“.', date: '2025-01-20', image: '/images/blog/gaming-news.jpg' },
+  { id: 5, slug: 'dota2-cosmetics-2025', title: 'Р С™Р С•РЎРѓР С�Р ВµРЎвЂљР С‘Р С”Р В° Р Р† Dota 2: РЎвЂЎРЎвЂљР С• РЎРѓРЎвЂљР С•Р С‘РЎвЂљ Р С”РЎС“Р С—Р С‘РЎвЂљРЎРЉ Р Р† 2025', excerpt: 'Р В РЎС“Р С”Р С•Р Р†Р С•Р Т‘РЎРѓРЎвЂљР Р†Р С• Р С—Р С• Р Р†РЎвЂ№Р В±Р С•РЎР‚РЎС“ Р С”РЎС“РЎР‚РЎРЉР ВµРЎР‚Р С•Р Р†, РЎРѓР ВµРЎвЂљР С•Р Р† Р С‘ РЎР‚Р ВµР Т‘Р С”Р С‘РЎвЂ¦ Р С—РЎР‚Р ВµР Т‘Р С�Р ВµРЎвЂљР С•Р Р†.', content: 'Р С›Р В±Р В·Р С•РЎР‚ Р С—Р С•Р С—РЎС“Р В»РЎРЏРЎР‚Р Р…РЎвЂ№РЎвЂ¦ РЎРѓР ВµРЎвЂљР С•Р Р† Р С‘ Р С”РЎС“РЎР‚РЎРЉР ВµРЎР‚Р С•Р Р†, Р С”Р В°Р С” Р С•РЎвЂ Р ВµР Р…Р С‘Р Р†Р В°РЎвЂљРЎРЉ РЎР‚Р ВµР Т‘Р С”Р С•РЎРѓРЎвЂљРЎРЉ Р С‘ РЎРѓРЎвЂљР С•Р С‘Р С�Р С•РЎРѓРЎвЂљРЎРЉ, Р С–Р Т‘Р Вµ Р Р†РЎвЂ№Р С–Р С•Р Т‘Р Р…Р ВµР Вµ Р С‘РЎРѓР С”Р В°РЎвЂљРЎРЉ Р С—РЎР‚Р ВµР Т‘Р В»Р С•Р В¶Р ВµР Р…Р С‘РЎРЏ Р С‘ Р Р…Р В° РЎвЂЎРЎвЂљР С• Р С•Р В±РЎР‚Р В°РЎвЂљР С‘РЎвЂљРЎРЉ Р Р†Р Р…Р С‘Р С�Р В°Р Р…Р С‘Р Вµ Р С—РЎР‚Р С‘ Р С•Р В±Р С�Р ВµР Р…Р Вµ.', date: '2025-02-01', image: '/images/blog/gaming-news.jpg' },
+  { id: 6, slug: 'rust-skins-feb-2025', title: 'Rust: Р В»РЎС“РЎвЂЎРЎв‚¬Р С‘Р Вµ РЎРѓР С”Р С‘Р Р…РЎвЂ№ РЎвЂћР ВµР Р†РЎР‚Р В°Р В»РЎРЏ 2025', excerpt: 'Р СџР С•Р Т‘Р В±Р С•РЎР‚Р С”Р В° Р Р†Р С•РЎРѓРЎвЂљРЎР‚Р ВµР В±Р С•Р Р†Р В°Р Р…Р Р…РЎвЂ№РЎвЂ¦ РЎРѓР С”Р С‘Р Р…Р С•Р Р† Р Т‘Р В»РЎРЏ Rust Р С‘ РЎРѓР С•Р Р†Р ВµРЎвЂљРЎвЂ№ Р С—Р С• Р С—Р С•Р С”РЎС“Р С—Р С”Р Вµ.', content: 'Р С›Р В±РЎРѓРЎС“Р В¶Р Т‘Р В°Р ВµР С� Р С—РЎР‚Р С‘Р Р†Р В»Р ВµР С”Р В°РЎвЂљР ВµР В»РЎРЉР Р…РЎвЂ№Р Вµ Р Р†Р В°РЎР‚Р С‘Р В°Р Р…РЎвЂљРЎвЂ№ РЎРѓР С”Р С‘Р Р…Р С•Р Р† Р Т‘Р В»РЎРЏ Rust: РЎРѓР С•Р С•РЎвЂљР Р…Р С•РЎв‚¬Р ВµР Р…Р С‘Р Вµ РЎвЂ Р ВµР Р…РЎвЂ№ Р С‘ РЎР‚Р ВµР Т‘Р С”Р С•РЎРѓРЎвЂљР С‘, Р Р†Р С‘Р В·РЎС“Р В°Р В»РЎРЉР Р…РЎвЂ№Р Вµ РЎвЂљРЎР‚Р ВµР Р…Р Т‘РЎвЂ№ Р С‘ РЎвЂЎРЎвЂљР С• Р В»РЎС“РЎвЂЎРЎв‚¬Р Вµ Р В±РЎР‚Р В°РЎвЂљРЎРЉ Р Т‘Р В»РЎРЏ Р С•Р В±Р С�Р ВµР Р…Р С•Р Р†.', date: '2025-02-10', image: '/images/blog/gaming-news.jpg' },
+  { id: 7, slug: 'tf2-market-2025', title: 'Team Fortress 2: РЎР‚РЎвЂ№Р Р…Р С•Р С” Р Р† 2025', excerpt: 'Р В§РЎвЂљР С• Р С—РЎР‚Р С•Р С‘РЎРѓРЎвЂ¦Р С•Р Т‘Р С‘РЎвЂљ РЎРѓ РЎвЂ Р ВµР Р…Р В°Р С�Р С‘ Р Р…Р В° TF2 Р С‘ Р С”Р В°Р С”Р С‘Р Вµ Р С—РЎР‚Р ВµР Т‘Р С�Р ВµРЎвЂљРЎвЂ№ РЎР‚Р В°РЎРѓРЎвЂљРЎС“РЎвЂљ.', content: 'Р С™РЎР‚Р В°РЎвЂљР С”Р С‘Р в„– РЎР‚Р В°Р В·Р В±Р С•РЎР‚ Р Т‘Р С‘Р Р…Р В°Р С�Р С‘Р С”Р С‘ РЎвЂ Р ВµР Р… Р Р…Р В° РЎР‚РЎвЂ№Р Р…Р С”Р Вµ TF2, РЎР‚Р ВµР Т‘Р С”Р С‘Р Вµ РЎв‚¬Р В»РЎРЏР С—РЎвЂ№ Р С‘ Р В°Р С”РЎРѓР ВµРЎРѓРЎРѓРЎС“Р В°РЎР‚РЎвЂ№, РЎРѓР С•Р Р†Р ВµРЎвЂљРЎвЂ№ Р С—Р С• РЎРѓР Т‘Р ВµР В»Р С”Р В°Р С� Р С‘ РЎР‚Р С‘РЎРѓР С”-Р С�Р ВµР Р…Р ВµР Т‘Р В¶Р С�Р ВµР Р…РЎвЂљ.', date: '2025-02-18', image: '/images/blog/gaming-news.jpg' },
+  { id: 8, slug: 'pubg-skins-guide-2025', title: 'PUBG: Р С–Р С‘Р Т‘ Р С—Р С• РЎРѓР С”Р С‘Р Р…Р В°Р С� 2025', excerpt: 'Р С™Р В°Р С” Р Р†РЎвЂ№Р В±РЎР‚Р В°РЎвЂљРЎРЉ РЎРѓР С”Р С‘Р Р…РЎвЂ№ Р Т‘Р В»РЎРЏ PUBG Р С‘ Р Р…Р Вµ Р С—Р ВµРЎР‚Р ВµР С—Р В»Р В°РЎвЂљР С‘РЎвЂљРЎРЉ.', content: 'Р В Р В°Р В·Р В±Р С‘РЎР‚Р В°Р ВµР С� Р С”Р В°РЎвЂљР ВµР С–Р С•РЎР‚Р С‘Р С‘ РЎРѓР С”Р С‘Р Р…Р С•Р Р† Р Р† PUBG, Р С—РЎР‚Р С‘Р В·Р Р…Р В°Р С”Р С‘ Р В»Р С‘Р С”Р Р†Р С‘Р Т‘Р Р…РЎвЂ№РЎвЂ¦ Р С—РЎР‚Р ВµР Т‘Р С�Р ВµРЎвЂљР С•Р Р†, Р С–Р Т‘Р Вµ Р С‘РЎРѓР С”Р В°РЎвЂљРЎРЉ Р Р†РЎвЂ№Р С–Р С•Р Т‘Р Р…РЎвЂ№Р Вµ Р С—РЎР‚Р ВµР Т‘Р В»Р С•Р В¶Р ВµР Р…Р С‘РЎРЏ Р С‘ Р С”Р В°Р С” Р С•РЎвЂљРЎРѓР В»Р ВµР В¶Р С‘Р Р†Р В°РЎвЂљРЎРЉ РЎвЂљРЎР‚Р ВµР Р…Р Т‘РЎвЂ№.', date: '2025-03-01', image: '/images/blog/gaming-news.jpg' },
+  { id: 9, slug: 'market-safety-2025', title: 'Р вЂ�Р ВµР В·Р С•Р С—Р В°РЎРѓР Р…Р С•РЎРѓРЎвЂљРЎРЉ РЎРѓР Т‘Р ВµР В»Р С•Р С” РЎРѓР С• РЎРѓР С”Р С‘Р Р…Р В°Р С�Р С‘ Р Р† 2025', excerpt: 'Р СџРЎР‚Р В°Р Р†Р С‘Р В»Р В° Р В±Р ВµР В·Р С•Р С—Р В°РЎРѓР Р…Р С•Р в„– Р С—Р С•Р С”РЎС“Р С—Р С”Р С‘ Р С‘ Р С—РЎР‚Р С•Р Т‘Р В°Р В¶Р С‘ РЎРѓР С”Р С‘Р Р…Р С•Р Р†.', content: 'Р СњР В°Р С—Р С•Р С�Р С‘Р Р…Р В°Р ВµР С� Р С• Р Р†Р В°Р В¶Р Р…РЎвЂ№РЎвЂ¦ Р С—РЎР‚Р С‘Р Р…РЎвЂ Р С‘Р С—Р В°РЎвЂ¦ Р В±Р ВµР В·Р С•Р С—Р В°РЎРѓР Р…Р С•РЎРѓРЎвЂљР С‘: Р С—РЎР‚Р С•Р Р†Р ВµРЎР‚Р С”Р В° Р С—РЎР‚Р С•Р Т‘Р В°Р Р†РЎвЂ Р В°, Р В·Р В°РЎвЂ°Р С‘РЎвЂљР В° Р В°Р С”Р С”Р В°РЎС“Р Р…РЎвЂљР В°, Р С‘Р В·Р В±Р ВµР С–Р В°Р Р…Р С‘Р Вµ РЎвЂћР С‘РЎв‚¬Р С‘Р Р…Р С–Р В° Р С‘ Р С‘РЎРѓР С—Р С•Р В»РЎРЉР В·Р С•Р Р†Р В°Р Р…Р С‘Р Вµ Р С—РЎР‚Р С•Р Р†Р ВµРЎР‚Р ВµР Р…Р Р…РЎвЂ№РЎвЂ¦ Р С—Р В»Р С•РЎвЂ°Р В°Р Т‘Р С•Р С”.', date: '2025-03-10', image: '/images/blog/gaming-news.jpg' },
+  { id: 10, slug: 'spring-sale-2025', title: 'Р вЂ™Р ВµРЎРѓР ВµР Р…Р Р…РЎРЏРЎРЏ РЎР‚Р В°РЎРѓР С—РЎР‚Р С•Р Т‘Р В°Р В¶Р В° 2025', excerpt: 'Р РЋР С”Р С‘Р Т‘Р С”Р С‘ Р С‘ Р В°Р С”РЎвЂ Р С‘Р С‘ Р Р…Р В° Р С‘Р С–РЎР‚РЎвЂ№ Р С‘ РЎРѓР С”Р С‘Р Р…РЎвЂ№ РЎРЊРЎвЂљР С•Р в„– Р Р†Р ВµРЎРѓР Р…Р С•Р в„–.', content: 'Р СџР С•Р Т‘Р В±Р С•РЎР‚Р С”Р В° Р В»РЎС“РЎвЂЎРЎв‚¬Р С‘РЎвЂ¦ Р С—РЎР‚Р ВµР Т‘Р В»Р С•Р В¶Р ВµР Р…Р С‘Р в„– Р Р†Р ВµРЎРѓР ВµР Р…Р Р…Р ВµР в„– РЎР‚Р В°РЎРѓР С—РЎР‚Р С•Р Т‘Р В°Р В¶Р С‘: РЎвЂЎРЎвЂљР С• Р Т‘Р ВµР в„–РЎРѓРЎвЂљР Р†Р С‘РЎвЂљР ВµР В»РЎРЉР Р…Р С• Р Р†РЎвЂ№Р С–Р С•Р Т‘Р Р…Р С•, Р С”Р В°Р С” Р С”Р С•Р С�Р В±Р С‘Р Р…Р С‘РЎР‚Р С•Р Р†Р В°РЎвЂљРЎРЉ РЎРѓР С”Р С‘Р Т‘Р С”Р С‘ Р С‘ РЎС“РЎРѓР С—Р ВµР Р†Р В°РЎвЂљРЎРЉ Р В»Р С•Р Р†Р С‘РЎвЂљРЎРЉ Р С—РЎР‚Р С•Р С�Р С•.', date: '2025-03-20', image: '/images/blog/gaming-news.jpg' }
+]
+
+// Р вЂќР ВµРЎвЂљР В°Р В»РЎРЉР Р…Р В°РЎРЏ РЎРѓРЎвЂљРЎР‚Р В°Р Р…Р С‘РЎвЂ Р В° Р С—Р С•РЎРѓРЎвЂљР В° Р В±Р В»Р С•Р С–Р В°
+function BlogPost() {
+  const { slug } = useParams()
+  const post = BLOG_POSTS.find(p => p.slug === slug)
+
+  if (!post) {
+    return (
+      <section className="space-y-4">
+        <h2 className="text-2xl font-bold">Р СџР С•РЎРѓРЎвЂљ Р Р…Р Вµ Р Р…Р В°Р в„–Р Т‘Р ВµР Р…</h2>
+        <p className="text-white/70">Р вЂ”Р В°Р С—РЎР‚Р В°РЎв‚¬Р С‘Р Р†Р В°Р ВµР С�Р В°РЎРЏ РЎРѓРЎвЂљР В°РЎвЂљРЎРЉРЎРЏ Р С•РЎвЂљРЎРѓРЎС“РЎвЂљРЎРѓРЎвЂљР Р†РЎС“Р ВµРЎвЂљ Р С‘Р В»Р С‘ Р В±РЎвЂ№Р В»Р В° РЎС“Р Т‘Р В°Р В»Р ВµР Р…Р В°.</p>
+        <NavLink to="/blog" className="inline-block px-4 py-2 rounded bg-[#161f38] hover:bg-[#2a3f5f]">Р вЂ™Р ВµРЎР‚Р Р…РЎС“РЎвЂљРЎРЉРЎРѓРЎРЏ Р Р† Р В±Р В»Р С•Р С–</NavLink>
+      </section>
+    )
+  }
+
+  return (
+    <section className="space-y-6">
+      <div className="h-56 bg-[#0D1A2F] rounded-lg overflow-hidden border border-white/10">
+        <LazyImage 
+          src={post.image}
+          alt={post.title}
+          className="w-full h-full object-cover"
+          fallback="/vite.svg"
+        />
+      </div>
+      <div>
+        <h1 className="text-3xl font-bold mb-2">{post.title}</h1>
+        <div className="text-sm text-white/60">{new Date(post.date).toLocaleDateString('ru-RU')}</div>
+      </div>
+      <div className="prose prose-invert max-w-none">
+        <p className="text-sm leading-relaxed">{post.content}</p>
+      </div>
+      <div>
+        <NavLink to="/blog" className="inline-block px-4 py-2 rounded bg-[#161f38] hover:bg-[#2a3f5f]">РІвЂ С’ Р С™ РЎРѓР С—Р С‘РЎРѓР С”РЎС“ РЎРѓРЎвЂљР В°РЎвЂљР ВµР в„–</NavLink>
+      </div>
+    </section>
+  )
+}
+
+// Р РЋРЎвЂљРЎР‚Р В°Р Р…Р С‘РЎвЂ Р В° Р С—РЎР‚Р С•Р Т‘Р В°Р В¶Р С‘
+function Sell() {
+  const [selectedGame, setSelectedGame] = useState('')
+  const [itemType, setItemType] = useState('')
+  const [itemName, setItemName] = useState('')
+  const [itemCondition, setItemCondition] = useState('')
+  const [desiredPrice, setDesiredPrice] = useState('')
+  const [description, setDescription] = useState('')
+  const [images, setImages] = useState([])
+  const [contactMethod, setContactMethod] = useState('steam')
+  const [contactInfo, setContactInfo] = useState('')
+
+  const games = [
+    'Counter-Strike 2',
+    'Dota 2',
+    'Team Fortress 2',
+    'Rust',
+    'PUBG'
+  ]
+
+  const itemTypes = {
+    'Counter-Strike 2': ['Р С›РЎР‚РЎС“Р В¶Р С‘Р Вµ', 'Р СњР С•Р В¶Р С‘', 'Р СџР ВµРЎР‚РЎвЂЎР В°РЎвЂљР С”Р С‘', 'Р СњР В°Р С”Р В»Р ВµР в„–Р С”Р С‘', 'Р С™Р ВµР в„–РЎРѓРЎвЂ№'],
+    'Dota 2': ['Р вЂњР ВµРЎР‚Р С•Р С‘', 'Р С™РЎС“РЎР‚РЎРЉР ВµРЎР‚РЎвЂ№', 'Р вЂ™Р В°РЎР‚Р Т‘РЎвЂ№', 'Р РЋР ВµРЎвЂљРЎвЂ№'],
+    'Team Fortress 2': ['Р С›РЎР‚РЎС“Р В¶Р С‘Р Вµ', 'Р РЃР В»РЎРЏР С—РЎвЂ№', 'Р В Р В°Р В·Р Р…Р С•Р Вµ'],
+    'Rust': ['Р РЋР С”Р С‘Р Р…РЎвЂ№ Р С•РЎР‚РЎС“Р В¶Р С‘РЎРЏ', 'Р С›Р Т‘Р ВµР В¶Р Т‘Р В°', 'Р вЂќР ВµР С”Р С•РЎР‚'],
+    'PUBG': ['Р С›РЎР‚РЎС“Р В¶Р С‘Р Вµ', 'Р С›Р Т‘Р ВµР В¶Р Т‘Р В°', 'Р СћРЎР‚Р В°Р Р…РЎРѓР С—Р С•РЎР‚РЎвЂљ']
+  }
+
+  const conditions = ['Factory New', 'Minimal Wear', 'Field-Tested', 'Well-Worn', 'Battle-Scarred']
+
+  const handleImageUpload = (e) => {
+    const files = Array.from(e.target.files)
+    if (files.length + images.length > 5) {
+      alert('Р СљР В°Р С”РЎРѓР С‘Р С�РЎС“Р С� 5 Р С‘Р В·Р С•Р В±РЎР‚Р В°Р В¶Р ВµР Р…Р С‘Р в„–')
+      return
+    }
+    
+    files.forEach(file => {
+      const reader = new FileReader()
+      reader.onload = (e) => {
+        setImages(prev => [...prev, e.target.result])
+      }
+      reader.readAsDataURL(file)
+    })
+  }
+
+  const removeImage = (index) => {
+    setImages(prev => prev.filter((_, i) => i !== index))
+  }
+
+  const handleSubmit = (e) => {
+    e.preventDefault()
+    // Р вЂ”Р Т‘Р ВµРЎРѓРЎРЉ Р В±РЎС“Р Т‘Р ВµРЎвЂљ Р В»Р С•Р С–Р С‘Р С”Р В° Р С•РЎвЂљР С—РЎР‚Р В°Р Р†Р С”Р С‘ РЎвЂћР С•РЎР‚Р С�РЎвЂ№
+    alert('Р вЂ”Р В°РЎРЏР Р†Р С”Р В° Р Р…Р В° Р С—РЎР‚Р С•Р Т‘Р В°Р В¶РЎС“ Р С•РЎвЂљР С—РЎР‚Р В°Р Р†Р В»Р ВµР Р…Р В°! Р СљРЎвЂ№ РЎРѓР Р†РЎРЏР В¶Р ВµР С�РЎРѓРЎРЏ РЎРѓ Р Р†Р В°Р С�Р С‘ Р Р† Р В±Р В»Р С‘Р В¶Р В°Р в„–РЎв‚¬Р ВµР Вµ Р Р†РЎР‚Р ВµР С�РЎРЏ.')
+  }
+
+  return (
+    <section className="space-y-8">
+      <div className="text-center space-y-4">
+        <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
+          Р СџРЎР‚Р С•Р Т‘Р В°РЎвЂљРЎРЉ Р С—РЎР‚Р ВµР Т‘Р С�Р ВµРЎвЂљРЎвЂ№
+        </h1>
+        <p className="text-white/70 max-w-2xl mx-auto">
+          Р СџРЎР‚Р С•Р Т‘Р В°Р в„–РЎвЂљР Вµ РЎРѓР Р†Р С•Р С‘ Р С‘Р С–РЎР‚Р С•Р Р†РЎвЂ№Р Вµ Р С—РЎР‚Р ВµР Т‘Р С�Р ВµРЎвЂљРЎвЂ№ Р В±РЎвЂ№РЎРѓРЎвЂљРЎР‚Р С• Р С‘ Р Р†РЎвЂ№Р С–Р С•Р Т‘Р Р…Р С•. Р СљРЎвЂ№ Р С—РЎР‚Р ВµР Т‘Р В»Р В°Р С–Р В°Р ВµР С� Р В»РЎС“РЎвЂЎРЎв‚¬Р С‘Р Вµ РЎвЂ Р ВµР Р…РЎвЂ№ Р С‘ Р С�Р С–Р Р…Р С•Р Р†Р ВµР Р…Р Р…РЎвЂ№Р Вµ Р Р†РЎвЂ№Р С—Р В»Р В°РЎвЂљРЎвЂ№.
+        </p>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Р В¤Р С•РЎР‚Р С�Р В° Р С—РЎР‚Р С•Р Т‘Р В°Р В¶Р С‘ */}
+        <div className="lg:col-span-2">
+          <form onSubmit={handleSubmit} className="bg-[#161f38] rounded-lg p-6 border border-white/10 space-y-6">
+            <h2 className="text-xl font-semibold mb-4">Р В�Р Р…РЎвЂћР С•РЎР‚Р С�Р В°РЎвЂ Р С‘РЎРЏ Р С• Р С—РЎР‚Р ВµР Т‘Р С�Р ВµРЎвЂљР Вµ</h2>
+            
+            {/* Р вЂ™РЎвЂ№Р В±Р С•РЎР‚ Р С‘Р С–РЎР‚РЎвЂ№ */}
+            <div>
+              <label className="block text-sm font-medium mb-2">Р В�Р С–РЎР‚Р В° *</label>
+              <div className="relative">
+                <select 
+                  value={selectedGame} 
+                  onChange={(e) => {
+                    setSelectedGame(e.target.value)
+                    setItemType('')
+                  }}
+                  className="w-full bg-[#0D1A2F] border border-white/20 rounded-lg px-4 py-3 pl-12 focus:border-blue-500 focus:outline-none appearance-none"
+                  required
+                >
+                  <option value="">Р вЂ™РЎвЂ№Р В±Р ВµРЎР‚Р С‘РЎвЂљР Вµ Р С‘Р С–РЎР‚РЎС“</option>
+                  {games.map(game => (
+                    <option key={game} value={game}>{game}</option>
+                  ))}
+                </select>
+                <div className="absolute left-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
+                  {selectedGame === 'CS2' && (
+                    <svg className="w-6 h-6 text-orange-400" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+                    </svg>
+                  )}
+                  {selectedGame === 'Dota 2' && (
+                    <svg className="w-6 h-6 text-red-400" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                    </svg>
+                  )}
+                  {selectedGame === 'Rust' && (
+                    <svg className="w-6 h-6 text-yellow-400" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                    </svg>
+                  )}
+                  {selectedGame === 'Steam' && (
+                    <svg className="w-6 h-6 text-blue-400" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/>
+                    </svg>
+                  )}
+                  {!selectedGame && (
+                    <svg className="w-6 h-6 text-white/40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1m4 0h1m-6 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Р СћР С‘Р С— Р С—РЎР‚Р ВµР Т‘Р С�Р ВµРЎвЂљР В° */}
+            {selectedGame && (
+              <div>
+                <label className="block text-sm font-medium mb-2">Р СћР С‘Р С— Р С—РЎР‚Р ВµР Т‘Р С�Р ВµРЎвЂљР В° *</label>
+                <select 
+                  value={itemType} 
+                  onChange={(e) => setItemType(e.target.value)}
+                  className="w-full bg-[#0D1A2F] border border-white/20 rounded-lg px-4 py-3 focus:border-blue-500 focus:outline-none"
+                  required
+                >
+                  <option value="">Р вЂ™РЎвЂ№Р В±Р ВµРЎР‚Р С‘РЎвЂљР Вµ РЎвЂљР С‘Р С—</option>
+                  {itemTypes[selectedGame]?.map(type => (
+                    <option key={type} value={type}>{type}</option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            {/* Р СњР В°Р В·Р Р†Р В°Р Р…Р С‘Р Вµ Р С—РЎР‚Р ВµР Т‘Р С�Р ВµРЎвЂљР В° */}
+            <div>
+              <label className="block text-sm font-medium mb-2">Р СњР В°Р В·Р Р†Р В°Р Р…Р С‘Р Вµ Р С—РЎР‚Р ВµР Т‘Р С�Р ВµРЎвЂљР В° *</label>
+              <input 
+                type="text"
+                value={itemName}
+                onChange={(e) => setItemName(e.target.value)}
+                placeholder="Р СњР В°Р С—РЎР‚Р С‘Р С�Р ВµРЎР‚: AK-47 | Redline"
+                className="w-full bg-[#0D1A2F] border border-white/20 rounded-lg px-4 py-3 focus:border-blue-500 focus:outline-none"
+                required
+              />
+            </div>
+
+            {/* Р РЋР С•РЎРѓРЎвЂљР С•РЎРЏР Р…Р С‘Р Вµ (Р Т‘Р В»РЎРЏ CS2) */}
+            {selectedGame === 'Counter-Strike 2' && (
+              <div>
+                <label className="block text-sm font-medium mb-2">Р РЋР С•РЎРѓРЎвЂљР С•РЎРЏР Р…Р С‘Р Вµ</label>
+                <select 
+                  value={itemCondition} 
+                  onChange={(e) => setItemCondition(e.target.value)}
+                  className="w-full bg-[#0D1A2F] border border-white/20 rounded-lg px-4 py-3 focus:border-blue-500 focus:outline-none"
+                >
+                  <option value="">Р вЂ™РЎвЂ№Р В±Р ВµРЎР‚Р С‘РЎвЂљР Вµ РЎРѓР С•РЎРѓРЎвЂљР С•РЎРЏР Р…Р С‘Р Вµ</option>
+                  {conditions.map(condition => (
+                    <option key={condition} value={condition}>{condition}</option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            {/* Р вЂ“Р ВµР В»Р В°Р ВµР С�Р В°РЎРЏ РЎвЂ Р ВµР Р…Р В° */}
+            <div>
+              <label className="block text-sm font-medium mb-2">Р вЂ“Р ВµР В»Р В°Р ВµР С�Р В°РЎРЏ РЎвЂ Р ВµР Р…Р В° (РІвЂљР…) *</label>
+              <input 
+                type="number"
+                value={desiredPrice}
+                onChange={(e) => setDesiredPrice(e.target.value)}
+                placeholder="1000"
+                min="1"
+                className="w-full bg-[#0D1A2F] border border-white/20 rounded-lg px-4 py-3 focus:border-blue-500 focus:outline-none"
+                required
+              />
+            </div>
+
+            {/* Р С›Р С—Р С‘РЎРѓР В°Р Р…Р С‘Р Вµ */}
+            <div>
+              <label className="block text-sm font-medium mb-2">Р вЂќР С•Р С—Р С•Р В»Р Р…Р С‘РЎвЂљР ВµР В»РЎРЉР Р…Р С•Р Вµ Р С•Р С—Р С‘РЎРѓР В°Р Р…Р С‘Р Вµ</label>
+              <textarea 
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="Р Р€Р С”Р В°Р В¶Р С‘РЎвЂљР Вµ Р Т‘Р С•Р С—Р С•Р В»Р Р…Р С‘РЎвЂљР ВµР В»РЎРЉР Р…РЎС“РЎР‹ Р С‘Р Р…РЎвЂћР С•РЎР‚Р С�Р В°РЎвЂ Р С‘РЎР‹ Р С• Р С—РЎР‚Р ВµР Т‘Р С�Р ВµРЎвЂљР Вµ..."
+                rows="4"
+                className="w-full bg-[#0D1A2F] border border-white/20 rounded-lg px-4 py-3 focus:border-blue-500 focus:outline-none resize-none"
+              />
+            </div>
+
+            {/* Р вЂ”Р В°Р С–РЎР‚РЎС“Р В·Р С”Р В° Р С‘Р В·Р С•Р В±РЎР‚Р В°Р В¶Р ВµР Р…Р С‘Р в„– */}
+            <div>
+              <label className="block text-sm font-medium mb-2">Р В�Р В·Р С•Р В±РЎР‚Р В°Р В¶Р ВµР Р…Р С‘РЎРЏ (Р Т‘Р С• 5 РЎв‚¬РЎвЂљРЎС“Р С”)</label>
+              <div className="space-y-4">
+                <input 
+                  type="file"
+                  multiple
+                  accept="image/*"
+                  onChange={handleImageUpload}
+                  className="w-full bg-[#0D1A2F] border border-white/20 rounded-lg px-4 py-3 focus:border-blue-500 focus:outline-none file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-blue-600 file:text-white file:cursor-pointer"
+                />
+                {images.length > 0 && (
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                    {images.map((image, index) => (
+                      <div key={index} className="relative">
+                        <img src={image} alt={`Preview ${index + 1}`} className="w-full h-24 object-cover rounded-lg" />
+                        <button 
+                          type="button"
+                          onClick={() => removeImage(index)}
+                          className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs hover:bg-red-600"
+                        >
+                          Р“вЂ”
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <h2 className="text-xl font-semibold mb-4 pt-4 border-t border-white/10">Р С™Р С•Р Р…РЎвЂљР В°Р С”РЎвЂљР Р…Р В°РЎРЏ Р С‘Р Р…РЎвЂћР С•РЎР‚Р С�Р В°РЎвЂ Р С‘РЎРЏ</h2>
+
+            {/* Р РЋР С—Р С•РЎРѓР С•Р В± РЎРѓР Р†РЎРЏР В·Р С‘ */}
+            <div>
+              <label className="block text-sm font-medium mb-2">Р РЋР С—Р С•РЎРѓР С•Р В± РЎРѓР Р†РЎРЏР В·Р С‘ *</label>
+              <div className="grid grid-cols-2 gap-4">
+                <label className="flex items-center space-x-2 cursor-pointer">
+                  <input 
+                    type="radio"
+                    value="steam"
+                    checked={contactMethod === 'steam'}
+                    onChange={(e) => setContactMethod(e.target.value)}
+                    className="text-blue-500"
+                  />
+                  <span>Steam</span>
+                </label>
+                <label className="flex items-center space-x-2 cursor-pointer">
+                  <input 
+                    type="radio"
+                    value="telegram"
+                    checked={contactMethod === 'telegram'}
+                    onChange={(e) => setContactMethod(e.target.value)}
+                    className="text-blue-500"
+                  />
+                  <span>Telegram</span>
+                </label>
+              </div>
+            </div>
+
+            {/* Р С™Р С•Р Р…РЎвЂљР В°Р С”РЎвЂљР Р…РЎвЂ№Р Вµ Р Т‘Р В°Р Р…Р Р…РЎвЂ№Р Вµ */}
+            <div>
+              <label className="block text-sm font-medium mb-2">
+                {contactMethod === 'steam' ? 'Steam ID Р С‘Р В»Р С‘ РЎРѓРЎРѓРЎвЂ№Р В»Р С”Р В° Р Р…Р В° Р С—РЎР‚Р С•РЎвЂћР С‘Р В»РЎРЉ' : 'Telegram username'} *
+              </label>
+              <input 
+                type="text"
+                value={contactInfo}
+                onChange={(e) => setContactInfo(e.target.value)}
+                placeholder={contactMethod === 'steam' ? 'https://steamcommunity.com/id/yourprofile' : '@username'}
+                className="w-full bg-[#0D1A2F] border border-white/20 rounded-lg px-4 py-3 focus:border-blue-500 focus:outline-none"
+                required
+              />
+            </div>
+
+            <button 
+              type="submit"
+              className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold py-3 px-6 rounded-lg transition-all duration-300 transform hover:scale-105"
+            >
+              Р С›РЎвЂљР С—РЎР‚Р В°Р Р†Р С‘РЎвЂљРЎРЉ Р В·Р В°РЎРЏР Р†Р С”РЎС“ Р Р…Р В° Р С—РЎР‚Р С•Р Т‘Р В°Р В¶РЎС“
+            </button>
+          </form>
+        </div>
+
+        {/* Р В�Р Р…РЎвЂћР С•РЎР‚Р С�Р В°РЎвЂ Р С‘Р С•Р Р…Р Р…Р В°РЎРЏ Р С—Р В°Р Р…Р ВµР В»РЎРЉ */}
+        <div className="space-y-6">
+          {/* Р СџРЎР‚Р ВµР С‘Р С�РЎС“РЎвЂ°Р ВµРЎРѓРЎвЂљР Р†Р В° */}
+          <div className="bg-[#161f38] rounded-lg p-6 border border-white/10">
+            <h3 className="text-lg font-semibold mb-4">Р СџР С•РЎвЂЎР ВµР С�РЎС“ Р Р†РЎвЂ№Р В±Р С‘РЎР‚Р В°РЎР‹РЎвЂљ Р Р…Р В°РЎРѓ?</h3>
+            <div className="space-y-4">
+              <div className="flex items-start space-x-3">
+                <div className="w-8 h-8 bg-green-500/20 rounded-lg flex items-center justify-center">
+                  <svg className="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  </svg>
+                </div>
+                <div>
+                  <h4 className="font-medium">Р вЂ�РЎвЂ№РЎРѓРЎвЂљРЎР‚РЎвЂ№Р Вµ Р Р†РЎвЂ№Р С—Р В»Р В°РЎвЂљРЎвЂ№</h4>
+                  <p className="text-sm text-white/70">Р СџР С•Р В»РЎС“РЎвЂЎР С‘РЎвЂљР Вµ Р Т‘Р ВµР Р…РЎРЉР С–Р С‘ Р Р† РЎвЂљР ВµРЎвЂЎР ВµР Р…Р С‘Р Вµ 24 РЎвЂЎР В°РЎРѓР С•Р Р†</p>
+                </div>
+              </div>
+              <div className="flex items-start space-x-3">
+                <div className="w-8 h-8 bg-blue-500/20 rounded-lg flex items-center justify-center">
+                  <svg className="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <div>
+                  <h4 className="font-medium">Р вЂєРЎС“РЎвЂЎРЎв‚¬Р С‘Р Вµ РЎвЂ Р ВµР Р…РЎвЂ№</h4>
+                  <p className="text-sm text-white/70">Р СџРЎР‚Р ВµР Т‘Р В»Р В°Р С–Р В°Р ВµР С� Р Т‘Р С• 90% Р С•РЎвЂљ РЎР‚РЎвЂ№Р Р…Р С•РЎвЂЎР Р…Р С•Р в„– РЎРѓРЎвЂљР С•Р С‘Р С�Р С•РЎРѓРЎвЂљР С‘</p>
+                </div>
+              </div>
+              <div className="flex items-start space-x-3">
+                <div className="w-8 h-8 bg-purple-500/20 rounded-lg flex items-center justify-center">
+                  <svg className="w-5 h-5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                  </svg>
+                </div>
+                <div>
+                  <h4 className="font-medium">Р вЂ�Р ВµР В·Р С•Р С—Р В°РЎРѓР Р…Р С•РЎРѓРЎвЂљРЎРЉ</h4>
+                  <p className="text-sm text-white/70">Р вЂ™РЎРѓР Вµ РЎРѓР Т‘Р ВµР В»Р С”Р С‘ Р В·Р В°РЎвЂ°Р С‘РЎвЂ°Р ВµР Р…РЎвЂ№ Р С‘ Р В·Р В°РЎРѓРЎвЂљРЎР‚Р В°РЎвЂ¦Р С•Р Р†Р В°Р Р…РЎвЂ№</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Р СџР С•Р С—РЎС“Р В»РЎРЏРЎР‚Р Р…РЎвЂ№Р Вµ Р С—РЎР‚Р ВµР Т‘Р С�Р ВµРЎвЂљРЎвЂ№ */}
+          <div className="bg-[#161f38] rounded-lg p-6 border border-white/10">
+            <h3 className="text-lg font-semibold mb-4">Р СџР С•Р С—РЎС“Р В»РЎРЏРЎР‚Р Р…РЎвЂ№Р Вµ Р С—РЎР‚Р ВµР Т‘Р С�Р ВµРЎвЂљРЎвЂ№</h3>
+            <div className="space-y-3">
+              <div className="flex justify-between items-center">
+                <span className="text-sm">AK-47 | Redline</span>
+                <span className="text-sm text-green-400">Р С•РЎвЂљ 2,500РІвЂљР…</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm">AWP | Dragon Lore</span>
+                <span className="text-sm text-green-400">Р С•РЎвЂљ 45,000РІвЂљР…</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm">Karambit | Fade</span>
+                <span className="text-sm text-green-400">Р С•РЎвЂљ 35,000РІвЂљР…</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm">M4A4 | Howl</span>
+                <span className="text-sm text-green-400">Р С•РЎвЂљ 15,000РІвЂљР…</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Р С™Р С•Р Р…РЎвЂљР В°Р С”РЎвЂљРЎвЂ№ Р С—Р С•Р Т‘Р Т‘Р ВµРЎР‚Р В¶Р С”Р С‘ */}
+          <div className="bg-[#161f38] rounded-lg p-6 border border-white/10">
+            <h3 className="text-lg font-semibold mb-4">Р СњРЎС“Р В¶Р Р…Р В° Р С—Р С•Р С�Р С•РЎвЂ°РЎРЉ?</h3>
+            <div className="space-y-3">
+              <div className="flex items-center space-x-3">
+                <div className="w-8 h-8 bg-blue-600/20 rounded-lg flex items-center justify-center">
+                  <svg className="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                  </svg>
+                </div>
+                <div>
+                  <p className="text-sm font-medium">Р С›Р Р…Р В»Р В°Р в„–Р Р… РЎвЂЎР В°РЎвЂљ</p>
+                  <p className="text-xs text-white/70">Р С›РЎвЂљР Р†Р ВµРЎвЂљР С‘Р С� Р Р† РЎвЂљР ВµРЎвЂЎР ВµР Р…Р С‘Р Вµ 5 Р С�Р С‘Р Р…РЎС“РЎвЂљ</p>
+                </div>
+              </div>
+              <div className="flex items-center space-x-3">
+                <div className="w-8 h-8 bg-green-600/20 rounded-lg flex items-center justify-center">
+                  <svg className="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                  </svg>
+                </div>
+                <div>
+                  <p className="text-sm font-medium">+7 (800) 123-45-67</p>
+                  <p className="text-xs text-white/70">Р С™РЎР‚РЎС“Р С–Р В»Р С•РЎРѓРЎС“РЎвЂљР С•РЎвЂЎР Р…Р С•</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  )
+}
+
+// Р СџР С•Р В»Р С‘РЎвЂљР С‘Р С”Р В° Р С”Р С•Р Р…РЎвЂћР С‘Р Т‘Р ВµР Р…РЎвЂ Р С‘Р В°Р В»РЎРЉР Р…Р С•РЎРѓРЎвЂљР С‘
+function PrivacyPolicy() {
+  return (
+    <section className="space-y-6">
+      <h1 className="text-3xl font-bold">Р СџР С•Р В»Р С‘РЎвЂљР С‘Р С”Р В° Р С”Р С•Р Р…РЎвЂћР С‘Р Т‘Р ВµР Р…РЎвЂ Р С‘Р В°Р В»РЎРЉР Р…Р С•РЎРѓРЎвЂљР С‘</h1>
+      
+      <div className="space-y-6 text-white/80">
+        <div>
+          <h2 className="text-xl font-semibold mb-3">1. Р С›Р В±РЎвЂ°Р С‘Р Вµ Р С—Р С•Р В»Р С•Р В¶Р ВµР Р…Р С‘РЎРЏ</h2>
+          <p className="text-sm leading-relaxed">
+            Р СњР В°РЎРѓРЎвЂљР С•РЎРЏРЎвЂ°Р В°РЎРЏ Р СџР С•Р В»Р С‘РЎвЂљР С‘Р С”Р В° Р С”Р С•Р Р…РЎвЂћР С‘Р Т‘Р ВµР Р…РЎвЂ Р С‘Р В°Р В»РЎРЉР Р…Р С•РЎРѓРЎвЂљР С‘ (Р Т‘Р В°Р В»Р ВµР Вµ РІР‚вЂќ Р’В«Р СџР С•Р В»Р С‘РЎвЂљР С‘Р С”Р В°Р’В») Р Т‘Р ВµР в„–РЎРѓРЎвЂљР Р†РЎС“Р ВµРЎвЂљ Р Р† Р С•РЎвЂљР Р…Р С•РЎв‚¬Р ВµР Р…Р С‘Р С‘ Р Р†РЎРѓР ВµР в„– Р С‘Р Р…РЎвЂћР С•РЎР‚Р С�Р В°РЎвЂ Р С‘Р С‘, 
+            Р С”Р С•РЎвЂљР С•РЎР‚РЎС“РЎР‹ AI Game Store Р С�Р С•Р В¶Р ВµРЎвЂљ Р С—Р С•Р В»РЎС“РЎвЂЎР С‘РЎвЂљРЎРЉ Р С• Р С—Р С•Р В»РЎРЉР В·Р С•Р Р†Р В°РЎвЂљР ВµР В»Р Вµ Р Р†Р С• Р Р†РЎР‚Р ВµР С�РЎРЏ Р С‘РЎРѓР С—Р С•Р В»РЎРЉР В·Р С•Р Р†Р В°Р Р…Р С‘РЎРЏ Р С‘Р С� РЎРѓР В°Р в„–РЎвЂљР В° gamesale.shop.
+          </p>
+        </div>
+
+        <div>
+          <h2 className="text-xl font-semibold mb-3">2. Р СџР ВµРЎР‚РЎРѓР С•Р Р…Р В°Р В»РЎРЉР Р…РЎвЂ№Р Вµ Р Т‘Р В°Р Р…Р Р…РЎвЂ№Р Вµ Р С—Р С•Р В»РЎРЉР В·Р С•Р Р†Р В°РЎвЂљР ВµР В»Р ВµР в„–</h2>
+          <p className="text-sm leading-relaxed mb-2">
+            Р вЂ™ РЎР‚Р В°Р С�Р С”Р В°РЎвЂ¦ Р Р…Р В°РЎРѓРЎвЂљР С•РЎРЏРЎвЂ°Р ВµР в„– Р СџР С•Р В»Р С‘РЎвЂљР С‘Р С”Р С‘ Р С—Р С•Р Т‘ Р’В«Р С—Р ВµРЎР‚РЎРѓР С•Р Р…Р В°Р В»РЎРЉР Р…РЎвЂ№Р С�Р С‘ Р Т‘Р В°Р Р…Р Р…РЎвЂ№Р С�Р С‘ Р С—Р С•Р В»РЎРЉР В·Р С•Р Р†Р В°РЎвЂљР ВµР В»РЎРЏР’В» Р С—Р С•Р Р…Р С‘Р С�Р В°РЎР‹РЎвЂљРЎРѓРЎРЏ:
+          </p>
+          <ul className="list-disc list-inside text-sm space-y-1 ml-4">
+            <li>Р СџР ВµРЎР‚РЎРѓР С•Р Р…Р В°Р В»РЎРЉР Р…РЎвЂ№Р Вµ Р Т‘Р В°Р Р…Р Р…РЎвЂ№Р Вµ, Р С”Р С•РЎвЂљР С•РЎР‚РЎвЂ№Р Вµ Р С—Р С•Р В»РЎРЉР В·Р С•Р Р†Р В°РЎвЂљР ВµР В»РЎРЉ Р С—РЎР‚Р ВµР Т‘Р С•РЎРѓРЎвЂљР В°Р Р†Р В»РЎРЏР ВµРЎвЂљ Р С• РЎРѓР ВµР В±Р Вµ РЎРѓР В°Р С�Р С•РЎРѓРЎвЂљР С•РЎРЏРЎвЂљР ВµР В»РЎРЉР Р…Р С• Р С—РЎР‚Р С‘ РЎР‚Р ВµР С–Р С‘РЎРѓРЎвЂљРЎР‚Р В°РЎвЂ Р С‘Р С‘ Р С‘Р В»Р С‘ Р Р† Р С—РЎР‚Р С•РЎвЂ Р ВµРЎРѓРЎРѓР Вµ Р С‘РЎРѓР С—Р С•Р В»РЎРЉР В·Р С•Р Р†Р В°Р Р…Р С‘РЎРЏ РЎРѓР В°Р в„–РЎвЂљР В°</li>
+            <li>IP-Р В°Р Т‘РЎР‚Р ВµРЎРѓ Р С—Р С•Р В»РЎРЉР В·Р С•Р Р†Р В°РЎвЂљР ВµР В»РЎРЏ</li>
+            <li>Р В�Р Р…РЎвЂћР С•РЎР‚Р С�Р В°РЎвЂ Р С‘РЎРЏ Р С• Р В±РЎР‚Р В°РЎС“Р В·Р ВµРЎР‚Р Вµ Р С—Р С•Р В»РЎРЉР В·Р С•Р Р†Р В°РЎвЂљР ВµР В»РЎРЏ</li>
+            <li>Р вЂќР В°Р Р…Р Р…РЎвЂ№Р Вµ Р С• Р С—Р С•Р С”РЎС“Р С—Р С”Р В°РЎвЂ¦ Р С‘ РЎвЂљРЎР‚Р В°Р Р…Р В·Р В°Р С”РЎвЂ Р С‘РЎРЏРЎвЂ¦</li>
+            <li>Email Р В°Р Т‘РЎР‚Р ВµРЎРѓ Р Т‘Р В»РЎРЏ Р С•РЎвЂљР С—РЎР‚Р В°Р Р†Р С”Р С‘ РЎвЂЎР ВµР С”Р С•Р Р†</li>
+          </ul>
+        </div>
+
+        <div>
+          <h2 className="text-xl font-semibold mb-3">3. Р В¦Р ВµР В»Р С‘ Р С•Р В±РЎР‚Р В°Р В±Р С•РЎвЂљР С”Р С‘ Р С—Р ВµРЎР‚РЎРѓР С•Р Р…Р В°Р В»РЎРЉР Р…РЎвЂ№РЎвЂ¦ Р Т‘Р В°Р Р…Р Р…РЎвЂ№РЎвЂ¦</h2>
+          <p className="text-sm leading-relaxed mb-2">
+            Р СџР ВµРЎР‚РЎРѓР С•Р Р…Р В°Р В»РЎРЉР Р…РЎвЂ№Р Вµ Р Т‘Р В°Р Р…Р Р…РЎвЂ№Р Вµ Р С—Р С•Р В»РЎРЉР В·Р С•Р Р†Р В°РЎвЂљР ВµР В»Р ВµР в„– Р С•Р В±РЎР‚Р В°Р В±Р В°РЎвЂљРЎвЂ№Р Р†Р В°РЎР‹РЎвЂљРЎРѓРЎРЏ Р Р† РЎРѓР В»Р ВµР Т‘РЎС“РЎР‹РЎвЂ°Р С‘РЎвЂ¦ РЎвЂ Р ВµР В»РЎРЏРЎвЂ¦:
+          </p>
+          <ul className="list-disc list-inside text-sm space-y-1 ml-4">
+            <li>Р С›Р В±Р ВµРЎРѓР С—Р ВµРЎвЂЎР ВµР Р…Р С‘Р Вµ РЎвЂћРЎС“Р Р…Р С”РЎвЂ Р С‘Р С•Р Р…Р С‘РЎР‚Р С•Р Р†Р В°Р Р…Р С‘РЎРЏ РЎРѓР В°Р в„–РЎвЂљР В°</li>
+            <li>Р С›Р В±РЎР‚Р В°Р В±Р С•РЎвЂљР С”Р В° Р С‘ Р Р†РЎвЂ№Р С—Р С•Р В»Р Р…Р ВµР Р…Р С‘Р Вµ Р В·Р В°Р С”Р В°Р В·Р С•Р Р†</li>
+            <li>Р С›РЎвЂљР С—РЎР‚Р В°Р Р†Р С”Р В° РЎРЊР В»Р ВµР С”РЎвЂљРЎР‚Р С•Р Р…Р Р…РЎвЂ№РЎвЂ¦ РЎвЂЎР ВµР С”Р С•Р Р†</li>
+            <li>Р Р€Р В»РЎС“РЎвЂЎРЎв‚¬Р ВµР Р…Р С‘Р Вµ Р С”Р В°РЎвЂЎР ВµРЎРѓРЎвЂљР Р†Р В° РЎС“РЎРѓР В»РЎС“Р С–</li>
+            <li>Р СћР ВµРЎвЂ¦Р Р…Р С‘РЎвЂЎР ВµРЎРѓР С”Р В°РЎРЏ Р С—Р С•Р Т‘Р Т‘Р ВµРЎР‚Р В¶Р С”Р В° Р С—Р С•Р В»РЎРЉР В·Р С•Р Р†Р В°РЎвЂљР ВµР В»Р ВµР в„–</li>
+          </ul>
+        </div>
+
+        <div>
+          <h2 className="text-xl font-semibold mb-3">4. Р СџРЎР‚Р В°Р Р†Р С•Р Р†РЎвЂ№Р Вµ Р С•РЎРѓР Р…Р С•Р Р†Р В°Р Р…Р С‘РЎРЏ Р С•Р В±РЎР‚Р В°Р В±Р С•РЎвЂљР С”Р С‘</h2>
+          <p className="text-sm leading-relaxed">
+            Р С›Р В±РЎР‚Р В°Р В±Р С•РЎвЂљР С”Р В° Р С—Р ВµРЎР‚РЎРѓР С•Р Р…Р В°Р В»РЎРЉР Р…РЎвЂ№РЎвЂ¦ Р Т‘Р В°Р Р…Р Р…РЎвЂ№РЎвЂ¦ Р С•РЎРѓРЎС“РЎвЂ°Р ВµРЎРѓРЎвЂљР Р†Р В»РЎРЏР ВµРЎвЂљРЎРѓРЎРЏ Р Р…Р В° Р С•РЎРѓР Р…Р С•Р Р†Р В°Р Р…Р С‘Р С‘ РЎРѓР С•Р С–Р В»Р В°РЎРѓР С‘РЎРЏ Р С—Р С•Р В»РЎРЉР В·Р С•Р Р†Р В°РЎвЂљР ВµР В»РЎРЏ, 
+            Р С—Р С•Р В»РЎС“РЎвЂЎР ВµР Р…Р Р…Р С•Р С–Р С• Р С—РЎР‚Р С‘ Р С—Р ВµРЎР‚Р Р†Р С•Р С� Р С—Р С•РЎРѓР ВµРЎвЂ°Р ВµР Р…Р С‘Р С‘ РЎРѓР В°Р в„–РЎвЂљР В°, Р В° РЎвЂљР В°Р С”Р В¶Р Вµ Р Р† РЎРѓР С•Р С•РЎвЂљР Р†Р ВµРЎвЂљРЎРѓРЎвЂљР Р†Р С‘Р С‘ РЎРѓ Р В¤Р ВµР Т‘Р ВµРЎР‚Р В°Р В»РЎРЉР Р…РЎвЂ№Р С� Р В·Р В°Р С”Р С•Р Р…Р С•Р С� 
+            Р С•РЎвЂљ 27.07.2006 РІвЂћвЂ“ 152-Р В¤Р вЂ” Р’В«Р С› Р С—Р ВµРЎР‚РЎРѓР С•Р Р…Р В°Р В»РЎРЉР Р…РЎвЂ№РЎвЂ¦ Р Т‘Р В°Р Р…Р Р…РЎвЂ№РЎвЂ¦Р’В».
+          </p>
+        </div>
+
+        <div>
+          <h2 className="text-xl font-semibold mb-3">5. Р РЋРЎР‚Р С•Р С”Р С‘ Р С•Р В±РЎР‚Р В°Р В±Р С•РЎвЂљР С”Р С‘ Р С—Р ВµРЎР‚РЎРѓР С•Р Р…Р В°Р В»РЎРЉР Р…РЎвЂ№РЎвЂ¦ Р Т‘Р В°Р Р…Р Р…РЎвЂ№РЎвЂ¦</h2>
+          <p className="text-sm leading-relaxed">
+            Р СџР ВµРЎР‚РЎРѓР С•Р Р…Р В°Р В»РЎРЉР Р…РЎвЂ№Р Вµ Р Т‘Р В°Р Р…Р Р…РЎвЂ№Р Вµ Р С•Р В±РЎР‚Р В°Р В±Р В°РЎвЂљРЎвЂ№Р Р†Р В°РЎР‹РЎвЂљРЎРѓРЎРЏ Р Р† РЎвЂљР ВµРЎвЂЎР ВµР Р…Р С‘Р Вµ РЎРѓРЎР‚Р С•Р С”Р В°, Р Р…Р ВµР С•Р В±РЎвЂ¦Р С•Р Т‘Р С‘Р С�Р С•Р С–Р С• Р Т‘Р В»РЎРЏ Р Т‘Р С•РЎРѓРЎвЂљР С‘Р В¶Р ВµР Р…Р С‘РЎРЏ РЎвЂ Р ВµР В»Р ВµР в„– Р С•Р В±РЎР‚Р В°Р В±Р С•РЎвЂљР С”Р С‘, 
+            Р Р…Р С• Р Р…Р Вµ Р В±Р С•Р В»Р ВµР Вµ 5 Р В»Р ВµРЎвЂљ РЎРѓ Р С�Р С•Р С�Р ВµР Р…РЎвЂљР В° Р С—Р С•РЎРѓР В»Р ВµР Т‘Р Р…Р ВµР С–Р С• Р Р†Р В·Р В°Р С‘Р С�Р С•Р Т‘Р ВµР в„–РЎРѓРЎвЂљР Р†Р С‘РЎРЏ РЎРѓ Р С—Р С•Р В»РЎРЉР В·Р С•Р Р†Р В°РЎвЂљР ВµР В»Р ВµР С�.
+          </p>
+        </div>
+
+        <div>
+          <h2 className="text-xl font-semibold mb-3">6. Р СџРЎР‚Р В°Р Р†Р В° РЎРѓРЎС“Р В±РЎР‰Р ВµР С”РЎвЂљР В° Р С—Р ВµРЎР‚РЎРѓР С•Р Р…Р В°Р В»РЎРЉР Р…РЎвЂ№РЎвЂ¦ Р Т‘Р В°Р Р…Р Р…РЎвЂ№РЎвЂ¦</h2>
+          <p className="text-sm leading-relaxed mb-2">
+            Р СџР С•Р В»РЎРЉР В·Р С•Р Р†Р В°РЎвЂљР ВµР В»РЎРЉ Р С‘Р С�Р ВµР ВµРЎвЂљ Р С—РЎР‚Р В°Р Р†Р С•:
+          </p>
+          <ul className="list-disc list-inside text-sm space-y-1 ml-4">
+            <li>Р СџР С•Р В»РЎС“РЎвЂЎР В°РЎвЂљРЎРЉ Р С‘Р Р…РЎвЂћР С•РЎР‚Р С�Р В°РЎвЂ Р С‘РЎР‹ Р С•Р В± Р С•Р В±РЎР‚Р В°Р В±Р С•РЎвЂљР С”Р Вµ РЎРѓР Р†Р С•Р С‘РЎвЂ¦ Р С—Р ВµРЎР‚РЎРѓР С•Р Р…Р В°Р В»РЎРЉР Р…РЎвЂ№РЎвЂ¦ Р Т‘Р В°Р Р…Р Р…РЎвЂ№РЎвЂ¦</li>
+            <li>Р СћРЎР‚Р ВµР В±Р С•Р Р†Р В°РЎвЂљРЎРЉ РЎС“РЎвЂљР С•РЎвЂЎР Р…Р ВµР Р…Р С‘РЎРЏ, Р В±Р В»Р С•Р С”Р С‘РЎР‚Р С•Р Р†Р В°Р Р…Р С‘РЎРЏ Р С‘Р В»Р С‘ РЎС“Р Р…Р С‘РЎвЂЎРЎвЂљР С•Р В¶Р ВµР Р…Р С‘РЎРЏ Р С—Р ВµРЎР‚РЎРѓР С•Р Р…Р В°Р В»РЎРЉР Р…РЎвЂ№РЎвЂ¦ Р Т‘Р В°Р Р…Р Р…РЎвЂ№РЎвЂ¦</li>
+            <li>Р С›РЎвЂљР В·РЎвЂ№Р Р†Р В°РЎвЂљРЎРЉ РЎРѓР С•Р С–Р В»Р В°РЎРѓР С‘Р Вµ Р Р…Р В° Р С•Р В±РЎР‚Р В°Р В±Р С•РЎвЂљР С”РЎС“ Р С—Р ВµРЎР‚РЎРѓР С•Р Р…Р В°Р В»РЎРЉР Р…РЎвЂ№РЎвЂ¦ Р Т‘Р В°Р Р…Р Р…РЎвЂ№РЎвЂ¦</li>
+            <li>Р С›Р В±РЎР‚Р В°РЎвЂ°Р В°РЎвЂљРЎРЉРЎРѓРЎРЏ Р Р† РЎС“Р С—Р С•Р В»Р Р…Р С•Р С�Р С•РЎвЂЎР ВµР Р…Р Р…РЎвЂ№Р в„– Р С•РЎР‚Р С–Р В°Р Р… Р С—Р С• Р В·Р В°РЎвЂ°Р С‘РЎвЂљР Вµ Р С—РЎР‚Р В°Р Р† РЎРѓРЎС“Р В±РЎР‰Р ВµР С”РЎвЂљР С•Р Р† Р С—Р ВµРЎР‚РЎРѓР С•Р Р…Р В°Р В»РЎРЉР Р…РЎвЂ№РЎвЂ¦ Р Т‘Р В°Р Р…Р Р…РЎвЂ№РЎвЂ¦</li>
+          </ul>
+        </div>
+
+        <div>
+          <h2 className="text-xl font-semibold mb-3">7. Р С™Р С•Р Р…РЎвЂљР В°Р С”РЎвЂљР Р…Р В°РЎРЏ Р С‘Р Р…РЎвЂћР С•РЎР‚Р С�Р В°РЎвЂ Р С‘РЎРЏ</h2>
+          <div className="text-sm leading-relaxed space-y-2">
+            <p>Р СџР С• Р Р†РЎРѓР ВµР С� Р Р†Р С•Р С—РЎР‚Р С•РЎРѓР В°Р С�, РЎРѓР Р†РЎРЏР В·Р В°Р Р…Р Р…РЎвЂ№Р С� РЎРѓ Р С•Р В±РЎР‚Р В°Р В±Р С•РЎвЂљР С”Р С•Р в„– Р С—Р ВµРЎР‚РЎРѓР С•Р Р…Р В°Р В»РЎРЉР Р…РЎвЂ№РЎвЂ¦ Р Т‘Р В°Р Р…Р Р…РЎвЂ№РЎвЂ¦, Р Р†РЎвЂ№ Р С�Р С•Р В¶Р ВµРЎвЂљР Вµ Р С•Р В±РЎР‚Р В°РЎвЂљР С‘РЎвЂљРЎРЉРЎРѓРЎРЏ Р С” Р Р…Р В°Р С�:</p>
+            <div className="bg-[#161f38]/50 p-4 rounded-lg border border-white/10">
+              <div className="space-y-1">
+                <div><strong>Р С›Р С›Р С› "Р С’Р В� Р вЂњР ВµР в„–Р С� Р РЋРЎвЂљР С•РЎР‚"</strong></div>
+                <div>Р В�Р СњР Сњ: 7707123456</div>
+                <div>Р С›Р вЂњР В Р Сњ: 1127746123456</div>
+                <div>Р В®РЎР‚Р С‘Р Т‘Р С‘РЎвЂЎР ВµРЎРѓР С”Р С‘Р в„– Р В°Р Т‘РЎР‚Р ВµРЎРѓ: 123456, Р С–. Р СљР С•РЎРѓР С”Р Р†Р В°, РЎС“Р В». Р СџРЎР‚Р С‘Р С�Р ВµРЎР‚Р Р…Р В°РЎРЏ, Р Т‘. 1, Р С•РЎвЂћ. 100</div>
+                <div>Email: <a href="mailto:privacy@aigamestore.ru" className="text-blue-400 hover:text-blue-300">privacy@aigamestore.ru</a></div>
+                <div>Р С›Р В±РЎвЂ°Р С‘Р в„– Email: <a href="mailto:info@aigamestore.ru" className="text-blue-400 hover:text-blue-300">info@aigamestore.ru</a></div>
+                <div>Р СћР ВµР В»Р ВµРЎвЂћР С•Р Р…: <a href="tel:+74951234567" className="text-blue-400 hover:text-blue-300">+7 (495) 123-45-67</a></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="text-xs text-white/60 pt-4 border-t border-white/10">
+          Р вЂќР В°РЎвЂљР В° Р С—Р С•РЎРѓР В»Р ВµР Т‘Р Р…Р ВµР С–Р С• Р С•Р В±Р Р…Р С•Р Р†Р В»Р ВµР Р…Р С‘РЎРЏ: 2025
+        </div>
+      </div>
+    </section>
+  )
+}
+
+// Р РЋРЎвЂљРЎР‚Р В°Р Р…Р С‘РЎвЂ Р В° РЎвЂљР С•Р Р†Р В°РЎР‚Р В°
+function Product() {
+  const { id } = useParams()
+  const { addItem } = useCart()
+  const { formatPrice } = useLang()
+  const [version, setVersion] = React.useState(0)
+  
+  React.useEffect(() => {
+    const onProductsLoaded = () => setVersion(v => v + 1)
+    window.addEventListener('products-loaded', onProductsLoaded)
+    return () => window.removeEventListener('products-loaded', onProductsLoaded)
+  }, [])
+  
+  const product = React.useMemo(() => {
+    const byId = DATA.products.find(p => p.id === id)
+    if (byId) return byId
+    return DATA.products.find(p => String(p.id) === String(id)) || null
+  }, [id, version])
+
+  const images = React.useMemo(() => {
+    if (!product) return ['/vite.svg','/vite.svg','/vite.svg']
+    const base = Array.isArray(product.images) ? product.images.filter(Boolean) : []
+    if (base.length === 0 && product.image) base.push(product.image)
+    const fallback = '/vite.svg'
+    while (base.length < 3) base.push(fallback)
+    return base.slice(0, 10)
+  }, [product])
+  
+  const [idx, setIdx] = React.useState(0)
+  const go = (d) => setIdx(i => (i + d + images.length) % images.length)
+
+  const recommendations = React.useMemo(() => {
+    const list = DATA.products.filter(p => p.id !== (product?.id || ''))
+    const arr = [...list]
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1))
+      ;[arr[i], arr[j]] = [arr[j], arr[i]]
+    }
+    return arr.slice(0, 4)
+  }, [product])
+
+  const [sellStatus, setSellStatus] = React.useState('')
+  const getRarityClasses = (rarity) => {
+    switch (String(rarity || '').toLowerCase()) {
+      case 'в�… covert':
+      case 'covert':
+        return 'bg-red-600 text-white'
+      case 'classified':
+        return 'bg-pink-600 text-white'
+      case 'restricted':
+        return 'bg-purple-600 text-white'
+      case 'mil-spec':
+        return 'bg-blue-600 text-white'
+      case 'consumer grade':
+        return 'bg-gray-600 text-white'
+      case 'rare':
+        return 'bg-green-600 text-white'
+      case 'unusual':
+        return 'bg-fuchsia-600 text-white'
+      case 'immortal':
+        return 'bg-amber-500 text-black'
+      case 'souvenir':
+        return 'bg-yellow-400 text-black'
+      default:
+        return 'bg-[#0D1A2F] text-white/70 border border-white/10'
+    }
+  }
+  const sellSkin = () => {
+    try {
+      const isAuth = localStorage.getItem('profile-auth') === '1'
+      if (!isAuth) {
+        window.dispatchEvent(new Event('open-login'))
+        return
+      }
+      if (!product || product.category !== 'skin') return
+      const credit = Math.round(product.price * 0.7 * 100) / 100
+      const prev = parseFloat(localStorage.getItem('wallet-usd') || '0')
+      const next = Math.round((prev + credit) * 100) / 100
+      localStorage.setItem('wallet-usd', String(next))
+      let hist = []
+      try { hist = JSON.parse(localStorage.getItem('wallet-history') || '[]') } catch { hist = [] }
+      const item = { id: `SELL-${Date.now()}`, type: 'sell', amountUsd: credit, name: product.name, ts: Date.now() }
+      localStorage.setItem('wallet-history', JSON.stringify([item, ...hist]))
+      window.dispatchEvent(new Event('wallet-updated'))
+      setSellStatus('sold')
+    } catch (e) {
+      console.error('sellSkin error', e)
+    }
+  }
+
+  if (!product) {
+    return (
+      <section className="space-y-6">
+        <h2 className="text-2xl font-bold">Р СћР С•Р Р†Р В°РЎР‚ Р Р…Р Вµ Р Р…Р В°Р в„–Р Т‘Р ВµР Р…</h2>
+        <div className="text-white/60">Р СџР С•РЎвЂ¦Р С•Р В¶Р Вµ, РЎвЂљР В°Р С”Р С•Р С–Р С• РЎвЂљР С•Р Р†Р В°РЎР‚Р В° Р Р…Р ВµРЎвЂљ Р Р† Р С”Р В°РЎвЂљР В°Р В»Р С•Р С–Р Вµ.</div>
+      </section>
+    )
+  }
+
+  return (
+    <section className="space-y-6">
+      <h2 className="text-2xl font-bold">{product.name}</h2>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+        <div className="p-4 rounded-lg border border-white/10 bg-[#0D1A2F]">
+          <div className="h-72 rounded-lg bg-[#161f38] overflow-hidden">
+            <div className="relative w-full h-full">
+              <LazyImage 
+                src={images[idx]} 
+                alt={`${product.name}-${idx+1}`} 
+                className="w-full h-full object-cover transition-opacity duration-300" 
+              />
+              <button aria-label="prev" onClick={() => go(-1)} className="absolute left-2 top-1/2 -translate-y-1/2 px-2 py-1 rounded bg-[#0D1A2F] border border-white/10">РІР‚в„–</button>
+              <button aria-label="next" onClick={() => go(1)} className="absolute right-2 top-1/2 -translate-y-1/2 px-2 py-1 rounded bg-[#0D1A2F] border border-white/10">РІР‚С”</button>
+              <div className="absolute bottom-2 left-0 right-0 flex justify-center gap-2">
+                {images.map((_, i) => (
+                  <button key={i} onClick={() => setIdx(i)} aria-label={`go-${i}`} className={`h-2 w-2 rounded-full ${i===idx?'bg-[#4A90E2]':'bg-white/30'}`}></button>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+        <div className="p-4 rounded-lg border border-white/10 bg-[#0D1A2F] lg:col-span-2 flex flex-col">
+          <div className="text-white/80">Р В¦Р ВµР Р…Р В°: {formatPrice(product.price)}</div>
+          <div className="mt-2 text-white/60 text-sm">Р С™Р В°РЎвЂљР ВµР С–Р С•РЎР‚Р С‘РЎРЏ: {product.category || 'РІР‚вЂќ'}{product.type ? ` РІР‚Сћ ${product.type}` : ''}</div>
+          {product.category === 'skin' && product.rarity && (
+            <div className="mt-2">
+              <span className={`inline-block px-2 py-0.5 rounded text-xs ${getRarityClasses(product.rarity)}`}>
+                {product.rarity}
+              </span>
+            </div>
+          )}
+          <div className="mt-4 flex items-center gap-2">
+            <button onClick={() => addItem(product, 1)} className="px-4 py-2 rounded-md bg-[#161f38] hover:bg-[#7e2aa8]">Р вЂ™ Р С”Р С•РЎР‚Р В·Р С‘Р Р…РЎС“</button>
+            {product.category === 'skin' && (
+              <button onClick={sellSkin} className="px-4 py-2 rounded-md bg-[#4A90E2] hover:bg-[#7e2aa8]">Р СџРЎР‚Р С•Р Т‘Р В°РЎвЂљРЎРЉ РЎРѓР С”Р С‘Р Р… (70%)</button>
+            )}
+            {sellStatus === 'sold' && (
+              <div className="ml-2 text-xs text-green-400">Р вЂ”Р В°РЎвЂЎР С‘РЎРѓР В»Р ВµР Р…Р С•: {formatPrice(product.price * 0.7)}</div>
+            )}
+          </div>
+          {/* Р С›Р С—Р С‘РЎРѓР В°Р Р…Р С‘Р Вµ Р С‘Р С–РЎР‚РЎвЂ№ */}
+          <div className="mt-6">
+            <h3 className="text-lg font-semibold">Р С›Р С—Р С‘РЎРѓР В°Р Р…Р С‘Р Вµ</h3>
+            <p className="mt-2 text-white/70 text-sm">{product.description || 'Р С›Р С—Р С‘РЎРѓР В°Р Р…Р С‘Р Вµ Р В±РЎС“Р Т‘Р ВµРЎвЂљ Р Т‘Р С•Р В±Р В°Р Р†Р В»Р ВµР Р…Р С• Р С—Р С•Р В·Р В¶Р Вµ.'}</p>
+          </div>
+          {/* Р СћР ВµРЎвЂ¦Р Р…Р С‘РЎвЂЎР ВµРЎРѓР С”Р С‘Р Вµ РЎвЂ¦Р В°РЎР‚Р В°Р С”РЎвЂљР ВµРЎР‚Р С‘РЎРѓРЎвЂљР С‘Р С”Р С‘ Р Т‘Р В»РЎРЏ Р С‘Р С–РЎР‚ */}
+          {product.category === 'game' && (
+            <div className="mt-6">
+              <h3 className="text-lg font-semibold">Р СћР ВµРЎвЂ¦Р Р…Р С‘РЎвЂЎР ВµРЎРѓР С”Р С‘Р Вµ РЎвЂ¦Р В°РЎР‚Р В°Р С”РЎвЂљР ВµРЎР‚Р С‘РЎРѓРЎвЂљР С‘Р С”Р С‘</h3>
+              <ul className="mt-2 text-white/70 text-sm space-y-1">
+                <li>Р В Р В°Р В·РЎР‚Р В°Р В±Р С•РЎвЂљРЎвЂЎР С‘Р С”: {product.specs?.developer || 'РІР‚вЂќ'}</li>
+                <li>Р вЂњР С•Р Т‘ Р Р†РЎвЂ№Р С—РЎС“РЎРѓР С”Р В°: {product.specs?.release || 'РІР‚вЂќ'}</li>
+                <li>Р СџР В»Р В°РЎвЂљРЎвЂћР С•РЎР‚Р С�Р В°: {product.specs?.platform || 'РІР‚вЂќ'}</li>
+                <li>Р СљР С‘Р Р…Р С‘Р С�Р В°Р В»РЎРЉР Р…РЎвЂ№Р Вµ РЎвЂљРЎР‚Р ВµР В±Р С•Р Р†Р В°Р Р…Р С‘РЎРЏ: {product.specs?.min || 'РІР‚вЂќ'}</li>
+              </ul>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Р РЋ РЎРЊРЎвЂљР С‘Р С� Р ВµРЎвЂ°Р Вµ Р С—Р С•Р С”РЎС“Р С—Р В°РЎР‹РЎвЂљ */}
+      {recommendations.length > 0 && (
+        <div className="space-y-3">
+          <h3 className="text-xl font-bold">Р РЋ РЎРЊРЎвЂљР С‘Р С� Р ВµРЎвЂ°Р Вµ Р С—Р С•Р С”РЎС“Р С—Р В°РЎР‹РЎвЂљ</h3>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            {recommendations.map(p => (
+              <div key={p.id} className="bg-[#161f38] rounded-lg overflow-hidden border border-white/10 hover:border-blue-500/50 transition-colors">
+                <div className="relative h-32">
+                  <LazyImage src={p.image} alt={p.name} className="h-full w-full object-cover" />
+                </div>
+                <div className="p-3">
+                  <h3 className="text-sm font-medium text-white/90 truncate">{p.name}</h3>
+                  <div className="flex items-center justify-between mt-2">
+                    <span className="text-blue-400 font-bold text-sm">{formatPrice(p.price)}</span>
+                    <button 
+                      onClick={() => addItem(p, 1)}
+                      className="px-2 py-1 bg-blue-600 hover:bg-blue-700 rounded text-xs transition-colors"
+                    >
+                      Р вЂ™ Р С”Р С•РЎР‚Р В·Р С‘Р Р…РЎС“
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </section>
+  )
+}
+
+// Р вЂњР В»Р В°Р Р†Р Р…Р В°РЎРЏ РЎРѓРЎвЂљРЎР‚Р В°Р Р…Р С‘РЎвЂ Р В°
+function Home() {
+  const { formatPrice } = useLang()
+  const { cmsContent } = useCMS()
+  const [version, setVersion] = React.useState(0)
+  
+  React.useEffect(() => {
+    const onProductsLoaded = () => setVersion(v => v + 1)
+    window.addEventListener('products-loaded', onProductsLoaded)
+    return () => window.removeEventListener('products-loaded', onProductsLoaded)
+  }, [])
+
+  const [remaining, setRemaining] = React.useState('')
+  const endsAtRef = React.useRef(Date.now() + 24 * 60 * 60 * 1000) // Р В°Р С”РЎвЂ Р С‘РЎРЏ 24 РЎвЂЎР В°РЎРѓР В°
+  React.useEffect(() => {
+    const update = () => {
+      const diff = endsAtRef.current - Date.now()
+      if (diff <= 0) { setRemaining('00:00:00'); return }
+      const h = Math.floor(diff / 3600000)
+      const m = Math.floor((diff % 3600000) / 60000)
+      const s = Math.floor((diff % 60000) / 1000)
+      setRemaining(`${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`)
+    }
+    update()
+    const t = setInterval(update, 1000)
+    return () => clearInterval(t)
+  }, [])
+
+  const { addItem } = useCart()
+  const addToCart = (product) => {
+    const qtyStr = window.prompt('Р вЂ™РЎвЂ№Р В±Р ВµРЎР‚Р С‘РЎвЂљР Вµ Р С”Р С•Р В»Р С‘РЎвЂЎР ВµРЎРѓРЎвЂљР Р†Р С•', '1')
+    const qty = parseInt(qtyStr || '0', 10)
+    if (!Number.isNaN(qty) && qty > 0) {
+      addItem(product, qty)
+    }
+  }
+
+  // Р СџРЎР‚Р С•Р С�Р С•-РЎРѓР В»Р В°Р в„–Р Т‘Р ВµРЎР‚ Р Р…Р В° Р С–Р В»Р В°Р Р†Р Р…Р С•Р в„–: Р В°Р Р†РЎвЂљР С•Р С—РЎР‚Р С•Р С”РЎР‚РЎС“РЎвЂљР С”Р В° Р В±Р ВµР В· РЎР‚РЎС“РЎвЂЎР Р…РЎвЂ№РЎвЂ¦ Р С”Р С•Р Р…РЎвЂљРЎР‚Р С•Р В»Р С•Р Р†
+  const promoRef = React.useRef(null)
+  const promoTimerRef = React.useRef(null)
+  const promoStep = () => {
+    const el = promoRef.current
+    if (!el) return
+    const first = el.firstElementChild
+    const step = first ? first.getBoundingClientRect().width + 24 : 320
+    const nearEnd = el.scrollLeft + el.clientWidth + step >= el.scrollWidth - 4
+    if (nearEnd) {
+      el.scrollTo({ left: 0, behavior: 'smooth' })
+    } else {
+      el.scrollBy({ left: step, behavior: 'smooth' })
+    }
+  }
+  const startPromo = () => { if (!promoTimerRef.current) promoTimerRef.current = setInterval(promoStep, 2500) }
+  const stopPromo = () => { if (promoTimerRef.current) { clearInterval(promoTimerRef.current); promoTimerRef.current = null } }
+  React.useEffect(() => {
+    const el = promoRef.current
+    if (!el) return
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => { entry.isIntersecting ? startPromo() : stopPromo() })
+    }, { root: null, threshold: 0.1 })
+    observer.observe(el)
+    const onEnter = () => stopPromo()
+    const onLeave = () => startPromo()
+    el.addEventListener('mouseenter', onEnter)
+    el.addEventListener('mouseleave', onLeave)
+    startPromo()
+    return () => { observer.disconnect(); el.removeEventListener('mouseenter', onEnter); el.removeEventListener('mouseleave', onLeave); stopPromo() }
+  }, [])
+
+  const promoItems = React.useMemo(() => {
+    const items = DATA.products.filter(p => {
+      const src = p.introImage || p.image
+      return src && !String(src).includes('/images/logo/logo.png')
+    })
+    const arr = [...items]
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1))
+      ;[arr[i], arr[j]] = [arr[j], arr[i]]
+    }
+    return arr.slice(0, 10).map(p => ({ product: p, src: p.introImage || p.image, to: `/product/${p.id}` }))
+  }, [version])
+  
+  // Р В Р В°Р Р…Р Т‘Р С•Р С�Р С‘Р В·Р В°РЎвЂ Р С‘РЎРЏ Р С‘Р С–РЎР‚ Р Р…Р В° Р С–Р В»Р В°Р Р†Р Р…Р С•Р в„–: Р Т‘Р Р†Р Вµ РЎРѓРЎвЂљРЎР‚Р С•Р С”Р С‘, РЎР‚Р В°Р В·Р Р…РЎвЂ№Р Вµ Р С—РЎР‚Р С‘ Р С”Р В°Р В¶Р Т‘Р С•Р С� Р С•Р В±Р Р…Р С•Р Р†Р В»Р ВµР Р…Р С‘Р С‘
+  const gamesShuffled = React.useMemo(() => {
+    const list = DATA.products.filter(p => p.category === 'game')
+    const arr = [...list]
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1))
+      ;[arr[i], arr[j]] = [arr[j], arr[i]]
+    }
+    return arr
+  }, [version])
+  const gamesRow1 = React.useMemo(() => gamesShuffled.slice(0, 6), [gamesShuffled])
+  const gamesRow2 = React.useMemo(() => gamesShuffled.slice(6, 12), [gamesShuffled])
+
+  const scrollToRoulette = React.useCallback(() => {
+    const el = document.getElementById('roulette-anchor')
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }, [])
+  
+  return (
+    <section className="space-y-8 p-4 sm:p-6">
+      {/* Р вЂњР В»Р В°Р Р†Р Р…РЎвЂ№Р в„– Р В±Р В°Р Р…Р Р…Р ВµРЎР‚ - Hero Section */}
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#0a0f1c] via-[#1a1f3a] to-[#2d1b69] min-h-[500px] flex items-center">
+        {/* Р В¤Р С•Р Р…Р С•Р Р†РЎвЂ№Р Вµ РЎРЊРЎвЂћРЎвЂћР ВµР С”РЎвЂљРЎвЂ№ */}
+        <div className="absolute inset-0">
+          {/* Р СљР С•Р Р…РЎвЂљР В°Р В¶ Р С‘Р В·Р С•Р В±РЎР‚Р В°Р В¶Р ВµР Р…Р С‘Р в„– Р С‘Р С–РЎР‚/РЎРѓР С”Р С‘Р Р…Р С•Р Р†: Р Т‘Р С‘Р Р…Р В°Р С�Р С‘РЎвЂЎР Р…Р В°РЎРЏ РЎРѓР ВµРЎвЂљР С”Р В° Р С‘Р В· Р С”Р Р†Р В°Р Т‘РЎР‚Р В°РЎвЂљР С•Р Р† */}
+          <div className="absolute inset-0 pointer-events-none">
+            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent"></div>
+            <div className="grid grid-cols-5 gap-2 w-full h-full p-4 opacity-20" style={{ gridAutoRows: '100px' }}>
+              {DATA.products.slice(0, 25).map((p) => (
+                <div key={p.id} className="relative rounded-lg overflow-hidden" style={{ aspectRatio: '1 / 1' }}>
+                  <LazyImage src={p.introImage || p.image} alt={p.name} className="w-full h-full object-cover" />
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="absolute top-0 left-0 w-96 h-96 bg-blue-500/20 rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2"></div>
+          <div className="absolute bottom-0 right-0 w-96 h-96 bg-purple-500/20 rounded-full blur-3xl translate-x-1/2 translate-y-1/2"></div>
+          <div className="absolute top-1/2 left-1/2 w-64 h-64 bg-cyan-400/10 rounded-full blur-2xl -translate-x-1/2 -translate-y-1/2"></div>
+        </div>
+        
+        {/* Р С™Р С•Р Р…РЎвЂљР ВµР Р…РЎвЂљ Р В±Р В°Р Р…Р Р…Р ВµРЎР‚Р В° */}
+        <div className="relative z-10 w-full px-8 py-12">
+          <div className="max-w-4xl mx-auto text-center">
+            <div className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-500/20 to-purple-500/20 rounded-full border border-blue-400/30 mb-6">
+              <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
+              <span className="text-sm text-blue-300 font-medium">Р С’Р С”РЎвЂ Р С‘РЎРЏ Р В·Р В°Р С”Р В°Р Р…РЎвЂЎР С‘Р Р†Р В°Р ВµРЎвЂљРЎРѓРЎРЏ РЎвЂЎР ВµРЎР‚Р ВµР В· {remaining}</span>
+            </div>
+            
+            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black bg-gradient-to-r from-white via-blue-100 to-purple-200 bg-clip-text text-transparent mb-6 leading-tight">
+              {cmsContent.bannerTitle}
+            </h1>
+            
+            <p className="text-lg sm:text-xl text-white/80 mb-8 max-w-2xl mx-auto leading-relaxed">
+              {cmsContent.bannerDescription}
+            </p>
+            
+            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+              <NavLink 
+                to="/skins" 
+                className="group relative px-8 py-4 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 rounded-xl font-bold text-white transition-all duration-300 transform hover:scale-105 hover:shadow-2xl hover:shadow-blue-500/25 min-w-[200px]"
+              >
+                <span className="relative z-10">Р С™РЎС“Р С—Р С‘РЎвЂљРЎРЉ РЎРѓР С”Р С‘Р Р…РЎвЂ№</span>
+                <div className="absolute inset-0 bg-gradient-to-r from-blue-400 to-purple-400 rounded-xl blur opacity-0 group-hover:opacity-30 transition-opacity duration-300"></div>
+              </NavLink>
+              
+              <NavLink 
+                to="/sell" 
+                className="group px-8 py-4 bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/20 hover:border-white/40 rounded-xl font-bold text-white transition-all duration-300 transform hover:scale-105 min-w-[200px]"
+              >
+                Р СџРЎР‚Р С•Р Т‘Р В°РЎвЂљРЎРЉ РЎРѓР С”Р С‘Р Р…
+              </NavLink>
+
+              <NavLink 
+                to="/product/cyberpunk" 
+                className="group px-8 py-4 bg-[#1b2838] hover:bg-[#2a475e] border border-white/10 rounded-xl font-bold text-white transition-all duration-300 transform hover:scale-105 min-w-[200px]"
+              >
+                Р СћР С•Р С—РІР‚вЂ�Р С‘Р С–РЎР‚Р В°
+              </NavLink>
+            </div>
+
+            {/* Р В�Р С”Р С•Р Р…Р С”Р С‘ Р С—Р С•Р С—РЎС“Р В»РЎРЏРЎР‚Р Р…РЎвЂ№РЎвЂ¦ Р С‘Р С–РЎР‚ РЎС“Р Т‘Р В°Р В»Р ВµР Р…РЎвЂ№ Р С—Р С• Р В·Р В°Р С—РЎР‚Р С•РЎРѓРЎС“ Р С—Р С•Р В»РЎРЉР В·Р С•Р Р†Р В°РЎвЂљР ВµР В»РЎРЏ */}
+          </div>
+        </div>
+        
+        {/* Р вЂќР ВµР С”Р С•РЎР‚Р В°РЎвЂљР С‘Р Р†Р Р…РЎвЂ№Р Вµ РЎРЊР В»Р ВµР С�Р ВµР Р…РЎвЂљРЎвЂ№ */}
+        <div className="absolute top-4 right-4 w-32 h-32 border border-white/10 rounded-full animate-spin" style={{animationDuration: '20s'}}></div>
+        <div className="absolute bottom-4 left-4 w-24 h-24 border border-blue-400/20 rounded-full animate-pulse"></div>
+      </div>
+
+      {/* Р СџРЎР‚Р С•Р С�Р С•-РЎРѓР В»Р В°Р в„–Р Т‘Р ВµРЎР‚ - Featured Games */}
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <h2 className="text-3xl font-bold bg-gradient-to-r from-white to-blue-200 bg-clip-text text-transparent">
+            СЂСџвЂќТђ Р вЂњР С•РЎР‚РЎРЏРЎвЂЎР С‘Р Вµ Р С—РЎР‚Р ВµР Т‘Р В»Р С•Р В¶Р ВµР Р…Р С‘РЎРЏ
+          </h2>
+          <div className="text-sm text-white/60">Р С›Р В±Р Р…Р С•Р Р†Р В»РЎРЏР ВµРЎвЂљРЎРѓРЎРЏ Р С”Р В°Р В¶Р Т‘РЎвЂ№Р в„– РЎвЂЎР В°РЎРѓ</div>
+        </div>
+        
+        <div className="relative">
+          <div ref={promoRef} className="flex gap-6 overflow-x-auto snap-x snap-mandatory scroll-smooth pb-4 scrollbar-hide">
+            {promoItems.map((item, i) => (
+              <NavLink to={item.to} key={i} className="group snap-start shrink-0 w-[320px] sm:w-[380px]">
+                <div className="relative h-48 w-full rounded-2xl overflow-hidden bg-gradient-to-br from-[#161f38] to-[#1f2a4a] border border-white/10 hover:border-blue-400/50 transition-all duration-300 transform hover:scale-[1.02] hover:shadow-2xl hover:shadow-blue-500/20">
+                  <LazyImage src={item.src} alt={item.name} className="h-full w-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                  
+                  {/* Р вЂњРЎР‚Р В°Р Т‘Р С‘Р ВµР Р…РЎвЂљ Р С•Р Р†Р ВµРЎР‚Р В»Р ВµР в„– */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
+                  
+                  {/* Р вЂ�Р ВµР в„–Р Т‘Р В¶ РЎРѓР С”Р С‘Р Т‘Р С”Р С‘ */}
+                  <div className="absolute top-4 left-4 px-3 py-1 bg-gradient-to-r from-red-500 to-pink-500 text-white text-sm font-bold rounded-full shadow-lg">
+                    -{Math.floor(Math.random() * 30 + 20)}%
+                  </div>
+                  
+                  {/* Р С™Р С•Р Р…РЎвЂљР ВµР Р…РЎвЂљ */}
+                  <div className="absolute bottom-0 left-0 right-0 p-6">
+                    <h3 className="text-white font-bold text-lg mb-2 truncate">{item.name}</h3>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-baseline gap-2">
+                        <span className="text-white/60 line-through text-sm">{formatPrice(Math.round(item.price * 1.4))}</span>
+                        <span className="text-blue-400 font-bold text-xl">{formatPrice(item.price)}</span>
+                      </div>
+                      <button 
+                        onClick={(e) => { e.preventDefault(); e.stopPropagation(); addItem(item.product, 1) }}
+                        className="px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 rounded-lg text-white font-medium transition-all duration-300 transform hover:scale-105"
+                      >
+                        Р вЂ™ Р С”Р С•РЎР‚Р В·Р С‘Р Р…РЎС“
+                      </button>
+                    </div>
+                  </div>
+                  
+                  {/* Р В­РЎвЂћРЎвЂћР ВµР С”РЎвЂљ РЎРѓР Р†Р ВµРЎвЂЎР ВµР Р…Р С‘РЎРЏ Р С—РЎР‚Р С‘ РЎвЂ¦Р С•Р Р†Р ВµРЎР‚Р Вµ */}
+                  <div className="absolute inset-0 bg-gradient-to-r from-blue-500/0 via-blue-500/10 to-purple-500/0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                </div>
+              </NavLink>
+            ))}
+          </div>
+          
+          {/* Р В�Р Р…Р Т‘Р С‘Р С”Р В°РЎвЂљР С•РЎР‚РЎвЂ№ Р С—РЎР‚Р С•Р С”РЎР‚РЎС“РЎвЂљР С”Р С‘ */}
+          <div className="flex justify-center mt-4 gap-2">
+            {promoItems.slice(0, 5).map((_, i) => (
+              <div key={i} className="w-2 h-2 rounded-full bg-white/20"></div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Р СџР С•Р С—РЎС“Р В»РЎРЏРЎР‚Р Р…РЎвЂ№Р Вµ РЎРѓР С”Р С‘Р Р…РЎвЂ№ - РЎС“Р В»РЎС“РЎвЂЎРЎв‚¬Р ВµР Р…Р Р…Р В°РЎРЏ Р С”Р В°РЎР‚РЎС“РЎРѓР ВµР В»РЎРЉ */}
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <h2 className="text-3xl font-bold bg-gradient-to-r from-white to-purple-200 bg-clip-text text-transparent">
+            РІСљРЃ Р СџР С•Р С—РЎС“Р В»РЎРЏРЎР‚Р Р…РЎвЂ№Р Вµ РЎРѓР С”Р С‘Р Р…РЎвЂ№
+          </h2>
+          <NavLink to="/skins" className="group flex items-center gap-2 text-blue-400 hover:text-blue-300 transition-colors">
+            <span>Р РЋР С�Р С•РЎвЂљРЎР‚Р ВµРЎвЂљРЎРЉ Р Р†РЎРѓР Вµ</span>
+            <svg className="w-4 h-4 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          </NavLink>
+        </div>
+        
+        <div className="relative">
+          <div id="popular-skins-carousel" className="flex gap-6 overflow-x-auto snap-x snap-mandatory scroll-smooth pb-4 scrollbar-hide">
+            {DATA.products.filter(p => p.category === 'skin').slice(0, 8).map(product => (
+              <div key={product.id} className="group snap-start shrink-0 w-[240px]">
+                <div className="relative bg-gradient-to-br from-[#161f38] to-[#1f2a4a] rounded-2xl overflow-hidden border border-white/10 hover:border-purple-400/50 transition-all duration-300 transform hover:scale-[1.02] hover:shadow-2xl hover:shadow-purple-500/20">
+                  <div className="relative h-40 overflow-hidden">
+                    <LazyImage src={product.image} alt={product.name} className="h-full w-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                    
+                    {/* Р вЂњРЎР‚Р В°Р Т‘Р С‘Р ВµР Р…РЎвЂљ Р С•Р Р†Р ВµРЎР‚Р В»Р ВµР в„– */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+                    
+                    {/* Р вЂ�Р ВµР в„–Р Т‘Р В¶ РЎРѓР С”Р С‘Р Т‘Р С”Р С‘ */}
+                    <div className="absolute top-3 right-3 px-2 py-1 bg-gradient-to-r from-orange-500 to-red-500 text-white text-xs font-bold rounded-full shadow-lg">
+                      -{Math.floor(Math.random() * 30 + 10)}%
+                    </div>
+                    
+                    {/* Р В Р ВµР в„–РЎвЂљР С‘Р Р…Р С– Р С”Р В°РЎвЂЎР ВµРЎРѓРЎвЂљР Р†Р В° */}
+                    <div className="absolute top-3 left-3 px-2 py-1 bg-black/50 backdrop-blur-sm rounded-full">
+                      <div className="flex items-center gap-1">
+                        <div className="w-2 h-2 bg-yellow-400 rounded-full"></div>
+                        <span className="text-xs text-white font-medium">Rare</span>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="p-4">
+                    <h3 className="text-white font-semibold text-sm mb-2 truncate">{product.name}</h3>
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-baseline gap-2">
+                        <span className="text-white/50 line-through text-xs">{formatPrice(Math.round(product.price * 1.3))}</span>
+                        <span className="text-purple-400 font-bold text-lg">{formatPrice(product.price)}</span>
+                      </div>
+                    </div>
+                    
+                    <button 
+                      onClick={() => addItem(product, 1)}
+                      className="w-full px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 rounded-lg text-white font-medium transition-all duration-300 transform hover:scale-105"
+                    >
+                      Р вЂ™ Р С”Р С•РЎР‚Р В·Р С‘Р Р…РЎС“
+                    </button>
+                  </div>
+                  
+                  {/* Р В­РЎвЂћРЎвЂћР ВµР С”РЎвЂљ РЎРѓР Р†Р ВµРЎвЂЎР ВµР Р…Р С‘РЎРЏ */}
+                  <div className="absolute inset-0 bg-gradient-to-r from-purple-500/0 via-purple-500/5 to-pink-500/0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Р СџР С•Р С—РЎС“Р В»РЎРЏРЎР‚Р Р…РЎвЂ№Р Вµ Р С‘Р С–РЎР‚РЎвЂ№ - РЎС“Р В»РЎС“РЎвЂЎРЎв‚¬Р ВµР Р…Р Р…Р В°РЎРЏ РЎРѓР ВµРЎвЂљР С”Р В° */}
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <h2 className="text-3xl font-bold bg-gradient-to-r from-white to-green-200 bg-clip-text text-transparent">
+            СЂСџР‹В® Р СџР С•Р С—РЎС“Р В»РЎРЏРЎР‚Р Р…РЎвЂ№Р Вµ Р С‘Р С–РЎР‚РЎвЂ№
+          </h2>
+          <NavLink to="/games" className="group flex items-center gap-2 text-blue-400 hover:text-blue-300 transition-colors">
+            <span>Р РЋР С�Р С•РЎвЂљРЎР‚Р ВµРЎвЂљРЎРЉ Р Р†РЎРѓР Вµ</span>
+            <svg className="w-4 h-4 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          </NavLink>
+        </div>
+        
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          {gamesRow1.map(product => (
+            <NavLink key={product.id} to={`/product/${product.id}`} className="group">
+              <div className="relative bg-gradient-to-br from-[#161f38] to-[#1f2a4a] rounded-2xl overflow-hidden border border-white/10 hover:border-green-400/50 transition-all duration-300 transform hover:scale-[1.02] hover:shadow-2xl hover:shadow-green-500/20">
+                <div className="relative h-48 overflow-hidden">
+                  <LazyImage src={product.image} alt={product.name} className="h-full w-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                  
+                  {/* Р вЂњРЎР‚Р В°Р Т‘Р С‘Р ВµР Р…РЎвЂљ Р С•Р Р†Р ВµРЎР‚Р В»Р ВµР в„– */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
+                  
+                  {/* Р СћР С‘Р С— Р С‘Р С–РЎР‚РЎвЂ№ */}
+                  <div className="absolute top-3 right-3 px-3 py-1 bg-black/50 backdrop-blur-sm rounded-full">
+                    <span className="text-xs text-white/90 font-medium uppercase tracking-wide">{product.type}</span>
+                  </div>
+                  
+                  {/* Р В Р ВµР в„–РЎвЂљР С‘Р Р…Р С– */}
+                  <div className="absolute top-3 left-3 flex items-center gap-1 px-2 py-1 bg-black/50 backdrop-blur-sm rounded-full">
+                    <svg className="w-3 h-3 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                    </svg>
+                    <span className="text-xs text-white font-medium">{(Math.random() * 2 + 3).toFixed(1)}</span>
+                  </div>
+                  
+                  {/* Р С™Р С•Р Р…РЎвЂљР ВµР Р…РЎвЂљ Р Р†Р Р…Р С‘Р В·РЎС“ */}
+                  <div className="absolute bottom-0 left-0 right-0 p-4">
+                    <h3 className="text-white font-bold text-lg mb-2">{product.name}</h3>
+                    <div className="flex items-center justify-between">
+                      <span className="text-green-400 font-bold text-xl">{formatPrice(product.price)}</span>
+                      <button 
+                        onClick={(e) => { e.preventDefault(); e.stopPropagation(); addItem(product, 1) }}
+                        className="px-4 py-2 bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-500 hover:to-blue-500 rounded-lg text-white font-medium transition-all duration-300 transform hover:scale-105"
+                      >
+                        Р С™РЎС“Р С—Р С‘РЎвЂљРЎРЉ
+                      </button>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Р В­РЎвЂћРЎвЂћР ВµР С”РЎвЂљ РЎРѓР Р†Р ВµРЎвЂЎР ВµР Р…Р С‘РЎРЏ */}
+                <div className="absolute inset-0 bg-gradient-to-r from-green-500/0 via-green-500/5 to-blue-500/0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
+              </div>
+            </NavLink>
+          ))}
+        </div>
+      </div>
+
+      {/* Р В РЎС“Р В»Р ВµРЎвЂљР С”Р В° - РЎС“Р В»РЎС“РЎвЂЎРЎв‚¬Р ВµР Р…Р Р…РЎвЂ№Р в„– Р Т‘Р С‘Р В·Р В°Р в„–Р Р… */}
+      <div id="roulette-anchor" className="space-y-6">
+        <div className="flex items-center justify-between">
+          <h2 className="text-3xl font-bold bg-gradient-to-r from-white to-yellow-200 bg-clip-text text-transparent">
+            СЂСџР‹В° Р В РЎС“Р В»Р ВµРЎвЂљР С”Р В° РЎРѓР С”Р С‘Р Р…Р С•Р Р†
+          </h2>
+          <NavLink to="/roulette" className="group flex items-center gap-2 text-yellow-400 hover:text-yellow-300 transition-colors">
+            <span>Р В�Р С–РЎР‚Р В°РЎвЂљРЎРЉ</span>
+            <svg className="w-4 h-4 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          </NavLink>
+        </div>
+        
+        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#1a0f2e] via-[#2d1b69] to-[#4c1d95] p-8 border border-purple-500/30">
+          {/* Р В¤Р С•Р Р…Р С•Р Р†РЎвЂ№Р Вµ РЎРЊРЎвЂћРЎвЂћР ВµР С”РЎвЂљРЎвЂ№ */}
+          <div className="absolute inset-0">
+            <div className="absolute top-0 left-0 w-64 h-64 bg-yellow-500/10 rounded-full blur-3xl animate-pulse"></div>
+            <div className="absolute bottom-0 right-0 w-64 h-64 bg-purple-500/10 rounded-full blur-3xl animate-pulse" style={{animationDelay: '1s'}}></div>
+            <div className="absolute top-1/2 left-1/2 w-32 h-32 bg-pink-500/10 rounded-full blur-2xl animate-pulse" style={{animationDelay: '0.5s'}}></div>
+          </div>
+          
+          <div className="relative z-10 text-center space-y-6">
+            {/* Р С’Р Р…Р С‘Р С�Р С‘РЎР‚Р С•Р Р†Р В°Р Р…Р Р…Р В°РЎРЏ Р С‘Р С”Р С•Р Р…Р С”Р В° */}
+            <div className="relative inline-block">
+              <div className="text-6xl animate-spin" style={{animationDuration: '3s'}}>СЂСџР‹В°</div>
+              <div className="absolute inset-0 bg-gradient-to-r from-yellow-400/20 to-purple-400/20 rounded-full blur-xl animate-pulse"></div>
+            </div>
+            
+            <div className="space-y-4">
+              <h3 className="text-2xl sm:text-3xl font-black bg-gradient-to-r from-yellow-400 via-pink-400 to-purple-400 bg-clip-text text-transparent">
+                Р СџР С•Р С—РЎР‚Р С•Р В±РЎС“Р в„– РЎС“Р Т‘Р В°РЎвЂЎРЎС“!
+              </h3>
+              <p className="text-lg text-white/80 max-w-md mx-auto">
+                Р С™РЎР‚РЎС“РЎвЂљР С‘ РЎР‚РЎС“Р В»Р ВµРЎвЂљР С”РЎС“ Р С‘ Р Р†РЎвЂ№Р С‘Р С–РЎР‚РЎвЂ№Р Р†Р В°Р в„– РЎР‚Р ВµР Т‘Р С”Р С‘Р Вµ РЎРѓР С”Р С‘Р Р…РЎвЂ№. Р С™Р В°Р В¶Р Т‘РЎвЂ№Р в„– РЎРѓР С—Р С‘Р Р… - РЎв‚¬Р В°Р Р…РЎРѓ Р Р…Р В° Р В»Р ВµР С–Р ВµР Р…Р Т‘Р В°РЎР‚Р Р…РЎвЂ№Р в„– Р С—РЎР‚Р С‘Р В·!
+              </p>
+            </div>
+            
+            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+              <NavLink 
+                to="/roulette" 
+                className="group relative px-8 py-4 bg-gradient-to-r from-yellow-500 via-orange-500 to-red-500 hover:from-yellow-400 hover:via-orange-400 hover:to-red-400 rounded-xl font-bold text-white transition-all duration-300 transform hover:scale-105 hover:shadow-2xl hover:shadow-orange-500/25 min-w-[200px]"
+              >
+                <span className="relative z-10">СЂСџР‹Р† Р С™РЎР‚РЎС“РЎвЂљР С‘РЎвЂљРЎРЉ РЎР‚РЎС“Р В»Р ВµРЎвЂљР С”РЎС“</span>
+                <div className="absolute inset-0 bg-gradient-to-r from-yellow-300 to-red-300 rounded-xl blur opacity-0 group-hover:opacity-30 transition-opacity duration-300"></div>
+              </NavLink>
+              
+              <div className="text-center">
+                <div className="text-sm text-white/60">Р СљР С‘Р Р…Р С‘Р С�Р В°Р В»РЎРЉР Р…Р В°РЎРЏ РЎРѓРЎвЂљР В°Р Р†Р С”Р В°</div>
+                <div className="text-xl font-bold text-yellow-400">$1.00</div>
+              </div>
+            </div>
+            
+            {/* Р РЋРЎвЂљР В°РЎвЂљР С‘РЎРѓРЎвЂљР С‘Р С”Р В° */}
+            <div className="grid grid-cols-3 gap-4 max-w-md mx-auto pt-4 border-t border-white/10">
+              <div className="text-center">
+                <div className="text-2xl font-bold text-green-400">87%</div>
+                <div className="text-xs text-white/60">Р РЃР В°Р Р…РЎРѓ Р Р†РЎвЂ№Р С‘Р С–РЎР‚РЎвЂ№РЎв‚¬Р В°</div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-purple-400">2.5x</div>
+                <div className="text-xs text-white/60">Р СљР В°Р С”РЎРѓ. Р С�Р Р…Р С•Р В¶Р С‘РЎвЂљР ВµР В»РЎРЉ</div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-yellow-400">1,247</div>
+                <div className="text-xs text-white/60">Р В�Р С–РЎР‚Р С•Р С”Р С•Р Р† Р С•Р Р…Р В»Р В°Р в„–Р Р…</div>
+              </div>
+            </div>
+          </div>
+          
+          {/* Р вЂќР ВµР С”Р С•РЎР‚Р В°РЎвЂљР С‘Р Р†Р Р…РЎвЂ№Р Вµ РЎРЊР В»Р ВµР С�Р ВµР Р…РЎвЂљРЎвЂ№ */}
+          <div className="absolute top-4 right-4 w-16 h-16 border-2 border-yellow-400/30 rounded-full animate-spin" style={{animationDuration: '8s'}}></div>
+          <div className="absolute bottom-4 left-4 w-12 h-12 border-2 border-purple-400/30 rounded-full animate-ping"></div>
+        </div>
+      </div>
+
+      {/* Р вЂ�Р В»Р С•Р С” Р С•РЎвЂљР В·РЎвЂ№Р Р†Р С•Р Р† */}
+      <div className="space-y-8">
+        <div className="text-center space-y-4">
+          <h2 className="text-4xl font-bold bg-gradient-to-r from-white via-blue-200 to-purple-200 bg-clip-text text-transparent">
+            СЂСџвЂ™В¬ Р С›РЎвЂљР В·РЎвЂ№Р Р†РЎвЂ№ Р Р…Р В°РЎв‚¬Р С‘РЎвЂ¦ Р С”Р В»Р С‘Р ВµР Р…РЎвЂљР С•Р Р†
+          </h2>
+          <p className="text-lg text-white/70 max-w-2xl mx-auto">
+            Р Р€Р В·Р Р…Р В°Р в„–РЎвЂљР Вµ, РЎвЂЎРЎвЂљР С• Р С–Р С•Р Р†Р С•РЎР‚РЎРЏРЎвЂљ Р С• Р Р…Р В°РЎРѓ РЎвЂљРЎвЂ№РЎРѓРЎРЏРЎвЂЎР С‘ Р Т‘Р С•Р Р†Р С•Р В»РЎРЉР Р…РЎвЂ№РЎвЂ¦ Р С‘Р С–РЎР‚Р С•Р С”Р С•Р Р† РЎРѓР С• Р Р†РЎРѓР ВµР С–Р С• Р С�Р С‘РЎР‚Р В°
+          </p>
+        </div>
+
+        {/* Р С™Р В°РЎР‚РЎС“РЎРѓР ВµР В»РЎРЉ Р С•РЎвЂљР В·РЎвЂ№Р Р†Р С•Р Р† */}
+        <div className="relative overflow-hidden">
+          <div className="flex gap-6 animate-scroll-x">
+            {/* Р С›РЎвЂљР В·РЎвЂ№Р Р† 1 */}
+            <div className="min-w-[350px] bg-gradient-to-br from-[#1a1a2e] via-[#16213e] to-[#0f172a] rounded-2xl p-6 border border-white/10 hover:border-blue-500/30 transition-all duration-300 hover:transform hover:scale-105">
+              <div className="flex items-center gap-4 mb-4">
+                <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-white font-bold">
+                  Р С’
+                </div>
+                <div>
+                  <div className="font-semibold text-white">Р С’Р В»Р ВµР С”РЎРѓР ВµР в„–_Pro</div>
+                  <div className="flex text-yellow-400 text-sm">
+                    РІВ­С’РІВ­С’РІВ­С’РІВ­С’РІВ­С’
+                  </div>
+                </div>
+              </div>
+              <p className="text-white/80 leading-relaxed">
+                "Р С›РЎвЂљР В»Р С‘РЎвЂЎР Р…РЎвЂ№Р в„– Р С�Р В°Р С–Р В°Р В·Р С‘Р Р…! Р С™РЎС“Р С—Р С‘Р В» Р Р…Р ВµРЎРѓР С”Р С•Р В»РЎРЉР С”Р С• РЎРѓР С”Р С‘Р Р…Р С•Р Р† Р Т‘Р В»РЎРЏ CS2, Р Р†РЎРѓР Вµ Р С—РЎР‚Р С‘РЎв‚¬Р В»Р С• Р С�Р С•Р С�Р ВµР Р…РЎвЂљР В°Р В»РЎРЉР Р…Р С•. Р В¦Р ВµР Р…РЎвЂ№ Р В°Р Т‘Р ВµР С”Р Р†Р В°РЎвЂљР Р…РЎвЂ№Р Вµ, Р С—Р С•Р Т‘Р Т‘Р ВµРЎР‚Р В¶Р С”Р В° Р С•РЎвЂљР Р†Р ВµРЎвЂЎР В°Р ВµРЎвЂљ Р В±РЎвЂ№РЎРѓРЎвЂљРЎР‚Р С•. Р В Р ВµР С”Р С•Р С�Р ВµР Р…Р Т‘РЎС“РЎР‹!"
+              </p>
+              <div className="mt-4 text-xs text-white/50">
+                2 Р Т‘Р Р…РЎРЏ Р Р…Р В°Р В·Р В°Р Т‘
+              </div>
+            </div>
+
+            {/* Р С›РЎвЂљР В·РЎвЂ№Р Р† 2 */}
+            <div className="min-w-[350px] bg-gradient-to-br from-[#1a1a2e] via-[#16213e] to-[#0f172a] rounded-2xl p-6 border border-white/10 hover:border-green-500/30 transition-all duration-300 hover:transform hover:scale-105">
+              <div className="flex items-center gap-4 mb-4">
+                <div className="w-12 h-12 bg-gradient-to-r from-green-500 to-teal-500 rounded-full flex items-center justify-center text-white font-bold">
+                  Р Сљ
+                </div>
+                <div>
+                  <div className="font-semibold text-white">MaxGamer2024</div>
+                  <div className="flex text-yellow-400 text-sm">
+                    РІВ­С’РІВ­С’РІВ­С’РІВ­С’РІВ­С’
+                  </div>
+                </div>
+              </div>
+              <p className="text-white/80 leading-relaxed">
+                "Р СџР С•Р В»РЎРЉР В·РЎС“РЎР‹РЎРѓРЎРЉ РЎС“Р В¶Р Вµ Р С—Р С•Р В»Р С–Р С•Р Т‘Р В°. Р В РЎС“Р В»Р ВµРЎвЂљР С”Р В° РЎвЂЎР ВµРЎРѓРЎвЂљР Р…Р В°РЎРЏ, Р Р†РЎвЂ№Р С‘Р С–РЎР‚РЎвЂ№Р Р†Р В°Р В» Р Р…Р ВµРЎРѓР С”Р С•Р В»РЎРЉР С”Р С• РЎР‚Р В°Р В· Р С”РЎР‚РЎС“РЎвЂљРЎвЂ№Р Вµ РЎРѓР С”Р С‘Р Р…РЎвЂ№. Р вЂ™РЎвЂ№Р Р†Р С•Р Т‘ РЎРѓРЎР‚Р ВµР Т‘РЎРѓРЎвЂљР Р† РЎР‚Р В°Р В±Р С•РЎвЂљР В°Р ВµРЎвЂљ Р В±Р ВµР В· Р С—РЎР‚Р С•Р В±Р В»Р ВµР С�."
+              </p>
+              <div className="mt-4 text-xs text-white/50">
+                5 Р Т‘Р Р…Р ВµР в„– Р Р…Р В°Р В·Р В°Р Т‘
+              </div>
+            </div>
+
+            {/* Р С›РЎвЂљР В·РЎвЂ№Р Р† 3 */}
+            <div className="min-w-[350px] bg-gradient-to-br from-[#1a1a2e] via-[#16213e] to-[#0f172a] rounded-2xl p-6 border border-white/10 hover:border-purple-500/30 transition-all duration-300 hover:transform hover:scale-105">
+              <div className="flex items-center gap-4 mb-4">
+                <div className="w-12 h-12 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center text-white font-bold">
+                  Р вЂќ
+                </div>
+                <div>
+                  <div className="font-semibold text-white">DarkKnight</div>
+                  <div className="flex text-yellow-400 text-sm">
+                    РІВ­С’РІВ­С’РІВ­С’РІВ­С’РІВ­С’
+                  </div>
+                </div>
+              </div>
+              <p className="text-white/80 leading-relaxed">
+                "Р вЂєРЎС“РЎвЂЎРЎв‚¬Р С‘Р в„– РЎРѓР ВµРЎР‚Р Р†Р С‘РЎРѓ Р Т‘Р В»РЎРЏ Р С—Р С•Р С”РЎС“Р С—Р С”Р С‘ РЎРѓР С”Р С‘Р Р…Р С•Р Р†! Р вЂ�Р С•Р В»РЎРЉРЎв‚¬Р С•Р в„– Р Р†РЎвЂ№Р В±Р С•РЎР‚, РЎвЂЎР ВµРЎРѓРЎвЂљР Р…РЎвЂ№Р Вµ РЎвЂ Р ВµР Р…РЎвЂ№, Р В±РЎвЂ№РЎРѓРЎвЂљРЎР‚РЎвЂ№Р Вµ РЎвЂљРЎР‚Р В°Р Р…Р В·Р В°Р С”РЎвЂ Р С‘Р С‘. Р вЂќРЎР‚РЎС“Р В·РЎРЉРЎРЏР С� РЎС“Р В¶Р Вµ Р С—Р С•РЎРѓР С•Р Р†Р ВµРЎвЂљР С•Р Р†Р В°Р В»."
+              </p>
+              <div className="mt-4 text-xs text-white/50">
+                1 Р Р…Р ВµР Т‘Р ВµР В»РЎР‹ Р Р…Р В°Р В·Р В°Р Т‘
+              </div>
+            </div>
+
+            {/* Р С›РЎвЂљР В·РЎвЂ№Р Р† 4 */}
+            <div className="min-w-[350px] bg-gradient-to-br from-[#1a1a2e] via-[#16213e] to-[#0f172a] rounded-2xl p-6 border border-white/10 hover:border-orange-500/30 transition-all duration-300 hover:transform hover:scale-105">
+              <div className="flex items-center gap-4 mb-4">
+                <div className="w-12 h-12 bg-gradient-to-r from-orange-500 to-red-500 rounded-full flex items-center justify-center text-white font-bold">
+                  Р РЋ
+                </div>
+                <div>
+                  <div className="font-semibold text-white">SteamLegend</div>
+                  <div className="flex text-yellow-400 text-sm">
+                    РІВ­С’РІВ­С’РІВ­С’РІВ­С’РІВ­С’
+                  </div>
+                </div>
+              </div>
+              <p className="text-white/80 leading-relaxed">
+                "Р СџР С•Р С”РЎС“Р С—Р В°Р В» Р В·Р Т‘Р ВµРЎРѓРЎРЉ РЎРѓР С”Р С‘Р Р…РЎвЂ№ Р Р…Р В° 500$, Р Р†РЎРѓР Вµ РЎвЂЎР ВµРЎвЂљР С”Р С•! Р СћР ВµРЎвЂ¦Р С—Р С•Р Т‘Р Т‘Р ВµРЎР‚Р В¶Р С”Р В° Р С—Р С•Р С�Р С•Р С–Р В»Р В° РЎР‚Р В°Р В·Р С•Р В±РЎР‚Р В°РЎвЂљРЎРЉРЎРѓРЎРЏ РЎРѓ Р Р†Р С•Р С—РЎР‚Р С•РЎРѓР В°Р С�Р С‘. Р РЋР В°Р в„–РЎвЂљ РЎС“Р Т‘Р С•Р В±Р Р…РЎвЂ№Р в„– Р С‘ Р С—Р С•Р Р…РЎРЏРЎвЂљР Р…РЎвЂ№Р в„–."
+              </p>
+              <div className="mt-4 text-xs text-white/50">
+                2 Р Р…Р ВµР Т‘Р ВµР В»Р С‘ Р Р…Р В°Р В·Р В°Р Т‘
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Р РЋРЎвЂљР В°РЎвЂљР С‘РЎРѓРЎвЂљР С‘Р С”Р В° */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-4xl mx-auto">
+          <div className="text-center p-4 bg-gradient-to-br from-[#1a1a2e] to-[#16213e] rounded-xl border border-white/10">
+            <div className="text-3xl font-bold text-green-400">4.9</div>
+            <div className="text-sm text-white/60">Р РЋРЎР‚Р ВµР Т‘Р Р…РЎРЏРЎРЏ Р С•РЎвЂ Р ВµР Р…Р С”Р В°</div>
+          </div>
+          <div className="text-center p-4 bg-gradient-to-br from-[#1a1a2e] to-[#16213e] rounded-xl border border-white/10">
+            <div className="text-3xl font-bold text-blue-400">15,247</div>
+            <div className="text-sm text-white/60">Р С›РЎвЂљР В·РЎвЂ№Р Р†Р С•Р Р†</div>
+          </div>
+          <div className="text-center p-4 bg-gradient-to-br from-[#1a1a2e] to-[#16213e] rounded-xl border border-white/10">
+            <div className="text-3xl font-bold text-purple-400">98%</div>
+            <div className="text-sm text-white/60">Р вЂќР С•Р Р†Р С•Р В»РЎРЉР Р…РЎвЂ№РЎвЂ¦ Р С”Р В»Р С‘Р ВµР Р…РЎвЂљР С•Р Р†</div>
+          </div>
+          <div className="text-center p-4 bg-gradient-to-br from-[#1a1a2e] to-[#16213e] rounded-xl border border-white/10">
+            <div className="text-3xl font-bold text-yellow-400">24/7</div>
+            <div className="text-sm text-white/60">Р СџР С•Р Т‘Р Т‘Р ВµРЎР‚Р В¶Р С”Р В°</div>
+          </div>
+        </div>
+      </div>
+    </section>
+  )
+}
+
+// Layout Р С”Р С•Р С�Р С—Р С•Р Р…Р ВµР Р…РЎвЂљ РЎРѓ Р Р…Р В°Р Р†Р С‘Р С–Р В°РЎвЂ Р С‘Р ВµР в„– Р С‘ Р В°Р Р†РЎвЂљР С•РЎР‚Р С‘Р В·Р В°РЎвЂ Р С‘Р ВµР в„–
+function Layout({ children }) {
+  const { lang, setLang, formatPrice } = useLang()
+  const [isAuthorized, setAuthorized] = React.useState(() => {
+    const hasCookie = typeof document !== 'undefined' && document.cookie.includes('profile_auth=1')
+    return hasCookie || localStorage.getItem('profile-auth') === '1'
+  })
+  const [showLogin, setShowLogin] = React.useState(false)
+  const [cookieConsent, setCookieConsent] = React.useState(() => typeof document !== 'undefined' && document.cookie.includes('cookie_consent=accepted'))
+  const [walletUsd, setWalletUsd] = React.useState(() => {
+    try { return parseFloat(localStorage.getItem('wallet-usd') || '0') } catch { return 0 }
+  })
+  // Р В�Р С�РЎРЏ Р С‘ Р В°Р Р†Р В°РЎвЂљР В°РЎР‚ Р Т‘Р В»РЎРЏ Р С•РЎвЂљР С•Р В±РЎР‚Р В°Р В¶Р ВµР Р…Р С‘РЎРЏ Р Р† РЎвЂ¦Р ВµР Т‘Р ВµРЎР‚Р Вµ
+  const [name, setName] = React.useState(() => localStorage.getItem('profile-name') || '')
+  const [avatar, setAvatar] = React.useState(() => localStorage.getItem('profile-avatar') || 'СЂСџвЂ�С•')
+  
+  React.useEffect(() => {
+    const syncWallet = () => setWalletUsd(parseFloat(localStorage.getItem('wallet-usd') || '0'))
+    window.addEventListener('wallet-updated', syncWallet)
+    window.addEventListener('storage', syncWallet)
+    return () => { window.removeEventListener('wallet-updated', syncWallet); window.removeEventListener('storage', syncWallet) }
+  }, [])
+  
+  // Р вЂ”Р В°Р С–РЎР‚РЎС“Р В·Р С”Р В° Р Т‘Р С‘Р Р…Р В°Р С�Р С‘РЎвЂЎР ВµРЎРѓР С”Р С‘РЎвЂ¦ РЎвЂљР С•Р Р†Р В°РЎР‚Р С•Р Р† РЎРѓ РЎРѓР ВµРЎР‚Р Р†Р ВµРЎР‚Р В°
+  React.useEffect(() => {
+    let aborted = false
+    const load = async () => {
+      try {
+        const res = await fetch('/products')
+        const json = await res.json().catch(() => ({ ok: false }))
+        const list = Array.isArray(json?.data) ? json.data : []
+        if (!aborted && list.length > 0) {
+          const existingIds = new Set(DATA.products.map(p => p.id))
+          const incoming = list.filter(p => p && p.id && !existingIds.has(p.id))
+          if (incoming.length > 0) {
+            DATA.products = [...incoming, ...DATA.products]
+            window.dispatchEvent(new Event('products-loaded'))
+          }
+        }
+      } catch (e) {
+        // ignore
+      }
+    }
+    load()
+    const interval = setInterval(load, 5 * 60 * 1000) // Р С•Р В±Р Р…Р С•Р Р†Р В»Р ВµР Р…Р С‘Р Вµ Р С”Р В°Р В¶Р Т‘РЎвЂ№Р Вµ 5 Р С�Р С‘Р Р…РЎС“РЎвЂљ
+    return () => { aborted = true; clearInterval(interval) }
+  }, [])
+  
+  const navigate = useNavigate()
+  React.useEffect(() => {
+    const sync = () => {
+      const hasCookie = typeof document !== 'undefined' && document.cookie.includes('profile_auth=1')
+      setAuthorized(hasCookie || localStorage.getItem('profile-auth') === '1')
+      // Р РЋР С‘Р Р…РЎвЂ¦РЎР‚Р С•Р Р…Р С‘Р В·Р С‘РЎР‚РЎС“Р ВµР С� Р С‘Р С�РЎРЏ Р С‘ Р В°Р Р†Р В°РЎвЂљР В°РЎР‚ Р С—РЎР‚Р С‘ Р С‘Р В·Р С�Р ВµР Р…Р ВµР Р…Р С‘РЎРЏРЎвЂ¦
+      setName(localStorage.getItem('profile-name') || '')
+      setAvatar(localStorage.getItem('profile-avatar') || 'СЂСџвЂ�С•')
+    }
+    const onOpenLogin = () => setShowLogin(true)
+    window.addEventListener('storage', sync)
+    window.addEventListener('open-login', onOpenLogin)
+    return () => { window.removeEventListener('storage', sync); window.removeEventListener('open-login', onOpenLogin) }
+  }, [])
+  
+  const startSteamLogin = () => { window.location.href = '/auth/steam' }
+  const [regularName, setRegularName] = React.useState('')
+  const [regularPassword, setRegularPassword] = React.useState('')
+  const [loginError, setLoginError] = React.useState('')
+  
+  // CMS РЎРѓР С•РЎРѓРЎвЂљР С•РЎРЏР Р…Р С‘Р Вµ
+  const { cmsContent, updateCmsContent } = useCMS()
+  const [showCmsPanel, setShowCmsPanel] = React.useState(false)
+  
+  const acceptCookies = () => {
+    const d = new Date()
+    d.setTime(d.getTime() + (365 * 24 * 60 * 60 * 1000))
+    document.cookie = `cookie_consent=accepted; expires=${d.toUTCString()}; path=/`
+    setCookieConsent(true)
+  }
+  
+  const doRegularLogin = () => {
+    const name = regularName
+    const password = regularPassword
+    if (!name || !name.trim()) { setLoginError('Р вЂ™Р Р†Р ВµР Т‘Р С‘РЎвЂљР Вµ Р В»Р С•Р С–Р С‘Р Р…'); return }
+    if (!password || !password.trim()) { setLoginError('Р вЂ™Р Р†Р ВµР Т‘Р С‘РЎвЂљР Вµ Р С—Р В°РЎР‚Р С•Р В»РЎРЉ'); return }
+    
+    // Р СџРЎР‚Р С•Р Р†Р ВµРЎР‚РЎРЏР ВµР С� Р Т‘Р ВµРЎвЂћР С•Р В»РЎвЂљР Р…РЎвЂ№Р Вµ РЎС“РЎвЂЎР ВµРЎвЂљР Р…РЎвЂ№Р Вµ Р Т‘Р В°Р Р…Р Р…РЎвЂ№Р Вµ
+    const isValidUser = (name.trim() === 'user' && password.trim() === 'password') || 
+                       (name.trim() === 'admin' && password.trim() === 'admin123')
+    
+    if (!isValidUser) {
+      setLoginError('Р СњР ВµР Р†Р ВµРЎР‚Р Р…РЎвЂ№Р в„– Р В»Р С•Р С–Р С‘Р Р… Р С‘Р В»Р С‘ Р С—Р В°РЎР‚Р С•Р В»РЎРЉ')
+      return
+    }
+    
+    const isAdmin = name.trim() === 'admin'
+    
+    // Persist localStorage
+    localStorage.setItem('profile-auth', '1')
+    localStorage.setItem('profile-name', name.trim())
+    localStorage.setItem('auth-method', 'regular')
+    localStorage.setItem('role', isAdmin ? 'admin' : 'user')
+    // Persist cookies for 7 days
+    const d = new Date()
+    d.setTime(d.getTime() + (7 * 24 * 60 * 60 * 1000))
+    const expires = `expires=${d.toUTCString()}`
+    document.cookie = `profile_auth=1; ${expires}; path=/`
+    document.cookie = `profile_name=${encodeURIComponent(name.trim())}; ${expires}; path=/`
+    document.cookie = `auth_method=regular; ${expires}; path=/`
+    document.cookie = `role=${isAdmin ? 'admin' : 'user'}; ${expires}; path=/`
+    setAuthorized(true)
+    setShowLogin(false)
+    // Р СџРЎР‚Р С‘Р Р…РЎС“Р Т‘Р С‘РЎвЂљР ВµР В»РЎРЉР Р…Р С• Р С•Р В±Р Р…Р С•Р Р†Р В»РЎРЏР ВµР С� РЎРѓР С•РЎРѓРЎвЂљР С•РЎРЏР Р…Р С‘Р Вµ Р В°Р Р†РЎвЂљР С•РЎР‚Р С‘Р В·Р В°РЎвЂ Р С‘Р С‘
+    window.dispatchEvent(new Event('storage'))
+    navigate('/profile')
+  }
+
+  // State for mobile menu
+  const [showMobileMenu, setShowMobileMenu] = React.useState(false)
+
+  return (
+    <div className="min-h-screen bg-[#0D1A2F] text-white flex flex-col pt-14 lg:pt-0 overflow-x-hidden max-w-[100vw]">
+      {/* Mobile Header - Р С—Р С•Р С”Р В°Р В·РЎвЂ№Р Р†Р В°Р ВµРЎвЂљРЎРѓРЎРЏ РЎвЂљР С•Р В»РЎРЉР С”Р С• Р Р…Р В° Р С�Р С•Р В±Р С‘Р В»РЎРЉР Р…РЎвЂ№РЎвЂ¦ Р С‘ Р С—Р В»Р В°Р Р…РЎв‚¬Р ВµРЎвЂљР В°РЎвЂ¦ */}
+      <header className="mobile-header lg:hidden fixed top-0 left-0 right-0 w-full z-50 bg-[#0D1A2F]/95 backdrop-blur border-b border-white/10">
+        <div className="max-w-6xl mx-auto flex items-center justify-between px-3 py-2">
+          {/* Р вЂєР С•Р С–Р С•РЎвЂљР С‘Р С—: Р С�Р С•Р В±Р С‘Р В»РЎРЉР Р…Р В°РЎРЏ Р Р†Р ВµРЎР‚РЎРѓР С‘РЎРЏ (РЎС“Р С�Р ВµР Р…РЎРЉРЎв‚¬Р ВµР Р… РЎР‚Р В°Р В·Р С�Р ВµРЎР‚) */}
+          <NavLink to="/" className="flex items-center gap-2">
+                <LazyImage src="/images/logo/logo.png" alt="AI Game Store" className="h-4 w-auto object-contain" />
+          </NavLink>
+          
+          <div className="flex items-center gap-3">
+            {isAuthorized ? (
+              <NavLink to="/profile" className="flex items-center gap-2 px-2 py-1 rounded hover:bg-white/10 transition-colors">
+                {String(avatar || '').startsWith('http') ? (
+                  <LazyImage src={avatar} alt={name || 'Р СџРЎР‚Р С•РЎвЂћР С‘Р В»РЎРЉ'} className="w-8 h-8 rounded-full object-cover" />
+                ) : (
+                  <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-lg">{avatar || 'СЂСџвЂ�С•'}</div>
+                )}
+                <span className="text-sm font-semibold truncate max-w-[120px]">{name || 'Р СџР С•Р В»РЎРЉР В·Р С•Р Р†Р В°РЎвЂљР ВµР В»РЎРЉ'}</span>
+              </NavLink>
+            ) : (
+              <button onClick={() => setShowLogin(true)} className="px-3 py-1 rounded bg-blue-600 hover:bg-blue-700 text-sm">Р вЂ™Р С•Р в„–РЎвЂљР С‘</button>
+            )}
+            <button 
+              onClick={() => setShowMobileMenu(!showMobileMenu)}
+              className="p-2 rounded-lg hover:bg-white/10 transition-colors"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                {showMobileMenu ? (
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                ) : (
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                )}
+              </svg>
+            </button>
+          </div>
+        </div>
+        
+        {/* Mobile Menu Dropdown */}
+        {showMobileMenu && (
+          <div className="absolute top-full left-0 right-0 bg-[#0D1A2F]/95 backdrop-blur border-b border-white/10 shadow-lg">
+            <nav className="max-w-6xl mx-auto px-4 py-4 space-y-2">
+              <NavLink 
+                to="/store" 
+                className={({isActive}) => `block px-3 py-2 rounded ${isActive ? 'bg-white/10' : 'hover:bg-white/5'}`}
+                onClick={() => setShowMobileMenu(false)}
+              >
+                Р С™Р В°РЎвЂљР В°Р В»Р С•Р С–
+              </NavLink>
+              <NavLink 
+                to="/skins" 
+                className={({isActive}) => `block px-3 py-2 rounded ${isActive ? 'bg-white/10' : 'hover:bg-white/5'}`}
+                onClick={() => setShowMobileMenu(false)}
+              >
+                Р РЋР С”Р С‘Р Р…РЎвЂ№
+              </NavLink>
+              <NavLink 
+                to="/blog" 
+                className={({isActive}) => `block px-3 py-2 rounded ${isActive ? 'bg-white/10' : 'hover:bg-white/5'}`}
+                onClick={() => setShowMobileMenu(false)}
+              >
+                Р вЂ�Р В»Р С•Р С–
+              </NavLink>
+              <NavLink 
+                to="/sell" 
+                className={({isActive}) => `block px-3 py-2 rounded ${isActive ? 'bg-white/10' : 'hover:bg-white/5'}`}
+                onClick={() => setShowMobileMenu(false)}
+              >
+                Р СџРЎР‚Р С•Р Т‘Р В°Р В¶Р В°
+              </NavLink>
+              {isAuthorized && (
+                <>
+                  <NavLink 
+                    to="/cart" 
+                    className={({isActive}) => `block px-3 py-2 rounded ${isActive ? 'bg-white/10' : 'hover:bg-white/5'}`}
+                    onClick={() => setShowMobileMenu(false)}
+                  >
+                    Р С™Р С•РЎР‚Р В·Р С‘Р Р…Р В°
+                  </NavLink>
+                  <NavLink 
+                    to="/profile" 
+                    className={({isActive}) => `block px-3 py-2 rounded ${isActive ? 'bg-white/10' : 'hover:bg-white/5'}`}
+                    onClick={() => setShowMobileMenu(false)}
+                  >
+                    Р СџРЎР‚Р С•РЎвЂћР С‘Р В»РЎРЉ
+                  </NavLink>
+                </>
+              )}
+              {!isAuthorized && (
+                <button 
+                  onClick={() => { setShowLogin(true); setShowMobileMenu(false) }}
+                  className="block w-full text-left px-3 py-2 rounded hover:bg-white/5"
+                >
+                  Р вЂ™Р С•Р в„–РЎвЂљР С‘
+                </button>
+              )}
+            </nav>
+          </div>
+        )}
+      </header>
+
+      <div className="flex flex-1">
+        {/* Desktop Header - Р С—Р С•Р С”Р В°Р В·РЎвЂ№Р Р†Р В°Р ВµРЎвЂљРЎРѓРЎРЏ РЎвЂљР С•Р В»РЎРЉР С”Р С• Р Р…Р В° Р Т‘Р ВµРЎРѓР С”РЎвЂљР С•Р С—Р Вµ */}
+        <header className="desktop-header hidden lg:block fixed top-0 left-0 right-0 z-50 bg-[#0D1A2F]/95 backdrop-blur border-b border-white/10 overflow-hidden">
+          <div className="max-w-6xl mx-auto grid grid-cols-3 items-center px-4 py-2">
+            {/* Logo - Р Т‘Р ВµРЎРѓР С”РЎвЂљР С•Р С—: РЎС“Р С�Р ВµР Р…РЎРЉРЎв‚¬Р ВµР Р… РЎР‚Р В°Р В·Р С�Р ВµРЎР‚ Р С‘ Р В±Р ВµР В· РЎвЂљР ВµР С”РЎРѓРЎвЂљР В° */}
+            <NavLink to="/" className="flex items-center gap-3 justify-self-start">
+                <LazyImage src="/images/logo/logo.png" alt="AI Game Store logo" className="h-5 w-auto object-contain" />
+            </NavLink>
+            
+            {/* Desktop Navigation - Р С—Р С• РЎвЂ Р ВµР Р…РЎвЂљРЎР‚РЎС“ */}
+            <nav className="justify-self-center flex items-center gap-6">
+              <NavLink className={({isActive}) => `px-3 py-2 rounded transition-colors ${isActive ? 'bg-white/10' : 'hover:bg-white/5'}`} to="/store">
+                Р С™Р В°РЎвЂљР В°Р В»Р С•Р С–
+              </NavLink>
+              
+              {/* Skins Dropdown */}
+              <div className="group relative">
+                <NavLink className={({isActive}) => `px-3 py-2 rounded transition-colors ${isActive ? 'bg-white/10' : 'hover:bg-white/5'}`} to="/skins">
+                  Р РЋР С”Р С‘Р Р…РЎвЂ№
+                </NavLink>
+                <div className="pointer-events-none absolute left-0 top-full z-20 hidden min-w-[180px] flex-col gap-1 rounded-lg border border-white/10 bg-[#0D1A2F] p-2 shadow-xl group-hover:flex group-hover:pointer-events-auto">
+                  <NavLink className={({isActive}) => `block w-full px-2 py-2 rounded ${isActive ? 'bg-white/10' : 'hover:bg-white/5'}`} to="/skins/character">Р СџР ВµРЎР‚РЎРѓР С•Р Р…Р В°Р В¶Р С‘</NavLink>
+                  <NavLink className={({isActive}) => `block w-full px-2 py-2 rounded ${isActive ? 'bg-white/10' : 'hover:bg-white/5'}`} to="/skins/weapon">Р С›РЎР‚РЎС“Р В¶Р С‘Р Вµ</NavLink>
+                  <NavLink className={({isActive}) => `block w-full px-2 py-2 rounded ${isActive ? 'bg-white/10' : 'hover:bg-white/5'}`} to="/skins/armor">Р вЂ�РЎР‚Р С•Р Р…РЎРЏ</NavLink>
+                </div>
+              </div>
+              
+              <NavLink className={({isActive}) => `px-3 py-2 rounded transition-colors ${isActive ? 'bg-white/10' : 'hover:bg-white/5'}`} to="/blog">
+                Р вЂ�Р В»Р С•Р С–
+              </NavLink>
+              
+              <NavLink className={({isActive}) => `px-3 py-2 rounded transition-colors ${isActive ? 'bg-white/10' : 'hover:bg-white/5'}`} to="/sell">
+                Р СџРЎР‚Р С•Р Т‘Р В°Р В¶Р В°
+              </NavLink>
+            </nav>
+            
+            {/* User Actions - РЎРѓР С—РЎР‚Р В°Р Р†Р В° */}
+            <div className="flex items-center gap-3 justify-self-end">
+              {isAuthorized ? (
+                <>
+                  <NavLink to="/cart" className="relative flex items-center gap-2 px-3 py-2 rounded hover:bg-white/5 transition-colors">
+  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4m0 0L7 13m0 0l-1.5 6M7 13l-1.5-6m0 0h15M17 21a2 2 0 100-4 2 2 0 000 4zM9 21a2 2 0 100-4 2 2 0 000 4z" />
+  </svg>
+  <CartBadge />
+</NavLink>
+                  <NavLink to="/profile" className="flex items-center gap-3 px-3 py-2 rounded hover:bg-white/5 transition-colors">
+                    {String(avatar || '').startsWith('http') ? (
+                      <LazyImage src={avatar} alt={name || 'Р СџРЎР‚Р С•РЎвЂћР С‘Р В»РЎРЉ'} className="w-8 h-8 rounded-full object-cover" />
+                    ) : (
+                      <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-lg">{avatar || 'СЂСџвЂ�С•'}</div>
+                    )}
+                    <div className="flex flex-col">
+                      <span className="text-sm font-semibold truncate max-w-[160px]">{name || 'Р СџР С•Р В»РЎРЉР В·Р С•Р Р†Р В°РЎвЂљР ВµР В»РЎРЉ'}</span>
+                      <span className="text-xs text-white/60 truncate max-w-[160px]">Р СџРЎР‚Р С•РЎвЂћР С‘Р В»РЎРЉ</span>
+                    </div>
+                  </NavLink>
+                </>
+              ) : (
+                <button 
+                  onClick={() => setShowLogin(true)}
+                  className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded transition-colors"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013 3v1" />
+                  </svg>
+                  Р вЂ™Р С•Р в„–РЎвЂљР С‘
+                </button>
+              )}
+            </div>
+          </div>
+        </header>
+
+        {/* Р вЂєР ВµР Р†РЎвЂ№Р в„– РЎРѓР В°Р в„–Р Т‘Р В±Р В°РЎР‚ РЎС“Р Т‘Р В°Р В»РЎвЂ�Р Р…: Р Р…Р В°Р Р†Р С‘Р С–Р В°РЎвЂ Р С‘РЎРЏ РЎвЂљР ВµР С—Р ВµРЎР‚РЎРЉ РЎвЂљР С•Р В»РЎРЉР С”Р С• РЎРѓР Р†Р ВµРЎР‚РЎвЂ¦РЎС“ (desktop header) */}
+
+        {/* Р С›РЎРѓР Р…Р С•Р Р†Р Р…Р С•Р в„– Р С”Р С•Р Р…РЎвЂљР ВµР Р…РЎвЂљ Р В±Р ВµР В· Р С•РЎвЂљРЎРѓРЎвЂљРЎС“Р С—Р В° Р С—Р С•Р Т‘ РЎРѓР В°Р в„–Р Т‘Р В±Р В°РЎР‚, РЎвЂћР С‘Р С”РЎРѓР С‘РЎР‚Р С•Р Р†Р В°Р Р…Р Р…РЎвЂ№Р в„– РЎвЂ¦Р ВµР Т‘Р ВµРЎР‚ РЎРѓР Р†Р ВµРЎР‚РЎвЂ¦РЎС“ */}
+        <main className="flex-1 pt-14 lg:pt-16">
+          <div className="w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+            {children}
+          </div>
+        </main>
+      </div>
+
+      {/* Р СљР С•Р Т‘Р В°Р В»РЎРЉР Р…Р С•Р Вµ Р С•Р С”Р Р…Р С• Р Р†РЎвЂ¦Р С•Р Т‘Р В° */}
+      {showLogin && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="bg-[#0D1A2F] border border-white/10 rounded-lg p-6 w-full max-w-md mx-4">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-bold">Р вЂ™РЎвЂ¦Р С•Р Т‘ Р Р† Р В°Р С”Р С”Р В°РЎС“Р Р…РЎвЂљ</h2>
+              <button onClick={() => setShowLogin(false)} className="text-gray-400 hover:text-white">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            
+            {loginError && (
+              <div className="mb-4 p-3 bg-red-500/20 border border-red-500/30 rounded text-red-300 text-sm">
+                {loginError}
+              </div>
+            )}
+            
+            <div className="space-y-4">
+              <button 
+                onClick={startSteamLogin}
+                className="w-full flex items-center justify-center gap-3 px-4 py-3 bg-[#1B2838] hover:bg-[#2A475E] rounded transition-colors"
+              >
+                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.94-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/>
+                </svg>
+                Р вЂ™Р С•Р в„–РЎвЂљР С‘ РЎвЂЎР ВµРЎР‚Р ВµР В· Steam
+              </button>
+              
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-white/10"></div>
+                </div>
+                <div className="relative flex justify-center text-sm">
+                  <span className="px-2 bg-[#0D1A2F] text-gray-400">Р С‘Р В»Р С‘</span>
+                </div>
+              </div>
+              
+              <div className="space-y-3">
+                <input
+                  type="text"
+                  placeholder="Р вЂєР С•Р С–Р С‘Р Р…"
+                  value={regularName}
+                  onChange={(e) => setRegularName(e.target.value)}
+                  className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded focus:outline-none focus:border-blue-500"
+                />
+                <input
+                  type="password"
+                  placeholder="Р СџР В°РЎР‚Р С•Р В»РЎРЉ"
+                  value={regularPassword}
+                  onChange={(e) => setRegularPassword(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && doRegularLogin()}
+                  className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded focus:outline-none focus:border-blue-500"
+                />
+                <button 
+                  onClick={doRegularLogin}
+                  className="w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded transition-colors"
+                >
+                  Р вЂ™Р С•Р в„–РЎвЂљР С‘
+                </button>
+              </div>
+              
+              <div className="text-sm text-gray-400 text-center">
+                Р СћР ВµРЎРѓРЎвЂљР С•Р Р†РЎвЂ№Р Вµ Р В°Р С”Р С”Р В°РЎС“Р Р…РЎвЂљРЎвЂ№:<br />
+                user / password Р С‘Р В»Р С‘ admin / admin123
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Cookie consent */}
+      {!cookieConsent && (
+        <div className="fixed bottom-4 left-4 right-4 z-50 bg-[#0D1A2F] border border-white/10 rounded-lg p-4 shadow-lg">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+            <p className="text-sm text-gray-300">
+              Р СљРЎвЂ№ Р С‘РЎРѓР С—Р С•Р В»РЎРЉР В·РЎС“Р ВµР С� РЎвЂћР В°Р в„–Р В»РЎвЂ№ cookie Р Т‘Р В»РЎРЏ РЎС“Р В»РЎС“РЎвЂЎРЎв‚¬Р ВµР Р…Р С‘РЎРЏ РЎР‚Р В°Р В±Р С•РЎвЂљРЎвЂ№ РЎРѓР В°Р в„–РЎвЂљР В°. Р СџРЎР‚Р С•Р Т‘Р С•Р В»Р В¶Р В°РЎРЏ Р С‘РЎРѓР С—Р С•Р В»РЎРЉР В·Р С•Р Р†Р В°РЎвЂљРЎРЉ РЎРѓР В°Р в„–РЎвЂљ, Р Р†РЎвЂ№ РЎРѓР С•Р С–Р В»Р В°РЎв‚¬Р В°Р ВµРЎвЂљР ВµРЎРѓРЎРЉ РЎРѓ Р Р…Р В°РЎв‚¬Р ВµР в„– Р С—Р С•Р В»Р С‘РЎвЂљР С‘Р С”Р С•Р в„– Р С”Р С•Р Р…РЎвЂћР С‘Р Т‘Р ВµР Р…РЎвЂ Р С‘Р В°Р В»РЎРЉР Р…Р С•РЎРѓРЎвЂљР С‘.
+            </p>
+            <button 
+              onClick={acceptCookies}
+              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded transition-colors text-sm whitespace-nowrap"
+            >
+              Р СџРЎР‚Р С‘Р Р…РЎРЏРЎвЂљРЎРЉ
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Р В¤РЎС“РЎвЂљР ВµРЎР‚ */}
+      <footer className="bg-gradient-to-br from-[#0a0f1c] via-[#0d1a2f] to-[#1a1a2e] border-t border-white/10 mt-auto">
+        <div className="max-w-7xl mx-auto px-6 py-12">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            {/* Р вЂєР С•Р С–Р С•РЎвЂљР С‘Р С— Р С‘ Р С•Р С—Р С‘РЎРѓР В°Р Р…Р С‘Р Вµ */}
+            <div className="space-y-4">
+              <div className="flex items-center gap-3">
+                <LazyImage src="/images/logo/logo.png" alt="AI Game Store logo" className="h-10 w-auto object-contain" />
+                <span className="text-xl font-bold bg-gradient-to-r from-white to-blue-200 bg-clip-text text-transparent">
+                  AI Game Store
+                </span>
+              </div>
+              <p className="text-white/70 text-sm leading-relaxed">
+                {cmsContent.footerDescription}
+              </p>
+              {/* Р РЋР С•РЎвЂ .Р С‘Р С”Р С•Р Р…Р С”Р С‘ РЎС“Р Т‘Р В°Р В»Р ВµР Р…РЎвЂ№ Р С—Р С• РЎвЂљРЎР‚Р ВµР В±Р С•Р Р†Р В°Р Р…Р С‘РЎР‹ (YouTube/Twitter/Pinterest) */}
+            </div>
+
+            {/* Р СљР В°РЎР‚Р С”Р ВµРЎвЂљ */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-white">Р СљР В°РЎР‚Р С”Р ВµРЎвЂљ</h3>
+              <nav className="space-y-2">
+                <NavLink to="/store" className="block text-white/70 hover:text-white transition-colors text-sm">
+                  Р СџРЎР‚Р С•Р Т‘Р В°РЎвЂљРЎРЉ РЎРѓР С”Р С‘Р Р…РЎвЂ№ CS:GO
+                </NavLink>
+                <NavLink to="/store" className="block text-white/70 hover:text-white transition-colors text-sm">
+                  Р СџРЎР‚Р С•Р Т‘Р В°РЎвЂљРЎРЉ РЎРѓР С”Р С‘Р Р…РЎвЂ№ CS2
+                </NavLink>
+                <NavLink to="/store" className="block text-white/70 hover:text-white transition-colors text-sm">
+                  Р С™РЎС“Р С—Р С‘РЎвЂљРЎРЉ РЎРѓР С”Р С‘Р Р…РЎвЂ№ Steam
+                </NavLink>
+                <NavLink to="/store" className="block text-white/70 hover:text-white transition-colors text-sm">
+                  Р С™РЎС“Р С—Р С‘РЎвЂљРЎРЉ РЎРѓР С”Р С‘Р Р…РЎвЂ№ CS2
+                </NavLink>
+                <NavLink to="/store" className="block text-white/70 hover:text-white transition-colors text-sm">
+                  Р С™РЎС“Р С—Р С‘РЎвЂљРЎРЉ Р С”Р ВµР в„–РЎРѓРЎвЂ№ CS2
+                </NavLink>
+              </nav>
+            </div>
+
+            {/* Р СџР С•Р С�Р С•РЎвЂ°РЎРЉ */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-white">Р СџР С•Р С�Р С•РЎвЂ°РЎРЉ</h3>
+              <nav className="space-y-2">
+                <NavLink to="/faq" className="block text-white/70 hover:text-white transition-colors text-sm">
+                  FAQ
+                </NavLink>
+                <NavLink to="/support" className="block text-white/70 hover:text-white transition-colors text-sm">
+                  Р СћР ВµРЎвЂ¦Р С—Р С•Р Т‘Р Т‘Р ВµРЎР‚Р В¶Р С”Р В°
+                </NavLink>
+                <NavLink to="/about" className="block text-white/70 hover:text-white transition-colors text-sm">
+                  Р С™Р В°Р С” Р С�РЎвЂ№ РЎР‚Р В°Р В±Р С•РЎвЂљР В°Р ВµР С�
+                </NavLink>
+                <NavLink to="/about" className="block text-white/70 hover:text-white transition-colors text-sm">
+                  Р вЂњР В°РЎР‚Р В°Р Р…РЎвЂљР С‘Р С‘
+                </NavLink>
+                <NavLink to="/contacts" className="block text-white/70 hover:text-white transition-colors text-sm">
+                  Р С™Р С•Р Р…РЎвЂљР В°Р С”РЎвЂљРЎвЂ№
+                </NavLink>
+              </nav>
+            </div>
+
+            {/* Р СџР С•Р В»Р ВµР В·Р Р…Р С•Р Вµ */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-white">Р СџР С•Р В»Р ВµР В·Р Р…Р С•Р Вµ</h3>
+              <nav className="space-y-2">
+                <NavLink to="/sell" className="block text-white/70 hover:text-white transition-colors text-sm">
+                  СЂСџвЂ™В° Р СџРЎР‚Р С•Р Т‘Р В°Р В¶Р В° РЎРѓР С”Р С‘Р Р…Р С•Р Р†
+                </NavLink>
+                <NavLink to="/blog" className="block text-white/70 hover:text-white transition-colors text-sm">
+                  Р вЂ�Р В»Р С•Р С– Р С‘ Р Р…Р С•Р Р†Р С•РЎРѓРЎвЂљР С‘
+                </NavLink>
+                <NavLink to="/about" className="block text-white/70 hover:text-white transition-colors text-sm">
+                  Р С› Р Р…Р В°РЎРѓ
+                </NavLink>
+                <NavLink to="/terms" className="block text-white/70 hover:text-white transition-colors text-sm">
+                  Р СџР С•Р В»РЎРЉР В·Р С•Р Р†Р В°РЎвЂљР ВµР В»РЎРЉРЎРѓР С”Р С•Р Вµ РЎРѓР С•Р С–Р В»Р В°РЎв‚¬Р ВµР Р…Р С‘Р Вµ
+                </NavLink>
+                <NavLink to="/privacy" className="block text-white/70 hover:text-white transition-colors text-sm">
+                  Р СџР С•Р В»Р С‘РЎвЂљР С‘Р С”Р В° Р С”Р С•Р Р…РЎвЂћР С‘Р Т‘Р ВµР Р…РЎвЂ Р С‘Р В°Р В»РЎРЉР Р…Р С•РЎРѓРЎвЂљР С‘
+                </NavLink>
+              </nav>
+            </div>
+          </div>
+
+          {/* Р СњР С‘Р В¶Р Р…РЎРЏРЎРЏ РЎвЂЎР В°РЎРѓРЎвЂљРЎРЉ РЎвЂћРЎС“РЎвЂљР ВµРЎР‚Р В° */}
+          <div className="border-t border-white/10 mt-8 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
+            <div className="text-white/60 text-sm">
+              Р’В© 2024 AI Game Store. Р вЂ™РЎРѓР Вµ Р С—РЎР‚Р В°Р Р†Р В° Р В·Р В°РЎвЂ°Р С‘РЎвЂ°Р ВµР Р…РЎвЂ№.
+            </div>
+            <div className="flex items-center gap-6 text-sm text-white/60">
+              <span>Р СџР С•Р Т‘Р Т‘Р ВµРЎР‚Р В¶Р С”Р В°: 24/7</span>
+              <span>РІР‚Сћ</span>
+              <span>Р С›Р Р…Р В»Р В°Р в„–Р Р…: 1,247 Р С‘Р С–РЎР‚Р С•Р С”Р С•Р Р†</span>
+              <span>РІР‚Сћ</span>
+              <span>Р РЋР Т‘Р ВµР В»Р С•Р С”: 45,892</span>
+            </div>
+          </div>
+        </div>
+      </footer>
+    </div>
+  )
+}
+
+// Cart context
+const CartContext = React.createContext(null)
+
+// CMS Context
+const CMSContext = React.createContext(null)
+const useCMS = () => React.useContext(CMSContext)
+
+function CMSProvider({ children }) {
+  const [cmsContent, setCmsContent] = React.useState(() => {
+    const saved = localStorage.getItem('cms-content')
+    return saved ? JSON.parse(saved) : {
+      bannerTitle: '-30% Р Р…Р В° Cyberpunk 2077',
+      bannerDescription: 'Р Р€РЎРѓР С—Р ВµР в„–РЎвЂљР Вµ Р С”РЎС“Р С—Р С‘РЎвЂљРЎРЉ Р С—Р С• Р В°Р С”РЎвЂ Р С‘Р С‘! Р вЂќР С• Р С•Р С”Р С•Р Р…РЎвЂЎР В°Р Р…Р С‘РЎРЏ:',
+      bannerButton1: 'Р С™РЎС“Р С—Р С‘РЎвЂљРЎРЉ РЎРѓР С• РЎРѓР С”Р С‘Р Т‘Р С”Р С•Р в„–',
+      bannerButton2: 'Р СџР С•РЎРѓР С�Р С•РЎвЂљРЎР‚Р ВµРЎвЂљРЎРЉ Р С”Р В°РЎвЂљР В°Р В»Р С•Р С–',
+      rouletteButton: 'Р СџР С•Р С—РЎР‚Р С•Р В±РЎС“Р в„– РЎРѓР Р†Р С•РЎР‹ РЎС“Р Т‘Р В°РЎвЂЎРЎС“',
+      footerDescription: 'Р РЋР С•Р Р†РЎР‚Р ВµР С�Р ВµР Р…Р Р…РЎвЂ№Р в„– Р С�Р В°Р С–Р В°Р В·Р С‘Р Р… Р Р†Р С‘Р Т‘Р ВµР С•Р С‘Р С–РЎР‚ Р С‘ РЎвЂ Р С‘РЎвЂћРЎР‚Р С•Р Р†Р С•Р С–Р С• Р С”Р С•Р Р…РЎвЂљР ВµР Р…РЎвЂљР В°.'
+    }
+  })
+  
+  const updateCmsContent = (key, value) => {
+    const newContent = { ...cmsContent, [key]: value }
+    setCmsContent(newContent)
+    localStorage.setItem('cms-content', JSON.stringify(newContent))
+  }
+  
+  return (
+    <CMSContext.Provider value={{ cmsContent, updateCmsContent }}>
+      {children}
+    </CMSContext.Provider>
+  )
+}
+
+// Р вЂќР В°Р Р…Р Р…РЎвЂ№Р Вµ Р С—РЎР‚Р С•Р Т‘РЎС“Р С”РЎвЂљР С•Р Р†
+const DATA = {
+  products: [
+    // Р В�Р С–РЎР‚РЎвЂ№
+    { id: 'cyberpunk', name: 'Cyberpunk 2077', price: 29.99, image: '/images/cyberpunk/intro.jpeg', category: 'game', type: 'rpg', introImage: '/images/cyberpunk/intro.jpeg', images: ['/images/cyberpunk/intro.jpeg','/images/cyberpunk/game-cyberpunk-preview-2.jpeg','/images/cyberpunk/game-cyberpunk-preview-3.jpg','/images/cyberpunk/game-cyberpunk-preview-4.jpg','/images/cyberpunk/game-cyberpunk-preview-5.jpg'], specs: { developer: 'CD Projekt Red', release: '2020', platform: 'PC/PlayStation/Xbox', min: 'Intel Core i5, 8GB RAM, GTX 780' }, description: 'Р С™РЎС“Р В»РЎРЉРЎвЂљР С•Р Р†Р В°РЎРЏ RPG Р Р† Р С�Р С‘РЎР‚Р Вµ Р СњР С•РЎвЂЎР Р…Р С•Р С–Р С• Р вЂњР С•РЎР‚Р С•Р Т‘Р В°. Р В�РЎРѓРЎРѓР В»Р ВµР Т‘РЎС“Р в„–РЎвЂљР Вµ Р С–Р С•РЎР‚Р С•Р Т‘, РЎС“Р В»РЎС“РЎвЂЎРЎв‚¬Р В°Р в„–РЎвЂљР Вµ Р С‘Р С�Р С—Р В»Р В°Р Р…РЎвЂљРЎвЂ№, Р Р†РЎвЂ№Р В±Р С‘РЎР‚Р В°Р в„–РЎвЂљР Вµ РЎРѓР Р†Р С•РЎР‹ Р С‘РЎРѓРЎвЂљР С•РЎР‚Р С‘РЎР‹.' },
+    { id: 'battlefield6', name: 'Battlefield 6', price: 49.99, image: '/images/battlefield6/intro.jpeg', introImage: '/images/battlefield6/intro.jpeg', category: 'game', type: 'shooter', images: ['/images/battlefield6/intro.jpeg','/images/battlefield6/battlefield-preview-1.jpeg','/images/battlefield6/battlefield-preview-2.jpg','/images/battlefield6/battlefield-preview-3.png','/images/battlefield6/battlefield-preview-4.png'], specs: { developer: 'DICE', release: '2024', platform: 'PC/PlayStation/Xbox', min: 'Intel Core i5-8400, 8GB RAM, GTX 1060' }, description: 'Р СњР С•Р Р†Р ВµР в„–РЎв‚¬Р С‘Р в„– РЎв‚¬РЎС“РЎвЂљР ВµРЎР‚ Р С•РЎвЂљ DICE РЎРѓ Р С�Р В°РЎРѓРЎв‚¬РЎвЂљР В°Р В±Р Р…РЎвЂ№Р С�Р С‘ РЎРѓРЎР‚Р В°Р В¶Р ВµР Р…Р С‘РЎРЏР С�Р С‘ Р Т‘Р С• 128 Р С‘Р С–РЎР‚Р С•Р С”Р С•Р Р†. Р вЂќР С‘Р Р…Р В°Р С�Р С‘РЎвЂЎР Р…РЎвЂ№Р Вµ Р В±Р С•Р С‘, РЎР‚Р В°Р В·РЎР‚РЎС“РЎв‚¬Р В°Р ВµР С�РЎвЂ№Р Вµ Р С”Р В°РЎР‚РЎвЂљРЎвЂ№ Р С‘ РЎРѓР С•Р Р†РЎР‚Р ВµР С�Р ВµР Р…Р Р…Р С•Р Вµ Р С•РЎР‚РЎС“Р В¶Р С‘Р Вµ.' },
+    { id: 'arc-raiders', name: 'ARC Raiders', price: 39.99, image: '/images/ARC Raiders/intro.jpg', introImage: '/images/ARC Raiders/intro.jpg', category: 'game', type: 'shooter', images: ['/images/ARC Raiders/intro.jpg','/images/ARC Raiders/raiders-preview-1.jpeg','/images/ARC Raiders/raiders-preview-2.jpeg','/images/ARC Raiders/raiders-preview-3.jpg','/images/ARC Raiders/raiders-preview-4.jpeg'], specs: { developer: 'Embark Studios', release: '2024', platform: 'PC/PlayStation/Xbox', min: 'Intel Core i5-9400F, 12GB RAM, GTX 1660' }, description: 'Р С™Р С•Р С•Р С—Р ВµРЎР‚Р В°РЎвЂљР С‘Р Р†Р Р…РЎвЂ№Р в„– РЎРЊР С”РЎв‚¬Р ВµР Р…-РЎв‚¬РЎС“РЎвЂљР ВµРЎР‚ Р С•РЎвЂљ РЎвЂљРЎР‚Р ВµРЎвЂљРЎРЉР ВµР С–Р С• Р В»Р С‘РЎвЂ Р В° Р Р† Р С—Р С•РЎРѓРЎвЂљР В°Р С—Р С•Р С”Р В°Р В»Р С‘Р С—РЎвЂљР С‘РЎвЂЎР ВµРЎРѓР С”Р С•Р С� Р С�Р С‘РЎР‚Р Вµ. Р РЋРЎР‚Р В°Р В¶Р В°Р в„–РЎвЂљР ВµРЎРѓРЎРЉ РЎРѓ РЎР‚Р С•Р В±Р С•РЎвЂљР В°Р С�Р С‘ Р С‘ Р Т‘РЎР‚РЎС“Р С–Р С‘Р С�Р С‘ Р С‘Р С–РЎР‚Р С•Р С”Р В°Р С�Р С‘ Р В·Р В° РЎР‚Р ВµРЎРѓРЎС“РЎР‚РЎРѓРЎвЂ№.' },
+    { id: 'ea-sports-fc-26', name: 'EA SPORTS FC 26', price: 59.99, image: '/images/EA SPORTS FC 26/intro.jpg', introImage: '/images/EA SPORTS FC 26/intro.jpg', category: 'game', type: 'sports', images: ['/images/EA SPORTS FC 26/intro.jpg','/images/EA SPORTS FC 26/sports-preview-1.jpeg','/images/EA SPORTS FC 26/sports-preview-2.jpg','/images/EA SPORTS FC 26/sports-preview-3.jpg','/images/EA SPORTS FC 26/sports-preview-4.jpg'], specs: { developer: 'EA Sports', release: '2025', platform: 'PC/PlayStation/Xbox', min: 'Intel Core i5-10400F, 8GB RAM, GTX 1650' }, description: 'Р СњР С•Р Р†Р ВµР в„–РЎв‚¬Р С‘Р в„– РЎвЂћРЎС“РЎвЂљР В±Р С•Р В»РЎРЉР Р…РЎвЂ№Р в„– РЎРѓР С‘Р С�РЎС“Р В»РЎРЏРЎвЂљР С•РЎР‚ РЎРѓ РЎС“Р В»РЎС“РЎвЂЎРЎв‚¬Р ВµР Р…Р Р…Р С•Р в„– РЎвЂћР С‘Р В·Р С‘Р С”Р С•Р в„– Р С�РЎРЏРЎвЂЎР В°, РЎР‚Р ВµР В°Р В»Р С‘РЎРѓРЎвЂљР С‘РЎвЂЎР Р…Р С•Р в„– Р В°Р Р…Р С‘Р С�Р В°РЎвЂ Р С‘Р ВµР в„– Р С‘Р С–РЎР‚Р С•Р С”Р С•Р Р† Р С‘ Р С•Р В±Р Р…Р С•Р Р†Р В»Р ВµР Р…Р Р…РЎвЂ№Р С�Р С‘ РЎР‚Р ВµР В¶Р С‘Р С�Р В°Р С�Р С‘ Р С”Р В°РЎР‚РЎРЉР ВµРЎР‚РЎвЂ№.' },
+    { id: 'gta-v', name: 'GTA V', price: 29.99, image: '/images/GTA V/intro.jpg', introImage: '/images/GTA V/intro.jpg', category: 'game', type: 'racing', images: ['/images/GTA V/intro.jpg','/images/GTA V/GTA-preview-1.jpg','/images/GTA V/GTA-preview-2.jpg','/images/GTA V/GTA-preview-3.jpg','/images/GTA V/GTA-preview-4.jpg'], specs: { developer: 'Rockstar Games', release: '2013', platform: 'PC/PlayStation/Xbox', min: 'Intel Core i5-3470, 8GB RAM, GTX 660' }, description: 'Р вЂєР ВµР С–Р ВµР Р…Р Т‘Р В°РЎР‚Р Р…Р В°РЎРЏ Р С‘Р С–РЎР‚Р В° Р Р† Р С•РЎвЂљР С”РЎР‚РЎвЂ№РЎвЂљР С•Р С� Р С�Р С‘РЎР‚Р Вµ. Р СћРЎР‚Р С‘ Р С–Р В»Р В°Р Р†Р Р…РЎвЂ№РЎвЂ¦ Р С–Р ВµРЎР‚Р С•РЎРЏ, Р С•Р С–РЎР‚Р С•Р С�Р Р…РЎвЂ№Р в„– Р С–Р С•РЎР‚Р С•Р Т‘ Р вЂєР С•РЎРѓ-Р РЋР В°Р Р…РЎвЂљР С•РЎРѓ, Р С�Р Р…Р С•Р В¶Р ВµРЎРѓРЎвЂљР Р†Р С• Р С�Р С‘РЎРѓРЎРѓР С‘Р в„– Р С‘ Р С•Р Р…Р В»Р В°Р в„–Р Р…-РЎР‚Р ВµР В¶Р С‘Р С� GTA Online.' },
+    { id: 'jurassic-world-evolution-3', name: 'Jurassic World Evolution 3', price: 49.99, image: '/images/Jurassic World Evolution 3/intro.jpg', introImage: '/images/Jurassic World Evolution 3/intro.jpg', category: 'game', type: 'strategy', images: ['/images/Jurassic World Evolution 3/intro.jpg','/images/Jurassic World Evolution 3/evolution-preview-1.jpg','/images/Jurassic World Evolution 3/evolution-preview-2.jpeg','/images/Jurassic World Evolution 3/evolution-preview-3.png','/images/Jurassic World Evolution 3/evolution-preview-4.jpg'], specs: { developer: 'Frontier Developments', release: '2024', platform: 'PC/PlayStation/Xbox', min: 'Intel Core i5-8400, 12GB RAM, GTX 1060' }, description: 'Р РЋР С•Р В·Р Т‘Р В°Р Р†Р В°Р в„–РЎвЂљР Вµ Р С‘ РЎС“Р С—РЎР‚Р В°Р Р†Р В»РЎРЏР в„–РЎвЂљР Вµ РЎРѓР С•Р В±РЎРѓРЎвЂљР Р†Р ВµР Р…Р Р…РЎвЂ№Р С� Р С—Р В°РЎР‚Р С”Р С•Р С� Р Т‘Р С‘Р Р…Р С•Р В·Р В°Р Р†РЎР‚Р С•Р Р†. Р СњР С•Р Р†РЎвЂ№Р Вµ Р Р†Р С‘Р Т‘РЎвЂ№, РЎС“Р В»РЎС“РЎвЂЎРЎв‚¬Р ВµР Р…Р Р…Р В°РЎРЏ Р С–Р ВµР Р…Р ВµРЎвЂљР С‘Р С”Р В° Р С‘ Р В·Р В°РЎвЂ¦Р Р†Р В°РЎвЂљРЎвЂ№Р Р†Р В°РЎР‹РЎвЂ°Р С‘Р Вµ РЎРѓРЎвЂ Р ВµР Р…Р В°РЎР‚Р С‘Р С‘ Р С‘Р В· РЎвЂћР С‘Р В»РЎРЉР С�Р С•Р Р†.' },
+    { id: 'rv-there-yet', name: 'RV There Yet', price: 19.99, image: '/images/RV There Yet/intro.jpg', introImage: '/images/RV There Yet/intro.jpg', category: 'game', type: 'indie', images: ['/images/RV There Yet/intro.jpg','/images/RV There Yet/there-preview-1.jpg','/images/RV There Yet/there-preview-2.jpeg','/images/RV There Yet/there-preview-3.jpg','/images/RV There Yet/there-preview-4.jpeg','/images/RV There Yet/there-preview-5.jpg'], specs: { developer: 'Indie Studio', release: '2024', platform: 'PC/Nintendo Switch', min: 'Intel Core i3, 4GB RAM, Integrated Graphics' }, description: 'Р Р€РЎР‹РЎвЂљР Р…Р В°РЎРЏ Р С—РЎР‚Р С‘Р С”Р В»РЎР‹РЎвЂЎР ВµР Р…РЎвЂЎР ВµРЎРѓР С”Р В°РЎРЏ Р С‘Р С–РЎР‚Р В° Р С• Р С—РЎС“РЎвЂљР ВµРЎв‚¬Р ВµРЎРѓРЎвЂљР Р†Р С‘Р С‘ Р Р…Р В° Р В°Р Р†РЎвЂљР С•Р Т‘Р С•Р С�Р Вµ. Р В�РЎРѓРЎРѓР В»Р ВµР Т‘РЎС“Р в„–РЎвЂљР Вµ Р С”РЎР‚Р В°РЎРѓР С‘Р Р†РЎвЂ№Р Вµ Р В»Р С•Р С”Р В°РЎвЂ Р С‘Р С‘, Р Р†РЎРѓРЎвЂљРЎР‚Р ВµРЎвЂЎР В°Р в„–РЎвЂљР Вµ Р С‘Р Р…РЎвЂљР ВµРЎР‚Р ВµРЎРѓР Р…РЎвЂ№РЎвЂ¦ Р С—Р ВµРЎР‚РЎРѓР С•Р Р…Р В°Р В¶Р ВµР в„–.' },
+    { id: 'dead-by-daylight', name: 'Dead by Daylight', price: 24.99, image: '/images/dead by daylight/intro.jpg', introImage: '/images/dead by daylight/intro.jpg', category: 'game', type: 'horror', images: ['/images/dead by daylight/intro.jpg','/images/dead by daylight/dead-preview-1.jpg','/images/dead by daylight/dead-preview-2.jpg','/images/dead by daylight/dead-preview-3.png','/images/dead by daylight/dead-preview-4.jpg'], specs: { developer: 'Behaviour Interactive', release: '2016', platform: 'PC/PlayStation/Xbox/Nintendo Switch', min: 'Intel Core i3-4170, 8GB RAM, GTX 460' }, description: 'Р С’РЎРѓР С‘Р С�Р С�Р ВµРЎвЂљРЎР‚Р С‘РЎвЂЎР Р…Р В°РЎРЏ Р С‘Р С–РЎР‚Р В° Р Р…Р В° Р Р†РЎвЂ№Р В¶Р С‘Р Р†Р В°Р Р…Р С‘Р Вµ 4 Р С—РЎР‚Р С•РЎвЂљР С‘Р Р† 1. Р вЂ™РЎвЂ№Р В¶Р С‘Р Р†Р В°Р в„–РЎвЂљР Вµ Р С•РЎвЂљ Р С�Р В°Р Р…РЎРЉРЎРЏР С”Р В° Р С‘Р В»Р С‘ Р С•РЎвЂ¦Р С•РЎвЂљРЎРЉРЎвЂљР ВµРЎРѓРЎРЉ Р Р…Р В° Р Р†РЎвЂ№Р В¶Р С‘Р Р†РЎв‚¬Р С‘РЎвЂ¦ Р Р† Р В°РЎвЂљР С�Р С•РЎРѓРЎвЂћР ВµРЎР‚Р Р…РЎвЂ№РЎвЂ¦ Р В»Р С•Р С”Р В°РЎвЂ Р С‘РЎРЏРЎвЂ¦.' },
+    // Р РЋР С”Р С‘Р Р…РЎвЂ№
+    { id: 'skin-awp-gungnir', name: 'AWP | GUNGNIR', price: 14.99, image: '/images/skins/AWP-GUNGNIR.png', category: 'skin', type: 'weapon', description: 'Р вЂєР ВµР С–Р ВµР Р…Р Т‘Р В°РЎР‚Р Р…Р В°РЎРЏ РЎРѓР Р…Р В°Р в„–Р С—Р ВµРЎР‚РЎРѓР С”Р В°РЎРЏ Р Р†Р С‘Р Р…РЎвЂљР С•Р Р†Р С”Р В° РЎРѓ Р С�Р С‘РЎвЂћР С•Р В»Р С•Р С–Р С‘РЎвЂЎР ВµРЎРѓР С”Р С‘Р С� Р Т‘Р С‘Р В·Р В°Р в„–Р Р…Р С•Р С�. Р С™Р С•Р С—РЎРЉР Вµ Р С›Р Т‘Р С‘Р Р…Р В° Р Р† Р С�Р С‘РЎР‚Р Вµ CS2.' },
+    { id: 'skin-deagle-fenek', name: 'Desert Eagle | Р В¤Р ВµР Р…Р ВµР С”', price: 9.99, image: '/images/skins/Desert-eagle-fenek.png', category: 'skin', type: 'weapon', description: 'Р СљР С•РЎвЂ°Р Р…РЎвЂ№Р в„– Р С—Р С‘РЎРѓРЎвЂљР С•Р В»Р ВµРЎвЂљ РЎРѓ РЎРЏРЎР‚Р С”Р С‘Р С� Р Т‘Р С‘Р В·Р В°Р в„–Р Р…Р С•Р С� Р С—РЎС“РЎРѓРЎвЂљРЎвЂ№Р Р…Р Р…Р С•Р в„– Р В»Р С‘РЎРѓРЎвЂ№. Р В Р ВµР Т‘Р С”Р С‘Р в„– РЎРѓР С”Р С‘Р Р… РЎРѓ РЎС“Р Р…Р С‘Р С”Р В°Р В»РЎРЉР Р…Р С•Р в„– РЎР‚Р В°РЎРѓРЎвЂ Р Р†Р ВµРЎвЂљР С”Р С•Р в„–.' },
+    { id: 'skin-karambit-gradient', name: 'Р С™Р ВµРЎР‚Р В°Р С�Р В±Р С‘РЎвЂљ | Р вЂњРЎР‚Р В°Р Т‘Р С‘Р ВµР Р…РЎвЂљ', price: 19.99, image: '/images/skins/kerambit-gradient.png', category: 'skin', type: 'weapon', description: 'Р В�Р В·Р С•Р С–Р Р…РЎС“РЎвЂљРЎвЂ№Р в„– Р Р…Р С•Р В¶ РЎРѓ Р С—Р В»Р В°Р Р†Р Р…РЎвЂ№Р С� Р С–РЎР‚Р В°Р Т‘Р С‘Р ВµР Р…РЎвЂљР Р…РЎвЂ№Р С� Р С—Р ВµРЎР‚Р ВµРЎвЂ¦Р С•Р Т‘Р С•Р С� РЎвЂ Р Р†Р ВµРЎвЂљР С•Р Р†. Р С›Р Т‘Р С‘Р Р… Р С‘Р В· РЎРѓР В°Р С�РЎвЂ№РЎвЂ¦ Р С—Р С•Р С—РЎС“Р В»РЎРЏРЎР‚Р Р…РЎвЂ№РЎвЂ¦ Р Р…Р С•Р В¶Р ВµР в„– Р Р† CS2.' },
+    { id: 'skin-negev-tra-ta-ta', name: 'Negev | Р СћРЎР‚Р В°-РЎвЂљР В°-РЎвЂљР В°', price: 4.99, image: '/images/skins/negev-tra-ta-ta.png', category: 'skin', type: 'weapon', description: 'Р СџРЎС“Р В»Р ВµР С�Р ВµРЎвЂљ РЎРѓ Р Р†Р ВµРЎРѓР ВµР В»РЎвЂ№Р С� Р Т‘Р С‘Р В·Р В°Р в„–Р Р…Р С•Р С� Р С‘ Р В·Р Р†РЎС“Р С”Р С•Р С—Р С•Р Т‘РЎР‚Р В°Р В¶Р В°РЎвЂљР ВµР В»РЎРЉР Р…РЎвЂ№Р С� Р Р…Р В°Р В·Р Р†Р В°Р Р…Р С‘Р ВµР С�. Р С›РЎвЂљР В»Р С‘РЎвЂЎР Р…РЎвЂ№Р в„– Р Р†РЎвЂ№Р В±Р С•РЎР‚ Р Т‘Р В»РЎРЏ Р В»РЎР‹Р В±Р С‘РЎвЂљР ВµР В»Р ВµР в„– РЎвЂљРЎРЏР В¶Р ВµР В»Р С•Р С–Р С• Р Р†Р С•Р С•РЎР‚РЎС“Р В¶Р ВµР Р…Р С‘РЎРЏ.' },
+    { id: 'skin-pp-bizon-anubis', name: 'PP-Bizon | Р РЋРЎвЂ№Р Р… Р С’Р Р…РЎС“Р В±Р С‘РЎРѓР В°', price: 5.99, image: '/images/skins/pp-bizon-syd-annubisa.png', category: 'skin', type: 'weapon', description: 'Р СџР С‘РЎРѓРЎвЂљР С•Р В»Р ВµРЎвЂљ-Р С—РЎС“Р В»Р ВµР С�Р ВµРЎвЂљ РЎРѓ Р ВµР С–Р С‘Р С—Р ВµРЎвЂљРЎРѓР С”Р С•Р в„– РЎвЂљР ВµР С�Р В°РЎвЂљР С‘Р С”Р С•Р в„–. Р СљР С‘РЎРѓРЎвЂљР С‘РЎвЂЎР ВµРЎРѓР С”Р С‘Р в„– Р Т‘Р С‘Р В·Р В°Р в„–Р Р… РЎРѓ Р С‘Р В·Р С•Р В±РЎР‚Р В°Р В¶Р ВµР Р…Р С‘Р ВµР С� Р В±Р С•Р С–Р В° Р С’Р Р…РЎС“Р В±Р С‘РЎРѓР В°.' },
+    { id: 'skin-sawedoff-kraken', name: 'Sawed-Off | Р С™РЎР‚Р В°Р С”Р ВµР Р…', price: 3.99, image: '/images/skins/saved-off-cracken.png', category: 'skin', type: 'weapon', description: 'Р С›Р В±РЎР‚Р ВµР В· РЎРѓ Р С�Р С•РЎР‚РЎРѓР С”Р С•Р в„– РЎвЂљР ВµР С�Р В°РЎвЂљР С‘Р С”Р С•Р в„–. Р вЂќР С‘Р В·Р В°Р в„–Р Р… РЎРѓ Р С‘Р В·Р С•Р В±РЎР‚Р В°Р В¶Р ВµР Р…Р С‘Р ВµР С� Р В»Р ВµР С–Р ВµР Р…Р Т‘Р В°РЎР‚Р Р…Р С•Р С–Р С• Р С�Р С•РЎР‚РЎРѓР С”Р С•Р С–Р С• РЎвЂЎРЎС“Р Т‘Р С•Р Р†Р С‘РЎвЂ°Р В°.' },
+    { id: 'skin-sport-gloves-butcher', name: 'Р РЋР С—Р С•РЎР‚РЎвЂљР С‘Р Р†Р Р…РЎвЂ№Р Вµ Р С—Р ВµРЎР‚РЎвЂЎР В°РЎвЂљР С”Р С‘ | Р СљРЎРЏРЎРѓР Р…Р С‘Р С”', price: 24.99, image: '/images/skins/sport-perchatky-myasnik.png', category: 'skin', type: 'armor', description: 'Р РЋР С—Р С•РЎР‚РЎвЂљР С‘Р Р†Р Р…РЎвЂ№Р Вµ Р С—Р ВµРЎР‚РЎвЂЎР В°РЎвЂљР С”Р С‘ РЎРѓ Р В±РЎР‚РЎС“РЎвЂљР В°Р В»РЎРЉР Р…РЎвЂ№Р С� Р Т‘Р С‘Р В·Р В°Р в„–Р Р…Р С•Р С�. Р С™РЎР‚Р С•Р Р†Р В°Р Р†РЎвЂ№Р Вµ Р С—РЎРЏРЎвЂљР Р…Р В° Р С‘ Р С—Р С•РЎвЂљР ВµРЎР‚РЎвЂљР С•РЎРѓРЎвЂљР С‘ РЎРѓР С•Р В·Р Т‘Р В°РЎР‹РЎвЂљ Р В°РЎвЂљР С�Р С•РЎРѓРЎвЂћР ВµРЎР‚РЎС“ Р Р…Р В°РЎРѓРЎвЂљР С•РЎРЏРЎвЂ°Р ВµР С–Р С• Р В±Р С•Р в„–РЎвЂ Р В°.' }
+  ]
+}
+
+function CartProvider({ children }) {
+  const [items, setItems] = React.useState(() => {
+    try {
+      const saved = localStorage.getItem('cart-items')
+      return saved ? JSON.parse(saved) : []
+    } catch {
+      return []
+    }
+  })
+  React.useEffect(() => {
+    localStorage.setItem('cart-items', JSON.stringify(items))
+  }, [items])
+  const addItem = (product, qty = 1) => {
+    // Р СџРЎР‚Р С•Р Р†Р ВµРЎР‚РЎРЏР ВµР С� Р В°Р Р†РЎвЂљР С•РЎР‚Р С‘Р В·Р В°РЎвЂ Р С‘РЎР‹ РЎвЂЎР ВµРЎР‚Р ВµР В· cookie Р С‘ localStorage
+    const hasCookie = document.cookie.includes('profile_auth=1')
+    const hasLocalStorage = localStorage.getItem('profile-auth') === '1'
+    const authorized = hasCookie || hasLocalStorage
+    
+    if (!authorized) {
+      window.dispatchEvent(new Event('open-login'))
+      return
+    }
+    setItems(prev => {
+      const exists = prev.find(i => i.id === product.id)
+      if (exists) {
+        return prev.map(i => i.id === product.id ? { ...i, qty: i.qty + qty } : i)
+      }
+      return [...prev, { ...product, image: product.image || '', qty }]
+    })
+  }
+  const removeItem = (id) => setItems(prev => prev.filter(i => i.id !== id))
+  const updateQty = (id, qty) => setItems(prev => prev.map(i => i.id === id ? { ...i, qty: Math.max(1, qty) } : i))
+  const clear = () => setItems([])
+  const totalQuantity = items.reduce((sum, i) => sum + i.qty, 0)
+  const totalPrice = items.reduce((sum, i) => sum + i.price * i.qty, 0)
+  const value = { items, addItem, removeItem, updateQty, clear, totalQuantity, totalPrice }
+  return <CartContext.Provider value={value}>{children}</CartContext.Provider>
+}
+
+function useCart() { const ctx = React.useContext(CartContext); if (!ctx) throw new Error('useCart must be used within CartProvider'); return ctx }
+
+function CartBadge() {
+  const { totalQuantity } = useCart()
+  const isAuthorized = localStorage.getItem('profile-auth') === '1'
+  if (!isAuthorized || totalQuantity <= 0) return null
+  return (
+    <span className="absolute -top-1 -right-2 min-w-[18px] h-5 px-1 rounded-full bg-[#7e2aa8] text-xs flex items-center justify-center">
+      {totalQuantity}
+    </span>
+  )
+}
+
+// Р Р‡Р В·РЎвЂ№Р С”Р С•Р Р†Р С•Р в„– Р С”Р С•Р Р…РЎвЂљР ВµР С”РЎРѓРЎвЂљ: Р С—Р ВµРЎР‚Р ВµР С”Р В»РЎР‹РЎвЂЎР ВµР Р…Р С‘Р Вµ РЎРЏР В·РЎвЂ№Р С”Р В° Р С‘ Р Р†Р В°Р В»РЎР‹РЎвЂљРЎвЂ№, РЎвЂћР С•РЎР‚Р С�Р В°РЎвЂљР С‘РЎР‚Р С•Р Р†Р В°Р Р…Р С‘Р Вµ РЎвЂ Р ВµР Р…
+const LangContext = React.createContext(null)
+function LangProvider({ children }) {
+  const [lang, setLang] = React.useState(() => localStorage.getItem('lang') || 'ru')
+  React.useEffect(() => { localStorage.setItem('lang', lang) }, [lang])
+  const RATE = 90
+  const currency = lang === 'ru' ? 'RUB' : 'USD'
+  const formatPrice = (amountUsd) => {
+    try {
+      if (lang === 'ru') return new Intl.NumberFormat('ru-RU', { style: 'currency', currency: 'RUB' }).format(amountUsd * RATE)
+      return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amountUsd)
+    } catch {
+      return lang === 'ru' ? `${Math.round(amountUsd * RATE)} РІвЂљР…` : `$${amountUsd.toFixed(2)}`
+    }
+  }
+  const toAmountInCurrency = (amountUsd) => lang === 'ru' ? amountUsd * RATE : amountUsd
+  const DICT = {
+    ru: { 'skins.title': 'Р РЋР С”Р С‘Р Р…РЎвЂ№ CS2' },
+    en: { 'skins.title': 'CS2 Skins' }
+  }
+  const t = (key) => (DICT[lang] && DICT[lang][key]) || key
+  const value = { lang, setLang, currency, rate: RATE, formatPrice, toAmountInCurrency, t }
+  return <LangContext.Provider value={value}>{children}</LangContext.Provider>
+}
+
+function useLang() { 
+  const ctx = React.useContext(LangContext); 
+  if (!ctx) throw new Error('useLang must be used within LangProvider'); 
+  return ctx; 
+}
+
+// LazyImage Р С”Р С•Р С�Р С—Р С•Р Р…Р ВµР Р…РЎвЂљ Р Т‘Р В»РЎРЏ Р С•Р С—РЎвЂљР С‘Р С�Р С‘Р В·Р С‘РЎР‚Р С•Р Р†Р В°Р Р…Р Р…Р С•Р в„– Р В·Р В°Р С–РЎР‚РЎС“Р В·Р С”Р С‘ Р С‘Р В·Р С•Р В±РЎР‚Р В°Р В¶Р ВµР Р…Р С‘Р в„–
+ function LazyImage({ src, alt, className, fallback = '/vite.svg', ...props }) {
+  const [imageSrc, setImageSrc] = React.useState(fallback)
+  const [isLoading, setIsLoading] = React.useState(true)
+  const [hasError, setHasError] = React.useState(false)
+  const imgRef = React.useRef(null)
+
+  React.useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            const img = new Image()
+            img.onload = () => {
+              setImageSrc(src)
+              setIsLoading(false)
+              setHasError(false)
+            }
+            img.onerror = () => {
+              setImageSrc(fallback)
+              setIsLoading(false)
+              setHasError(true)
+            }
+            img.src = src
+            observer.unobserve(entry.target)
+          }
+        })
+      },
+      { threshold: 0.1, rootMargin: '50px' }
+    )
+
+    if (imgRef.current) {
+      observer.observe(imgRef.current)
+    }
+
+    return () => observer.disconnect()
+  }, [src, fallback])
+
+  return (
+    <div ref={imgRef} className={`relative ${className || ''}`}>
+      <img
+        src={imageSrc}
+        alt={alt}
+        className={`transition-opacity duration-300 ${isLoading ? 'opacity-50' : 'opacity-100'} ${className || ''}`}
+        loading="lazy"
+        decoding="async"
+        {...props}
+      />
+      {isLoading && (
+        <div className="absolute inset-0 flex items-center justify-center bg-[#161f38] animate-pulse">
+          <div className="w-8 h-8 border-2 border-white/20 border-t-white/60 rounded-full animate-spin"></div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// Р РЋРЎвЂљРЎР‚Р В°Р Р…Р С‘РЎвЂ Р В° Р С—Р С•Р С�Р С•РЎвЂ°Р С‘ Р С‘ Р С—Р С•Р Т‘Р Т‘Р ВµРЎР‚Р В¶Р С”Р С‘
+function Help() {
+  return (
+    <section className="bg-[#0c0f1a] text-white min-h-[60vh]">
+      <div className="max-w-6xl mx-auto px-4 py-16">
+        <h1 className="text-3xl font-bold mb-4">Р СџР С•Р С�Р С•РЎвЂ°РЎРЉ Р С‘ Р С—Р С•Р Т‘Р Т‘Р ВµРЎР‚Р В¶Р С”Р В°</h1>
+        <p className="text-white/70 mb-6">Р С›РЎвЂљР Р†Р ВµРЎвЂљРЎвЂ№ Р Р…Р В° РЎвЂЎР В°РЎРѓРЎвЂљРЎвЂ№Р Вµ Р Р†Р С•Р С—РЎР‚Р С•РЎРѓРЎвЂ№ Р С‘ РЎРѓР С—Р С•РЎРѓР С•Р В±РЎвЂ№ РЎРѓР Р†РЎРЏР В·Р С‘.</p>
+
+        <div className="grid md:grid-cols-2 gap-6">
+          <div className="p-6 bg-[#111936] rounded-xl border border-white/10">
+            <h2 className="text-xl font-semibold mb-3">FAQ</h2>
+            <p className="text-white/70 mb-4">Р СџР С•РЎРѓР С�Р С•РЎвЂљРЎР‚Р С‘РЎвЂљР Вµ Р С•РЎвЂљР Р†Р ВµРЎвЂљРЎвЂ№ Р Р…Р В° Р С—Р С•Р С—РЎС“Р В»РЎРЏРЎР‚Р Р…РЎвЂ№Р Вµ Р Р†Р С•Р С—РЎР‚Р С•РЎРѓРЎвЂ№ Р С• Р С—Р С•Р С”РЎС“Р С—Р С”Р В°РЎвЂ¦ Р С‘ Р С—РЎР‚Р С•Р Т‘Р В°Р В¶Р Вµ РЎРѓР С”Р С‘Р Р…Р С•Р Р†.</p>
+            <NavLink to="/blog" className="inline-block bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-lg">Р вЂ�Р В»Р С•Р С– Р С‘ Р С–Р В°Р в„–Р Т‘РЎвЂ№</NavLink>
+          </div>
+
+          <div className="p-6 bg-[#111936] rounded-xl border border-white/10">
+            <h2 className="text-xl font-semibold mb-3">Р РЋР Р†РЎРЏР В·Р В°РЎвЂљРЎРЉРЎРѓРЎРЏ РЎРѓ Р Р…Р В°Р С�Р С‘</h2>
+            <p className="text-white/70 mb-4">Р СљРЎвЂ№ Р Т‘Р С•РЎРѓРЎвЂљРЎС“Р С—Р Р…РЎвЂ№ 24/7. Р СњР В°Р С—Р С‘РЎв‚¬Р С‘РЎвЂљР Вµ Р Р…Р В° email Р С‘Р В»Р С‘ Р С‘РЎРѓР С—Р С•Р В»РЎРЉР В·РЎС“Р в„–РЎвЂљР Вµ РЎвЂћР С•РЎР‚Р С�РЎС“ Р С•Р В±РЎР‚Р В°РЎвЂљР Р…Р С•Р в„– РЎРѓР Р†РЎРЏР В·Р С‘.</p>
+            <div className="space-y-2 text-sm">
+              <div>Email: <a href="mailto:support@aigamestore.ru" className="text-blue-400 hover:text-blue-300">support@aigamestore.ru</a></div>
+              <div>Р СћР ВµР В»Р ВµРЎвЂћР С•Р Р…: <a href="tel:+74951234567" className="text-blue-400 hover:text-blue-300">+7 (495) 123-45-67</a></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  )
+}

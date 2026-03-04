@@ -1,0 +1,46 @@
+<svg width="320" height="400" viewBox="0 0 320 400" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1f2a4a" />
+      <stop offset="100%" stop-color="#2d1b69" />
+    </linearGradient>
+  </defs>
+  <rect width="320" height="400" fill="url(#grad)" />
+  <g fill="none" stroke="#ffffff22" stroke-width="4">
+    <circle cx="160" cy="150" r="64" />
+    <path d="M96 300c24-32 48-48 64-48s40 16 64 48" stroke-linecap="round" />
+  </g>
+  <text x="50%" y="336" text-anchor="middle" fill="#ffffff66" font-family="'Segoe UI', sans-serif" font-size="20">
+    Изображение
+  </text>
+  <text x="50%" y="364" text-anchor="middle" fill="#ffffff55" font-family="'Segoe UI', sans-serif" font-size="16">
+    скоро появится
+  </text>
+</svg>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

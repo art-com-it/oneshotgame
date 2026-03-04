@@ -1,0 +1,809 @@
+@charset "UTF-8";
+/* Import Tailwind v4 */
+@import "tailwindcss";
+
+/* Game Sale base theme colors */
+:root {
+  color-scheme: dark;
+  --bg-dark: #0D1A2F; /* Dark navy */
+  --accent-blue: #4A90E2; /* Bright blue */
+  --accent-purple: #9C27B0; /* Vibrant purple */
+  --radius: 10px;
+  --spacing-1: 4px;
+  --spacing-2: 8px;
+  --spacing-3: 12px;
+  --spacing-4: 16px;
+}
+
+html, body {
+  background-color: var(--bg-dark);
+}
+
+/* Utility presets via Tailwind classes will be used in components */
+/* Keep default demo styles minimal */
+#app { @apply min-h-screen text-white; }
+
+.h-18 {
+  height: 4.5rem !important;
+}
+
+.h-20 {
+  height: 5rem !important;
+}
+
+.card-image-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background: #070f21;
+}
+
+.product-card-image {
+  background: linear-gradient(135deg, #161f38 0%, #1d2648 50%, #101b34 100%);
+}
+
+.product-main-image {
+  background: #070f21;
+  border-radius: 1rem;
+}
+
+.product-image-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #070f21;
+}
+
+.product-image {
+  max-width: 100%;
+  max-height: 100%;
+  width: auto;
+  height: auto;
+}
+
+.image-loading-skeleton {
+  background: linear-gradient(90deg, #161f38 25%, #1a2442 50%, #161f38 75%);
+  background-size: 200% 100%;
+  animation: loading 1.5s infinite;
+}
+
+@keyframes loading {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+a { @apply text-blue-400 hover:text-blue-300; }
+
+/* Simple neon hover effect for demo */
+.neon-hover { @apply transition-all duration-300; }
+.neon-hover:hover { filter: drop-shadow(0 0 0.6rem var(--accent-blue)); }
+
+/* Normalize default template overrides to keep dark theme consistent */
+:root {
+  /* Global font stack with Cyrillic support */
+  font-family: 'Noto Sans', 'Roboto', 'Segoe UI', system-ui, -apple-system, 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+  color-scheme: dark;
+  color: rgba(255, 255, 255, 0.87);
+  background-color: var(--bg-dark);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Скрытие скроллбара для мобильной карусели */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+html, body {
+  /* Ensure body inherits the global font stack */
+  font-family: inherit;
+  margin: 0;
+  display: block; /* Ð½Ðµ Ñ†ÐµÐ½Ñ‚Ñ€Ð¸Ñ€ÑƒÐµÐ¼ Ð²ÑÐµ ÑÐ¾Ð´ÐµÑ€Ð¶Ð¸Ð¼Ð¾Ðµ */
+  min-width: 320px;
+  min-height: 100vh;
+  background-color: var(--bg-dark);
+  overflow-x: hidden;
+}
+
+#app {
+  width: 100%; 
+  margin: 0;
+  padding: 0; /* ÑƒÐ¿Ñ€Ð°Ð²Ð»ÐµÐ½Ð¸Ðµ Ð¾Ñ‚ÑÑ‚ÑƒÐ¿Ð°Ð¼Ð¸ Ð² ÐºÐ¾Ð¼Ð¿Ð¾Ð½ÐµÐ½Ñ‚Ð°Ñ… */
+  text-align: initial; /* Ð±ÐµÐ· Ñ†ÐµÐ½Ñ‚Ñ€Ð¸Ñ€Ð¾Ð²Ð°Ð½Ð¸Ñ Ð¿Ð¾ ÑƒÐ¼Ð¾Ð»Ñ‡Ð°Ð½Ð¸ÑŽ */
+}
+
+/* Ð‘Ð°Ð·Ð¾Ð²Ñ‹Ð¹ ÑÑ‚Ð¸Ð»ÑŒ ÐºÐ½Ð¾Ð¿Ð¾Ðº, Ð½Ðµ Ð¼ÐµÑˆÐ°ÑŽÑ‰Ð¸Ð¹ Tailwind-ÑƒÑ‚Ð¸Ð»Ð¸Ñ‚Ð°Ð¼ */
+button {
+  border-radius: var(--radius);
+  border: 1px solid transparent;
+  padding: 0.6em 1.2em;
+  font-size: 1em;
+  font-weight: 500;
+  font-family: inherit;
+  background-color: #161f38; /* Ñ‚Ñ‘Ð¼Ð½Ð°Ñ Ñ‚ÐµÐ¼Ð° */
+  color: #fff;
+  cursor: pointer;
+  transition: border-color 0.25s;
+}
+button:hover { border-color: #646cff; }
+button:focus,
+button:focus-visible { outline: 4px auto -webkit-focus-ring-color; }
+
+/* ÐšÐ¾Ð¼Ð¿Ð°ÐºÑ‚Ð½Ð°Ñ ÐºÐ½Ð¾Ð¿ÐºÐ° Ð¿ÐµÑ€ÐµÐºÐ»ÑŽÑ‡ÐµÐ½Ð¸Ñ ÑÐ·Ñ‹ÐºÐ° */
+.lang-switch {
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-size: 12px;
+  line-height: 1;
+}
+
+/* Ð¤ÑƒÑ‚ÐµÑ€: Ð²Ñ‹Ñ€Ð°Ð²Ð½Ð¸Ð²Ð°Ð½Ð¸Ðµ ÐºÐ¾Ð»Ð¾Ð½Ð¾Ðº Ð¸ Ð°Ð´Ð°Ð¿Ñ‚Ð¸Ð²Ð½Ñ‹Ð¹ Ð¿Ð¾Ñ€ÑÐ´Ð¾Ðº */
+.footer-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-4);
+}
+.footer-col {
+  flex: 1 1 300px;
+  min-width: 240px;
+}
+.footer-col.logo { order: 1; }
+.footer-col.docs { order: 2; }
+.footer-col.payments { order: 3; }
+@media (max-width: 640px) {
+  .footer-col.logo { order: 3; }
+  .footer-col.docs { order: 1; }
+}
+
+/* ÐÐ”ÐÐŸÐ¢Ð˜Ð’ÐÐ«Ð™ Ð”Ð˜Ð—ÐÐ™Ð */
+
+/* ÐœÐ¾Ð±Ð¸Ð»ÑŒÐ½Ð¾Ðµ Ð½Ð¸Ð¶Ð½ÐµÐµ Ð¼ÐµÐ½ÑŽ */
+.mobile-bottom-nav {
+  display: none;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: rgba(13, 26, 47, 0.95);
+  backdrop-filter: blur(10px);
+  border-top: 1px solid rgba(74, 144, 226, 0.2);
+  height: 60px;
+  z-index: 1000;
+  justify-content: space-around;
+  align-items: center;
+  padding: 0 8px;
+}
+
+.mobile-nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 12px;
+  color: rgba(255, 255, 255, 0.6);
+  transition: all 0.2s ease;
+  text-decoration: none;
+  border-radius: 8px;
+  min-width: 60px;
+}
+
+.mobile-nav-item.active,
+.mobile-nav-item:hover {
+  color: var(--accent-blue);
+  background: rgba(74, 144, 226, 0.1);
+}
+
+.mobile-nav-icon {
+  width: 24px;
+  height: 24px;
+  margin-bottom: 4px;
+  fill: currentColor;
+}
+
+.mobile-nav-text {
+  font-size: 10px;
+  font-weight: 500;
+  text-align: center;
+}
+
+/* Планшеты и мобильные (до 1000px) */
+@media (max-width: 1000px) {
+  /* Мобильный хедер должен быть виден */
+  .mobile-header {
+    display: block !important;
+  }
+  
+  .desktop-header {
+    display: none !important;
+  }
+  
+  /* Адаптация основного контента */
+  main {
+    padding-top: 88px !important; /* Высота мобильного хедера (h-14 лого + py-2) + отступ */
+  }
+  
+  /* Футер на мобильных - в колонки */
+  footer .flex-nowrap {
+    flex-wrap: wrap !important;
+  }
+  
+  footer .flex-shrink-0 {
+    flex-basis: calc(50% - 1rem) !important;
+    min-width: auto !important;
+  }
+}
+
+/* Десктоп (больше 1000px) */
+@media (min-width: 1001px) {
+  .mobile-header {
+    display: none !important;
+  }
+  
+  .desktop-header {
+    display: block !important;
+  }
+  
+  main {
+    padding-top: 96px !important; /* Высота desktop хедера (h-14 лого + py-2) + отступ */
+  }
+  /* ÐÐ´Ð°Ð¿Ñ‚Ð°Ñ†Ð¸Ñ ÑÐ°Ð¹Ð´Ð±Ð°Ñ€Ð° Ð´Ð»Ñ Ð¿Ð»Ð°Ð½ÑˆÐµÑ‚Ð¾Ð² */
+  .sidebar {
+    width: 100% !important;
+    position: relative !important;
+    height: auto !important;
+    flex-direction: row !important;
+    overflow-x: auto !important;
+    padding: 1rem !important;
+  }
+  
+  .sidebar-nav {
+    display: flex !important;
+    flex-direction: row !important;
+    gap: 1rem !important;
+    white-space: nowrap !important;
+  }
+  
+  .main-content {
+    margin-left: 0 !important;
+    padding: 1rem !important;
+  }
+  
+  .top-panel {
+    position: relative !important;
+    padding: 1rem !important;
+  }
+}
+
+/* Мобильные устройства (до 768px) */
+@media (max-width: 768px) {
+  /* ÐŸÐ¾ÐºÐ°Ð·Ñ‹Ð²Ð°ÐµÐ¼ Ð¼Ð¾Ð±Ð¸Ð»ÑŒÐ½Ð¾Ðµ Ð¼ÐµÐ½ÑŽ */
+  .mobile-bottom-nav {
+    display: flex;
+  }
+  
+  /* Ð¡ÐºÑ€Ñ‹Ð²Ð°ÐµÐ¼ Ð´ÐµÑÐºÑ‚Ð¾Ð¿Ð½ÑƒÑŽ Ð½Ð°Ð²Ð¸Ð³Ð°Ñ†Ð¸ÑŽ */
+  .sidebar {
+    display: none !important;
+  }
+  
+  /* ÐÐ´Ð°Ð¿Ñ‚Ð°Ñ†Ð¸Ñ Ð¾ÑÐ½Ð¾Ð²Ð½Ð¾Ð³Ð¾ ÐºÐ¾Ð½Ñ‚ÐµÐ½Ñ‚Ð° */
+  .main-content {
+    margin-left: 0 !important;
+    padding: 1rem 1rem 90px 1rem !important; /* Ð”Ð¾Ð±Ð°Ð²Ð»ÑÐµÐ¼ Ð¾Ñ‚ÑÑƒÐ¿ ÑÐ½Ð¸Ð·Ñƒ Ð´Ð»Ñ Ð¼ÐµÐ½ÑŽ */
+  }
+  
+  .top-panel {
+    position: relative !important;
+    padding: 1rem !important;
+  }
+  
+  /* ÐÐ´Ð°Ð¿Ñ‚Ð°Ñ†Ð¸Ñ ÑƒÐºÐ°Ð·Ð°Ñ‚ÐµÐ»ÑŒÐ½Ð¾Ð³Ð¾ ÐºÐ¾Ð½Ñ‚ÐµÐ½Ñ‚Ð° */
+  .product-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 1rem !important;
+  }
+  
+  .product-card {
+    padding: 1rem !important;
+  }
+  
+  /* ÐÐ´Ð°Ð¿Ñ‚Ð°Ñ†Ð¸Ñ Ð¼Ð¾Ð´Ð°Ð»ÑŒÐ½Ñ‹Ñ… Ð¾ÐºÐ¾Ð½ */
+  .modal-overlay {
+    padding: 1rem !important;
+  }
+  
+  .modal-content {
+    max-width: calc(100vw - 2rem) !important;
+    max-height: calc(100vh - 2rem) !important;
+    margin: 0 !important;
+  }
+  
+  /* ÐÐ´Ð°Ð¿Ñ‚Ð°Ñ†Ð¸Ñ Ñ„Ð¾Ñ€Ð¼ */
+  .form-grid {
+    grid-template-columns: 1fr !important;
+    gap: 1rem !important;
+  }
+  
+  /* ÐÐ´Ð°Ð¿Ñ‚Ð°Ñ†Ð¸Ñ ÐºÐ°Ñ€Ñ‚Ð¾Ñ‡ÐµÐº Ñ‚Ð¾Ð²Ð°Ñ€Ð¾Ð² Ð² Ð´ÐµÑ‚Ð°Ð»ÑÑ… */
+  .product-detail-images {
+    grid-template-columns: 1fr !important;
+  }
+  
+  .product-detail-info {
+    padding: 1rem !important;
+  }
+}
+
+/* ÐžÑ‡ÐµÐ½ÑŒ Ð¼Ð°Ð»ÐµÐ½ÑŒÐºÐ¸Ðµ ÑÐºÑ€Ð°Ð½Ñ‹ (Ð´Ð¾ 480px) */
+@media (max-width: 480px) {
+  .mobile-nav-text {
+    display: none;
+  }
+  
+  .mobile-nav-item {
+    min-width: 50px;
+    padding: 8px;
+  }
+  
+  .product-grid {
+    grid-template-columns: 1fr !important;
+    gap: 0.5rem !important;
+  }
+  
+  .main-content {
+    padding: 0.5rem 0.5rem 90px 0.5rem !important;
+  }
+  
+  .top-panel {
+    padding: 0.5rem !important;
+  }
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    color: #213547;
+    background-color: var(--bg-dark); /* Ð¾ÑÑ‚Ð°Ñ‘Ð¼ÑÑ Ð² Ñ‚Ñ‘Ð¼Ð½Ð¾Ð¹ Ñ‚ÐµÐ¼Ðµ */
+  }
+  a:hover { color: #747bff; }
+  button { background-color: #161f38; color: #fff; }
+}
+
+/* Heading/brand display font */
+.h-display {
+  font-family: 'Orbitron', system-ui, Avenir, Helvetica, Arial, sans-serif;
+  letter-spacing: 0.02em;
+}
+
+/* Apply display font to major headings */
+h1, h2, .brand-title { font-family: 'Orbitron', system-ui, Avenir, Helvetica, Arial, sans-serif; }
+
+
+/* Overrides: mobile/tablet visibility and icon sizing */
+@media (max-width: 1000px) {
+  .sidebar { display: none !important; }
+  .sticky.top-0.z-10.border-b { display: none !important; }
+  .mobile-bottom-nav { display: flex; }
+  .main-content { margin-left: 0 !important; padding: 1rem 1rem 90px 1rem !important; }
+}
+@media (max-width: 768px) {
+  .sidebar { display: none !important; }
+  .sticky.top-0.z-10.border-b { display: none !important; }
+  .mobile-nav-icon { width: 20px; height: 20px; }
+}
+@media (max-width: 480px) {
+  .mobile-nav-icon { width: 18px; height: 18px; }
+  .mobile-bottom-nav { height: 56px; }
+}
+
+/* Исправления для мобильной версии */
+@media (max-width: 768px) {
+  /* Исправляем растягивание блоков товаров */
+  .grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 0.75rem !important;
+  }
+  
+  /* Исправляем карточки товаров */
+  .grid > div {
+    min-height: auto !important;
+    height: auto !important;
+  }
+  
+  /* Исправляем изображения в каталоге */
+  .grid img,
+  .grid .aspect-video {
+    aspect-ratio: 16/9 !important;
+    height: auto !important;
+    max-height: 220px !important;
+    object-fit: contain !important;
+  }
+  
+  /* Исправляем высоту блоков */
+  .grid .h-36 {
+    height: 220px !important;
+  }
+  
+  /* Убираем проблемные стили для навигации */
+  .mobile-bottom-nav a,
+  .mobile-bottom-nav button {
+    text-decoration: none !important;
+    border: none !important;
+    background: transparent !important;
+  }
+}
+
+/* Дополнительные исправления для мобильных блоков */
+@media (max-width: 768px) {
+  /* Исправляем растягивание блоков товаров как баннеров */
+  .product-card {
+    min-height: 280px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    aspect-ratio: unset !important;
+  }
+  
+  .product-card img,
+  .product-card .h-36 {
+    height: 220px !important;
+    width: 100% !important;
+    object-fit: contain !important;
+    flex-shrink: 0 !important;
+    border-radius: 0.5rem !important;
+  }
+  
+  .product-card h3 {
+    margin-top: 0.75rem !important;
+    flex-grow: 1 !important;
+  }
+  
+  .product-card button {
+    margin-top: auto !important;
+  }
+  
+  /* Исправляем ширину блоков в каталоге */
+  .grid.grid-cols-2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+  
+  .grid.grid-cols-3 {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+  
+  .grid.grid-cols-4 {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
+
+/* Carousel Styles */
+#skins-carousel {
+  -webkit-overflow-scrolling: touch;
+}
+
+#skins-carousel::-webkit-scrollbar {
+  display: none;
+}
+
+#skins-carousel {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Smooth carousel animations */
+.carousel-item {
+  transition: transform 0.3s ease-in-out;
+}
+
+.carousel-item:hover {
+  transform: scale(1.05);
+}
+
+/* Navigation button hover effects */
+.carousel-nav-btn {
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
+}
+
+.carousel-nav-btn:hover {
+  transform: scale(1.1);
+  box-shadow: 0 0 20px rgba(74, 144, 226, 0.5);
+}
+
+@media (max-width: 480px) {
+  /* Одна колонка на очень маленьких экранах */
+  .grid {
+    grid-template-columns: 1fr !important;
+    gap: 0.5rem !important;
+  }
+  
+  /* Скрываем текст в мобильной навигации */
+  .mobile-nav-text {
+    display: none !important;
+  }
+}
+
+/* Анимация для карусели отзывов */
+@keyframes scroll-x {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-100%);
+  }
+}
+
+.animate-scroll-x {
+  animation: scroll-x 30s linear infinite;
+}
+
+.animate-scroll-x:hover {
+  animation-play-state: paused;
+}
+
+/* Анимация вращения рулетки */
+@keyframes spin-roulette {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-100%);
+  }
+}
+
+.animate-spin-roulette {
+  animation: spin-roulette 3s cubic-bezier(0.25, 0.1, 0.25, 1) forwards;
+}
+
+/* Анимации для модального окна PaymentWidget */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.3s ease-out;
+}
+
+.animate-slideUp {
+  animation: slideUp 0.3s ease-out;
+}
+/* Global width and overflow fixes */
+html, body, #app {
+  width: 100%;
+  max-width: 100vw;
+  overflow-x: hidden;
+  margin: 0;
+  padding: 0;
+}
+
+/* Ensure main container never exceeds viewport width */
+.min-h-screen {
+  width: 100%;
+  max-width: 100vw;
+}
+
+/* Prevent padding from causing overflow */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+/* Safe defaults for images */
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Центрирование контента на всех страницах */
+main {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 100%;
+  margin: 0 auto;
+}
+
+/* Контейнеры для центрирования контента */
+.container-center {
+  width: 100%;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+
+@media (min-width: 640px) {
+  .container-center {
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .container-center {
+    padding-left: 2rem;
+    padding-right: 2rem;
+  }
+}
+
+/* Улучшенные адаптивные сетки */
+.responsive-grid {
+  display: grid;
+  width: 100%;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
+  justify-items: center;
+}
+
+@media (min-width: 640px) {
+  .responsive-grid {
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
+    gap: 1.25rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .responsive-grid {
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
+    gap: 1.5rem;
+  }
+}
+
+/* Адаптивные карточки товаров */
+.product-card-responsive {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+}
+
+/* Центрирование всех секций */
+section {
+  width: 100%;
+  max-width: 100%;
+  margin: 0 auto;
+}
+
+/* Защита от перекрытия заголовков хедером */
+section > h2:first-child,
+section > h1:first-child {
+  margin-top: 0;
+  padding-top: 0.5rem;
+}
+
+/* Дополнительный отступ для первой секции на странице */
+main > div > section:first-child {
+  padding-top: 1rem;
+}
+
+main > div > section:first-child > h2:first-child,
+main > div > section:first-child > h1:first-child {
+  padding-top: 0;
+  margin-top: 0;
+}
+
+/* Улучшенная адаптивность для всех grid-сеток */
+.grid {
+  display: grid;
+  width: 100%;
+  max-width: 100%;
+}
+
+/* Адаптивные карточки - всегда центрированы */
+.grid > * {
+  min-width: 0;
+  width: 100%;
+  max-width: 100%;
+}
+
+/* Медиа-запросы для улучшенной адаптивности */
+@media (max-width: 640px) {
+  /* На мобильных - одна колонка, элементы по центру */
+  .grid.grid-cols-1,
+  .grid.grid-cols-2,
+  .grid.grid-cols-3,
+  .grid.grid-cols-4,
+  .grid.grid-cols-5 {
+    grid-template-columns: 1fr !important;
+    justify-items: center;
+  }
+  
+  /* Уменьшаем отступы на мобильных */
+  section {
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+  }
+}
+
+@media (min-width: 641px) and (max-width: 1023px) {
+  /* На планшетах - максимум 2-3 колонки */
+  .grid.grid-cols-4,
+  .grid.grid-cols-5 {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+  
+  .grid.grid-cols-3 {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+}
+
+@media (min-width: 1024px) and (max-width: 1279px) {
+  /* На больших планшетах - максимум 3 колонки */
+  .grid.grid-cols-5 {
+    grid-template-columns: repeat(3, 1fr) !important;
+  }
+}
+
+@media (min-width: 1280px) {
+  /* На десктопе - все колонки как задумано */
+  .grid {
+    justify-items: start;
+  }
+  
+  /* Центрируем контент на очень больших экранах */
+  .container-center {
+    max-width: 1400px;
+  }
+}
+
+/* Global logo sizing guard: prevent oversizing anywhere */
+img[src="/images/logo/logo.png"] {
+  height: 56px !important;
+  width: auto !important;
+  object-fit: contain !important;
+}
+
+@media (min-width: 768px) {
+  img[src="/images/logo/logo.png"] {
+    height: 64px !important;
+  }
+}
+
+@media (min-width: 1280px) {
+  img[src="/images/logo/logo.png"] {
+    height: 80px !important;
+  }
+}
+
+/* Square icon wrappers: enforce 1:1 aspect ratio and fit images */
+.w-8.h-8,
+.w-10.h-10,
+.w-12.h-12,
+.w-14.h-14,
+.w-16.h-16 {
+  aspect-ratio: 1 / 1;
+}
+
+.w-8.h-8 img,
+.w-10.h-10 img,
+.w-12.h-12 img,
+.w-14.h-14 img,
+.w-16.h-16 img {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+}

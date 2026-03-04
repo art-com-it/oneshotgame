@@ -1,0 +1,48 @@
+{
+  "name": "oneshotgame",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "server": "node server.js",
+    "start": "node server.js",
+    "dev:full": "concurrently \"npm run server\" \"npm run dev\""
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.1.15",
+    "autoprefixer": "^10.4.21",
+    "concurrently": "^9.2.1",
+    "postcss": "^8.5.6",
+    "tailwindcss": "^4.1.15",
+    "vite": "^5.4.8"
+  },
+  "overrides": {
+    "vite": "^5.4.8"
+  },
+  "dependencies": {
+    "classnames": "^2.5.1",
+    "compression": "^1.8.1",
+    "connect-redis": "^9.0.0",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.3",
+    "express": "^4.19.2",
+    "express-session": "^1.17.3",
+    "firebase": "^12.4.0",
+    "iconv-lite": "^0.7.0",
+    "multer": "^2.0.2",
+    "node-telegram-bot-api": "^0.66.0",
+    "nodemailer": "^6.10.1",
+    "passport": "^0.7.0",
+    "passport-steam": "^1.0.18",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "react-router-dom": "^7.9.4",
+    "redis": "^5.9.0",
+    "resend": "^6.4.2",
+    "socket.io": "^4.8.1",
+    "socket.io-client": "^4.8.1"
+  }
+}

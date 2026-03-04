@@ -1,0 +1,901 @@
+{
+  "byName": {
+    "apexlegends1": [
+      "/images/games/apex_legends_1.jpeg"
+    ],
+    "apexlegends": [
+      "/images/games/apex_legends_intro.jpeg",
+      "/images/games/apex_legends_1.jpeg",
+      "/images/games/apex_legends_2.jpeg",
+      "/images/games/apex_legends_3.jpg",
+      "/images/games/apex_legends_4.jpeg"
+    ],
+    "apexlegends2": [
+      "/images/games/apex_legends_2.jpeg"
+    ],
+    "apexlegends3": [
+      "/images/games/apex_legends_3.jpg"
+    ],
+    "apexlegends4": [
+      "/images/games/apex_legends_4.jpeg"
+    ],
+    "assassinscreedvalhalla1": [
+      "/images/games/Assassin_s_Creed_Valhalla_1.jpeg"
+    ],
+    "assassinscreedvalhalla": [
+      "/images/games/Assassin_s_Creed_Valhalla_intro.jpeg",
+      "/images/games/Assassin_s_Creed_Valhalla_1.jpeg",
+      "/images/games/Assassin_s_Creed_Valhalla_2.jpg",
+      "/images/games/Assassin_s_Creed_Valhalla_3.jpeg",
+      "/images/games/Assassin_s_Creed_Valhalla_4.jpeg",
+      "/images/games/Assassin_s_Creed_Valhalla_5.jpeg"
+    ],
+    "assassinscreedvalhalla2": [
+      "/images/games/Assassin_s_Creed_Valhalla_2.jpg"
+    ],
+    "assassinscreedvalhalla3": [
+      "/images/games/Assassin_s_Creed_Valhalla_3.jpeg"
+    ],
+    "assassinscreedvalhalla4": [
+      "/images/games/Assassin_s_Creed_Valhalla_4.jpeg"
+    ],
+    "assassinscreedvalhalla5": [
+      "/images/games/Assassin_s_Creed_Valhalla_5.jpeg"
+    ],
+    "baldursgate31": [
+      "/images/games/baldur_s_gate_3_1.jpg"
+    ],
+    "baldursgate": [
+      "/images/games/baldur_s_gate_3_intro.jpg",
+      "/images/games/baldur_s_gate_3_1.jpg",
+      "/images/games/baldur_s_gate_3_2.jpg",
+      "/images/games/baldur_s_gate_3_3.jpeg",
+      "/images/games/baldur_s_gate_3_4.jpg"
+    ],
+    "baldursgate32": [
+      "/images/games/baldur_s_gate_3_2.jpg"
+    ],
+    "baldursgate33": [
+      "/images/games/baldur_s_gate_3_3.jpeg"
+    ],
+    "baldursgate34": [
+      "/images/games/baldur_s_gate_3_4.jpg"
+    ],
+    "baldursgate3": [
+      "/images/games/baldur_s_gate_3_intro.jpg"
+    ],
+    "citiesskylineii3": [
+      "/images/games/cities-skyline-ii_3.jpg"
+    ],
+    "citiesskylineii": [
+      "/images/games/cities-skyline-ii_3.jpg"
+    ],
+    "citiesskylinesii1": [
+      "/images/games/Cities_Skylines_II_1.jpeg"
+    ],
+    "citiesskylinesii": [
+      "/images/games/Cities_Skylines_II_intro.jpeg",
+      "/images/games/Cities_Skylines_II_1.jpeg",
+      "/images/games/Cities_Skylines_II_2.jpeg",
+      "/images/games/Cities_Skylines_II_4.jpeg"
+    ],
+    "citiesskylinesii2": [
+      "/images/games/Cities_Skylines_II_2.jpeg"
+    ],
+    "citiesskylinesii4": [
+      "/images/games/Cities_Skylines_II_4.jpeg"
+    ],
+    "cs21": [
+      "/images/games/cs2_1.jpg"
+    ],
+    "cs": [
+      "/images/games/cs2_intro.jpeg",
+      "/images/games/cs2_1.jpg",
+      "/images/games/cs2_2.jpeg",
+      "/images/games/cs2_3.jpeg",
+      "/images/games/cs2_4.jpg"
+    ],
+    "cs22": [
+      "/images/games/cs2_2.jpeg"
+    ],
+    "cs23": [
+      "/images/games/cs2_3.jpeg"
+    ],
+    "cs24": [
+      "/images/games/cs2_4.jpg"
+    ],
+    "cs2": [
+      "/images/games/cs2_intro.jpeg"
+    ],
+    "deathstranding1": [
+      "/images/games/DEATH_STRANDING_1.jpg"
+    ],
+    "deathstranding": [
+      "/images/games/DEATH_STRANDING_intro.jpg",
+      "/images/games/DEATH_STRANDING_1.jpg",
+      "/images/games/DEATH_STRANDING_2.jpg",
+      "/images/games/DEATH_STRANDING_3.jpg",
+      "/images/games/DEATH_STRANDING_4.jpg"
+    ],
+    "deathstranding2": [
+      "/images/games/DEATH_STRANDING_2.jpg"
+    ],
+    "deathstranding3": [
+      "/images/games/DEATH_STRANDING_3.jpg"
+    ],
+    "deathstranding4": [
+      "/images/games/DEATH_STRANDING_4.jpg"
+    ],
+    "dispatch1": [
+      "/images/games/Dispatch_1.jpg"
+    ],
+    "dispatch": [
+      "/images/games/Dispatch_intro.jpg",
+      "/images/games/Dispatch_1.jpg",
+      "/images/games/Dispatch_2.jpg",
+      "/images/games/Dispatch_3.jpg",
+      "/images/games/Dispatch_4.jpg",
+      "/images/games/Dispatch_5.jpg"
+    ],
+    "dispatch2": [
+      "/images/games/Dispatch_2.jpg"
+    ],
+    "dispatch3": [
+      "/images/games/Dispatch_3.jpg"
+    ],
+    "dispatch4": [
+      "/images/games/Dispatch_4.jpg"
+    ],
+    "dispatch5": [
+      "/images/games/Dispatch_5.jpg"
+    ],
+    "doometernal1": [
+      "/images/games/doom_eternal_1.jpeg"
+    ],
+    "doometernal": [
+      "/images/games/doom_eternal_intro.jpg",
+      "/images/games/doom_eternal_1.jpeg",
+      "/images/games/doom_eternal_2.jpeg",
+      "/images/games/doom_eternal_3.jpeg",
+      "/images/games/doom_eternal_4.jpg"
+    ],
+    "doometernal2": [
+      "/images/games/doom_eternal_2.jpeg"
+    ],
+    "doometernal3": [
+      "/images/games/doom_eternal_3.jpeg"
+    ],
+    "doometernal4": [
+      "/images/games/doom_eternal_4.jpg"
+    ],
+    "dyinglight21": [
+      "/images/games/dying_light_2_1.jpg"
+    ],
+    "dyinglight": [
+      "/images/games/dying_light_2_intro.jpg",
+      "/images/games/dying_light_2_1.jpg",
+      "/images/games/dying_light_2_2.jpeg",
+      "/images/games/dying_light_2_3.jpeg",
+      "/images/games/dying_light_2_4.jpg"
+    ],
+    "dyinglight22": [
+      "/images/games/dying_light_2_2.jpeg"
+    ],
+    "dyinglight23": [
+      "/images/games/dying_light_2_3.jpeg"
+    ],
+    "dyinglight24": [
+      "/images/games/dying_light_2_4.jpg"
+    ],
+    "dyinglight2": [
+      "/images/games/dying_light_2_intro.jpg"
+    ],
+    "eaplay1": [
+      "/images/games/EA_Play_1.jpg"
+    ],
+    "eaplay": [
+      "/images/games/EA_Play_intro.jpg",
+      "/images/games/EA_Play_1.jpg",
+      "/images/games/EA_Play_2.jpg"
+    ],
+    "eaplay2": [
+      "/images/games/EA_Play_2.jpg"
+    ],
+    "eldenring1": [
+      "/images/games/ELDEN_RING_1.jpeg"
+    ],
+    "eldenring": [
+      "/images/games/ELDEN_RING_intro.jpg",
+      "/images/games/ELDEN_RING_1.jpeg",
+      "/images/games/ELDEN_RING_2.jpg",
+      "/images/games/ELDEN_RING_3.jpg",
+      "/images/games/ELDEN_RING_4.jpg"
+    ],
+    "eldenring2": [
+      "/images/games/ELDEN_RING_2.jpg"
+    ],
+    "eldenring3": [
+      "/images/games/ELDEN_RING_3.jpg"
+    ],
+    "eldenring4": [
+      "/images/games/ELDEN_RING_4.jpg"
+    ],
+    "europauniversalisv1": [
+      "/images/games/Europa_Universalis_V_1.jpg"
+    ],
+    "europauniversalisv": [
+      "/images/games/Europa_Universalis_V_intro.jpg",
+      "/images/games/Europa_Universalis_V_1.jpg",
+      "/images/games/Europa_Universalis_V_2.jpg",
+      "/images/games/Europa_Universalis_V_3.jpg",
+      "/images/games/Europa_Universalis_V_4.jpg"
+    ],
+    "europauniversalisv2": [
+      "/images/games/Europa_Universalis_V_2.jpg"
+    ],
+    "europauniversalisv3": [
+      "/images/games/Europa_Universalis_V_3.jpg"
+    ],
+    "europauniversalisv4": [
+      "/images/games/Europa_Universalis_V_4.jpg"
+    ],
+    "fallout1st1": [
+      "/images/games/Fallout_1st_1.jpg"
+    ],
+    "falloutst": [
+      "/images/games/Fallout_1st_intro.jpg",
+      "/images/games/Fallout_1st_1.jpg",
+      "/images/games/Fallout_1st_2.jpg",
+      "/images/games/Fallout_1st_3.jpg",
+      "/images/games/Fallout_1st_4.jpg"
+    ],
+    "fallout1st2": [
+      "/images/games/Fallout_1st_2.jpg"
+    ],
+    "fallout1st3": [
+      "/images/games/Fallout_1st_3.jpg"
+    ],
+    "fallout1st4": [
+      "/images/games/Fallout_1st_4.jpg"
+    ],
+    "fallout1st": [
+      "/images/games/Fallout_1st_intro.jpg"
+    ],
+    "farcry61": [
+      "/images/games/Far_Cry_6_1.jpg"
+    ],
+    "farcry": [
+      "/images/games/Far_Cry_6_intro.jpeg",
+      "/images/games/Far_Cry_6_1.jpg",
+      "/images/games/Far_Cry_6_2.jpeg",
+      "/images/games/Far_Cry_6_3.jpg",
+      "/images/games/Far_Cry_6_4.jpeg"
+    ],
+    "farcry62": [
+      "/images/games/Far_Cry_6_2.jpeg"
+    ],
+    "farcry63": [
+      "/images/games/Far_Cry_6_3.jpg"
+    ],
+    "farcry64": [
+      "/images/games/Far_Cry_6_4.jpeg"
+    ],
+    "farcry6": [
+      "/images/games/Far_Cry_6_intro.jpeg"
+    ],
+    "forzahorizon51": [
+      "/images/games/Forza_Horizon_5_1.jpg"
+    ],
+    "forzahorizon": [
+      "/images/games/Forza_Horizon_5_intro.jpg",
+      "/images/games/Forza_Horizon_5_1.jpg",
+      "/images/games/Forza_Horizon_5_2.jpeg",
+      "/images/games/Forza_Horizon_5_3.jpeg",
+      "/images/games/Forza_Horizon_5_4.jpeg"
+    ],
+    "forzahorizon52": [
+      "/images/games/Forza_Horizon_5_2.jpeg"
+    ],
+    "forzahorizon53": [
+      "/images/games/Forza_Horizon_5_3.jpeg"
+    ],
+    "forzahorizon54": [
+      "/images/games/Forza_Horizon_5_4.jpeg"
+    ],
+    "forzahorizon5": [
+      "/images/games/Forza_Horizon_5_intro.jpg"
+    ],
+    "ghostoftshushima1": [
+      "/images/games/ghost_of_tshushima_1.jpg"
+    ],
+    "ghostoftshushima": [
+      "/images/games/ghost_of_tshushima_intro.jpg",
+      "/images/games/ghost_of_tshushima_1.jpg",
+      "/images/games/ghost_of_tshushima_2.jpg",
+      "/images/games/ghost_of_tshushima_3.jpg"
+    ],
+    "ghostoftshushima2": [
+      "/images/games/ghost_of_tshushima_2.jpg"
+    ],
+    "ghostoftshushima3": [
+      "/images/games/ghost_of_tshushima_3.jpg"
+    ],
+    "godofwar1": [
+      "/images/games/god_of_war_1.jpg"
+    ],
+    "godofwar": [
+      "/images/games/god_of_war_intro.jpg",
+      "/images/games/god_of_war_1.jpg",
+      "/images/games/god_of_war_2.jpeg",
+      "/images/games/god_of_war_3.jpg",
+      "/images/games/god_of_war_4.jpeg"
+    ],
+    "godofwar2": [
+      "/images/games/god_of_war_2.jpeg"
+    ],
+    "godofwar3": [
+      "/images/games/god_of_war_3.jpg"
+    ],
+    "godofwar4": [
+      "/images/games/god_of_war_4.jpeg"
+    ],
+    "hades1": [
+      "/images/games/hades_1.jpg"
+    ],
+    "hades": [
+      "/images/games/hades_intro.png",
+      "/images/games/hades_1.jpg",
+      "/images/games/hades_2.jpeg",
+      "/images/games/hades_3.jpg"
+    ],
+    "hades2": [
+      "/images/games/hades_2.jpeg"
+    ],
+    "hades3": [
+      "/images/games/hades_3.jpg"
+    ],
+    "helldivers21": [
+      "/images/games/HELLDIVERS_2_1.jpg"
+    ],
+    "helldivers": [
+      "/images/games/HELLDIVERS_2_intro.jpg",
+      "/images/games/HELLDIVERS_2_1.jpg",
+      "/images/games/HELLDIVERS_2_2.jpg",
+      "/images/games/HELLDIVERS_2_3.jpg",
+      "/images/games/HELLDIVERS_2_4.jpg"
+    ],
+    "helldivers22": [
+      "/images/games/HELLDIVERS_2_2.jpg"
+    ],
+    "helldivers23": [
+      "/images/games/HELLDIVERS_2_3.jpg"
+    ],
+    "helldivers24": [
+      "/images/games/HELLDIVERS_2_4.jpg"
+    ],
+    "helldivers2": [
+      "/images/games/HELLDIVERS_2_intro.jpg"
+    ],
+    "hogwartslegasy1": [
+      "/images/games/hogwarts_legasy_1.jpeg"
+    ],
+    "hogwartslegasy": [
+      "/images/games/hogwarts_legasy_intro.jpg",
+      "/images/games/hogwarts_legasy_1.jpeg",
+      "/images/games/hogwarts_legasy_2.jpeg",
+      "/images/games/hogwarts_legasy_3.jpg",
+      "/images/games/hogwarts_legasy_4.jpeg"
+    ],
+    "hogwartslegasy2": [
+      "/images/games/hogwarts_legasy_2.jpeg"
+    ],
+    "hogwartslegasy3": [
+      "/images/games/hogwarts_legasy_3.jpg"
+    ],
+    "hogwartslegasy4": [
+      "/images/games/hogwarts_legasy_4.jpeg"
+    ],
+    "horizonzerodawn1": [
+      "/images/games/Horizon_Zero_Dawn_1.jpeg"
+    ],
+    "horizonzerodawn": [
+      "/images/games/Horizon_Zero_Dawn_intro.jpeg",
+      "/images/games/Horizon_Zero_Dawn_1.jpeg",
+      "/images/games/Horizon_Zero_Dawn_2.jpeg",
+      "/images/games/Horizon_Zero_Dawn_3.jpeg",
+      "/images/games/Horizon_Zero_Dawn_4.jpeg"
+    ],
+    "horizonzerodawn2": [
+      "/images/games/Horizon_Zero_Dawn_2.jpeg"
+    ],
+    "horizonzerodawn3": [
+      "/images/games/Horizon_Zero_Dawn_3.jpeg"
+    ],
+    "horizonzerodawn4": [
+      "/images/games/Horizon_Zero_Dawn_4.jpeg"
+    ],
+    "kingdomcomedeliveranceii1": [
+      "/images/games/Kingdom_Come_Deliverance_II_1.jpeg"
+    ],
+    "kingdomcomedeliveranceii": [
+      "/images/games/Kingdom_Come_Deliverance_II_intro.jpeg",
+      "/images/games/Kingdom_Come_Deliverance_II_1.jpeg",
+      "/images/games/Kingdom_Come_Deliverance_II_2.jpg",
+      "/images/games/Kingdom_Come_Deliverance_II_3.jpeg",
+      "/images/games/Kingdom_Come_Deliverance_II_4.jpg"
+    ],
+    "kingdomcomedeliveranceii2": [
+      "/images/games/Kingdom_Come_Deliverance_II_2.jpg"
+    ],
+    "kingdomcomedeliveranceii3": [
+      "/images/games/Kingdom_Come_Deliverance_II_3.jpeg"
+    ],
+    "kingdomcomedeliveranceii4": [
+      "/images/games/Kingdom_Come_Deliverance_II_4.jpg"
+    ],
+    "liesofp1": [
+      "/images/games/lies_of_p_1.jpg"
+    ],
+    "liesofp": [
+      "/images/games/lies_of_p_intro.jpg",
+      "/images/games/lies_of_p_1.jpg",
+      "/images/games/lies_of_p_2.jpg",
+      "/images/games/lies_of_p_3.jpg"
+    ],
+    "liesofp2": [
+      "/images/games/lies_of_p_2.jpg"
+    ],
+    "liesofp3": [
+      "/images/games/lies_of_p_3.jpg"
+    ],
+    "monsterhunterworld1": [
+      "/images/games/Monster_Hunter_World_1.jpg"
+    ],
+    "monsterhunterworld": [
+      "/images/games/Monster_Hunter_World_intro.jpg",
+      "/images/games/Monster_Hunter_World_1.jpg",
+      "/images/games/Monster_Hunter_World_2.jpg",
+      "/images/games/Monster_Hunter_World_3.jpeg",
+      "/images/games/Monster_Hunter_World_4.jpeg"
+    ],
+    "monsterhunterworld2": [
+      "/images/games/Monster_Hunter_World_2.jpg"
+    ],
+    "monsterhunterworld3": [
+      "/images/games/Monster_Hunter_World_3.jpeg"
+    ],
+    "monsterhunterworld4": [
+      "/images/games/Monster_Hunter_World_4.jpeg"
+    ],
+    "nomanssky1": [
+      "/images/games/No_Man_s_Sky_1.jpg"
+    ],
+    "nomanssky": [
+      "/images/games/No_Man_s_Sky_1.jpg",
+      "/images/games/No_Man_s_Sky_2.jpg",
+      "/images/games/No_Man_s_Sky_into.jpg",
+      "/images/games/No_Man_s_Sky_3.jpeg",
+      "/images/games/No_Man_s_Sky_4.jpeg"
+    ],
+    "nomanssky2": [
+      "/images/games/No_Man_s_Sky_2.jpg"
+    ],
+    "nomanssky3": [
+      "/images/games/No_Man_s_Sky_3.jpeg"
+    ],
+    "nomanssky4": [
+      "/images/games/No_Man_s_Sky_4.jpeg"
+    ],
+    "oriandthewillofthewisps1": [
+      "/images/games/Ori_and_the_Will_of_the_Wisps_1.jpg"
+    ],
+    "oriandthewillofthewisps": [
+      "/images/games/Ori_and_the_Will_of_the_Wisps_intro.jpg",
+      "/images/games/Ori_and_the_Will_of_the_Wisps_1.jpg",
+      "/images/games/Ori_and_the_Will_of_the_Wisps_2.jpg",
+      "/images/games/Ori_and_the_Will_of_the_Wisps_3.jpg"
+    ],
+    "oriandthewillofthewisps2": [
+      "/images/games/Ori_and_the_Will_of_the_Wisps_2.jpg"
+    ],
+    "oriandthewillofthewisps3": [
+      "/images/games/Ori_and_the_Will_of_the_Wisps_3.jpg"
+    ],
+    "palworld1": [
+      "/images/games/palworld-1.jpg"
+    ],
+    "palworld": [
+      "/images/games/palworld_intro.jpg",
+      "/images/games/palworld-1.jpg",
+      "/images/games/palworld-2.jpg",
+      "/images/games/palworld-3.jpg",
+      "/images/games/palworld_4.png"
+    ],
+    "palworld2": [
+      "/images/games/palworld-2.jpg"
+    ],
+    "palworld3": [
+      "/images/games/palworld-3.jpg"
+    ],
+    "palworld4": [
+      "/images/games/palworld_4.png"
+    ],
+    "peak1": [
+      "/images/games/PEAK_1.jpg"
+    ],
+    "peak": [
+      "/images/games/PEAK_intro.jpg",
+      "/images/games/PEAK_1.jpg",
+      "/images/games/PEAK_2.jpg",
+      "/images/games/PEAK_3.jpg",
+      "/images/games/PEAK_4.jpeg"
+    ],
+    "peak2": [
+      "/images/games/PEAK_2.jpg"
+    ],
+    "peak3": [
+      "/images/games/PEAK_3.jpg"
+    ],
+    "peak4": [
+      "/images/games/PEAK_4.jpeg"
+    ],
+    "rdr21": [
+      "/images/games/rdr_2_1.jpeg"
+    ],
+    "rdr": [
+      "/images/games/rdr_2_intro.jpeg",
+      "/images/games/rdr_2_1.jpeg",
+      "/images/games/rdr_2_2.jpg",
+      "/images/games/rdr_2_3.jpeg",
+      "/images/games/rdr_2_4.jpg"
+    ],
+    "rdr22": [
+      "/images/games/rdr_2_2.jpg"
+    ],
+    "rdr23": [
+      "/images/games/rdr_2_3.jpeg"
+    ],
+    "rdr24": [
+      "/images/games/rdr_2_4.jpg"
+    ],
+    "rdr2": [
+      "/images/games/rdr_2_intro.jpeg"
+    ],
+    "residentevil41": [
+      "/images/games/Resident_Evil_4_1.jpg"
+    ],
+    "residentevil": [
+      "/images/games/Resident_Evil_4_intro.jpg",
+      "/images/games/Resident_Evil_4_1.jpg",
+      "/images/games/Resident_Evil_4_2.jpeg",
+      "/images/games/Resident_Evil_4_3.jpeg",
+      "/images/games/Resident_Evil_4_4.jpg"
+    ],
+    "residentevil42": [
+      "/images/games/Resident_Evil_4_2.jpeg"
+    ],
+    "residentevil43": [
+      "/images/games/Resident_Evil_4_3.jpeg"
+    ],
+    "residentevil44": [
+      "/images/games/Resident_Evil_4_4.jpg"
+    ],
+    "residentevil4": [
+      "/images/games/Resident_Evil_4_intro.jpg"
+    ],
+    "rimworld1": [
+      "/images/games/Rimworld_1.jpg"
+    ],
+    "rimworld": [
+      "/images/games/Rimworld_intro.jpg",
+      "/images/games/Rimworld_1.jpg",
+      "/images/games/Rimworld_2.jpg",
+      "/images/games/Rimworld_3.jpeg"
+    ],
+    "rimworld2": [
+      "/images/games/Rimworld_2.jpg"
+    ],
+    "rimworld3": [
+      "/images/games/Rimworld_3.jpeg"
+    ],
+    "sekiro1": [
+      "/images/games/sekiro_1.jpeg"
+    ],
+    "sekiro": [
+      "/images/games/sekiro_intro.jpg",
+      "/images/games/sekiro_1.jpeg",
+      "/images/games/sekiro_2.jpeg",
+      "/images/games/sekiro_3.jpg",
+      "/images/games/sekiro_4.jpeg"
+    ],
+    "sekiro2": [
+      "/images/games/sekiro_2.jpeg"
+    ],
+    "sekiro3": [
+      "/images/games/sekiro_3.jpg"
+    ],
+    "sekiro4": [
+      "/images/games/sekiro_4.jpeg"
+    ],
+    "sonsoftheforest1": [
+      "/images/games/Sons-of-the-Forest-1.jpg"
+    ],
+    "sonsoftheforest": [
+      "/images/games/Sons-of-the-Forest-intro.jpg",
+      "/images/games/Sons-of-the-Forest-1.jpg",
+      "/images/games/Sons-of-the-Forest-2.png",
+      "/images/games/Sons-of-the-Forest-3.jpg",
+      "/images/games/Sons-of-the-Forest-4.jpg"
+    ],
+    "sonsoftheforest2": [
+      "/images/games/Sons-of-the-Forest-2.png"
+    ],
+    "sonsoftheforest3": [
+      "/images/games/Sons-of-the-Forest-3.jpg"
+    ],
+    "sonsoftheforest4": [
+      "/images/games/Sons-of-the-Forest-4.jpg"
+    ],
+    "stardewvalley1": [
+      "/images/games/Stardew_Valley_1.jpeg"
+    ],
+    "stardewvalley": [
+      "/images/games/Stardew_Valley_intro.jpg",
+      "/images/games/Stardew_Valley_1.jpeg",
+      "/images/games/Stardew_Valley_2.jpeg",
+      "/images/games/Stardew_Valley_3.jpeg",
+      "/images/games/Stardew_Valley_3.jpg"
+    ],
+    "stardewvalley2": [
+      "/images/games/Stardew_Valley_2.jpeg"
+    ],
+    "stardewvalley3": [
+      "/images/games/Stardew_Valley_3.jpeg",
+      "/images/games/Stardew_Valley_3.jpg"
+    ],
+    "starfield1": [
+      "/images/games/Starfield_1.jpeg"
+    ],
+    "starfield": [
+      "/images/games/Starfield_intro.jpg",
+      "/images/games/Starfield_1.jpeg",
+      "/images/games/Starfield_2.jpeg",
+      "/images/games/Starfield_3.jpeg",
+      "/images/games/Starfield_4.jpg"
+    ],
+    "starfield2": [
+      "/images/games/Starfield_2.jpeg"
+    ],
+    "starfield3": [
+      "/images/games/Starfield_3.jpeg"
+    ],
+    "starfield4": [
+      "/images/games/Starfield_4.jpg"
+    ],
+    "teamfortress1": [
+      "/images/games/team_fortress_1.jpg"
+    ],
+    "teamfortress": [
+      "/images/games/team_fortress_intro.jpg",
+      "/images/games/team_fortress_1.jpg",
+      "/images/games/team_fortress_2.jpg",
+      "/images/games/team_fortress_3.jpg",
+      "/images/games/team_fortress_4.jpg"
+    ],
+    "teamfortress2": [
+      "/images/games/team_fortress_2.jpg"
+    ],
+    "teamfortress3": [
+      "/images/games/team_fortress_3.jpg"
+    ],
+    "teamfortress4": [
+      "/images/games/team_fortress_4.jpg"
+    ],
+    "terraria1": [
+      "/images/games/terraria_1.png"
+    ],
+    "terraria": [
+      "/images/games/terraria_intro.png",
+      "/images/games/terraria_1.png",
+      "/images/games/terraria_2.jpg",
+      "/images/games/terraria_3.png"
+    ],
+    "terraria2": [
+      "/images/games/terraria_2.jpg"
+    ],
+    "terraria3": [
+      "/images/games/terraria_3.png"
+    ],
+    "thelastcaretaker1": [
+      "/images/games/The_Last_Caretaker_1.jpg"
+    ],
+    "thelastcaretaker": [
+      "/images/games/The_Last_Caretaker_intro.jpg",
+      "/images/games/The_Last_Caretaker_1.jpg",
+      "/images/games/The_Last_Caretaker_2.jpeg",
+      "/images/games/The_Last_Caretaker_3.jpg",
+      "/images/games/The_Last_Caretaker_4.jpg"
+    ],
+    "thelastcaretaker2": [
+      "/images/games/The_Last_Caretaker_2.jpeg"
+    ],
+    "thelastcaretaker3": [
+      "/images/games/The_Last_Caretaker_3.jpg"
+    ],
+    "thelastcaretaker4": [
+      "/images/games/The_Last_Caretaker_4.jpg"
+    ],
+    "thewitcher31": [
+      "/images/games/the_witcher_3_1.jpg"
+    ],
+    "thewitcher": [
+      "/images/games/the_witcher_3_intro.jpeg",
+      "/images/games/the_witcher_3_1.jpg",
+      "/images/games/the_witcher_3_2.jpeg",
+      "/images/games/the_witcher_3_3.jpeg",
+      "/images/games/the_witcher_3_4.jpeg"
+    ],
+    "thewitcher32": [
+      "/images/games/the_witcher_3_2.jpeg"
+    ],
+    "thewitcher33": [
+      "/images/games/the_witcher_3_3.jpeg"
+    ],
+    "thewitcher34": [
+      "/images/games/the_witcher_3_4.jpeg"
+    ],
+    "thewitcher3": [
+      "/images/games/the_witcher_3_intro.jpeg"
+    ],
+    "dyinglight2stayhuman": [
+      "/images/games/dying_light_2_intro.jpg"
+    ],
+    "ghostoftsushimadirectorscut": [
+      "/images/games/ghost_of_tshushima_intro.jpg",
+      "/images/games/ghost_of_tshushima_1.jpg",
+      "/images/games/ghost_of_tshushima_2.jpg",
+      "/images/games/ghost_of_tshushima_3.jpg"
+    ],
+    "reddeadredemption2": [
+      "/images/games/rdr_2_intro.jpeg",
+      "/images/games/rdr_2_1.jpeg",
+      "/images/games/rdr_2_2.jpg",
+      "/images/games/rdr_2_3.jpeg",
+      "/images/games/rdr_2_4.jpg"
+    ],
+    "hogwartslegacy": [
+      "/images/games/hogwarts_legasy_intro.jpg",
+      "/images/games/hogwarts_legasy_1.jpeg",
+      "/images/games/hogwarts_legasy_2.jpeg",
+      "/images/games/hogwarts_legasy_3.jpg",
+      "/images/games/hogwarts_legasy_4.jpeg"
+    ]
+  },
+  "bySteamId": {
+    "440": [
+      "/images/steam-games/steam/apps/440/header.jpg"
+    ],
+    "570": [
+      "/images/steam-games/steam/apps/570/header.jpg"
+    ],
+    "730": [
+      "/images/steam-games/steam/apps/730/header.jpg"
+    ],
+    "105600": [
+      "/images/steam-games/steam/apps/105600/header.jpg"
+    ],
+    "230410": [
+      "/images/steam-games/steam/apps/230410/header.jpg"
+    ],
+    "275850": [
+      "/images/steam-games/steam/apps/275850/header.jpg"
+    ],
+    "292030": [
+      "/images/steam-games/steam/apps/292030/header.jpg"
+    ],
+    "294100": [
+      "/images/steam-games/steam/apps/294100/header.jpg"
+    ],
+    "413150": [
+      "/images/steam-games/steam/apps/413150/header.jpg"
+    ],
+    "534380": [
+      "/images/steam-games/steam/apps/534380/header.jpg"
+    ],
+    "553850": [
+      "/images/steam-games/steam/apps/553850/header.jpg"
+    ],
+    "582010": [
+      "/images/steam-games/steam/apps/582010/header.jpg"
+    ],
+    "782330": [
+      "/images/steam-games/steam/apps/782330/header.jpg"
+    ],
+    "814380": [
+      "/images/steam-games/steam/apps/814380/header.jpg"
+    ],
+    "949230": [
+      "/images/steam-games/steam/apps/949230/header.jpg"
+    ],
+    "990080": [
+      "/images/steam-games/steam/apps/990080/header.jpg"
+    ],
+    "1057090": [
+      "/images/steam-games/steam/apps/1057090/header.jpg"
+    ],
+    "1145360": [
+      "/images/steam-games/steam/apps/1145360/header.jpg"
+    ],
+    "1151640": [
+      "/images/steam-games/steam/apps/1151640/header.jpg"
+    ],
+    "1172470": [
+      "/images/steam-games/steam/apps/1172470/header.jpg"
+    ],
+    "1174180": [
+      "/images/steam-games/steam/apps/1174180/header.jpg"
+    ],
+    "1190460": [
+      "/images/steam-games/steam/apps/1190460/header.jpg"
+    ],
+    "1202520": [
+      "/images/steam-games/steam/apps/1202520/header.jpg",
+      "/images/steam-games/steam/apps/1202520/capsule_616x353.jpg"
+    ],
+    "1245620": [
+      "/images/steam-games/steam/apps/1245620/header.jpg"
+    ],
+    "1289670": [
+      "/images/steam-games/steam/apps/1289670/header.jpg",
+      "/images/steam-games/steam/apps/1289670/capsule_616x353.jpg"
+    ],
+    "1326470": [
+      "/images/steam-games/steam/apps/1326470/header.jpg"
+    ],
+    "1551360": [
+      "/images/steam-games/steam/apps/1551360/header.jpg"
+    ],
+    "1593500": [
+      "/images/steam-games/steam/apps/1593500/header.jpg"
+    ],
+    "1623730": [
+      "/images/steam-games/steam/apps/1623730/header.jpg"
+    ],
+    "1627720": [
+      "/images/steam-games/steam/apps/1627720/header.jpg"
+    ],
+    "1675200": [
+      "/images/steam-games/steam/apps/1675200/header.jpg",
+      "/images/steam-games/steam/apps/1675200/capsule_616x353.jpg"
+    ],
+    "1716740": [
+      "/images/steam-games/steam/apps/1716740/header.jpg"
+    ],
+    "1771300": [
+      "/images/steam-games/steam/apps/1771300/header.jpg",
+      "/images/steam-games/steam/apps/1771300/capsule_616x353.jpg"
+    ],
+    "1783560": [
+      "/images/steam-games/steam/apps/1783560/header.jpg"
+    ],
+    "1808500": [
+      "/images/steam-games/steam/apps/1808500/header.jpg",
+      "/images/steam-games/steam/apps/1808500/capsule_616x353.jpg"
+    ],
+    "2050650": [
+      "/images/steam-games/steam/apps/2050650/header.jpg"
+    ],
+    "2208920": [
+      "/images/steam-games/steam/apps/2208920/header.jpg"
+    ],
+    "2215430": [
+      "/images/steam-games/steam/apps/2215430/header.jpg"
+    ],
+    "2369390": [
+      "/images/steam-games/steam/apps/2369390/header.jpg"
+    ],
+    "2592160": [
+      "/images/steam-games/steam/apps/2592160/header.jpg"
+    ]
+  }
+}

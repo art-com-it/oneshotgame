@@ -1,0 +1,2903 @@
+import React from 'react'
+import { createRoot } from 'react-dom/client'
+import { BrowserRouter, Routes, Route, Link, NavLink, useNavigate, useParams } from 'react-router-dom'
+import './style.css'
+
+// РРјРїРѕСЂС‚ СЃС‚СЂР°РЅРёС†
+import FAQ from './pages/FAQ.jsx'
+import Support from './pages/Support.jsx'
+import Privacy from './pages/Privacy.jsx'
+import Terms from './pages/Terms.jsx'
+import About from './pages/About.jsx'
+import BlogPage from './pages/Blog.jsx'
+import Contacts from './pages/Contacts.jsx'
+import SellSkins from './pages/SellSkins.jsx'
+
+// РРјРїРѕСЂС‚ СЃРµСЂРІРёСЃРѕРІ
+import { sendPurchaseEmail } from './services/emailService.js'
+
+// РџСЂРѕС„РёР»СЊ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ
+function Profile() {
+  const [name, setName] = React.useState(() => localStorage.getItem('profile-name') || '')
+  const [avatar, setAvatar] = React.useState(() => localStorage.getItem('profile-avatar') || 'рџ‘ѕ')
+  const [authorized, setAuthorized] = React.useState(() => localStorage.getItem('profile-auth') === '1')
+  const avatars = ['рџ‘ѕ','рџ¦ѕ','рџЋ®','рџљЂ','рџ§ ','рџђ‰']
+  const startSteamLogin = () => { window.location.href = '/auth/steam' }
+  const navigate = useNavigate()
+  const [photo, setPhoto] = React.useState(() => localStorage.getItem('profile-photo') || '')
+  const [steamidState, setSteamidState] = React.useState(() => localStorage.getItem('steamid') || '')
+  const [authMethod, setAuthMethod] = React.useState(() => localStorage.getItem('auth-method') || '')
+
+  React.useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const login = params.get('login')
+    if (login === 'steam') {
+      const steamid = params.get('steamid')
+      const nm = params.get('name')
+      const photo = params.get('photo')
+      if (nm) setName(nm)
+      if (photo) { localStorage.setItem('profile-photo', photo); setPhoto(photo) }
+      if (steamid) { localStorage.setItem('steamid', steamid); setSteamidState(steamid) }
+      localStorage.setItem('auth-method', 'steam'); setAuthMethod('steam')
+      localStorage.setItem('role', 'user')
+      
+      const d = new Date()
+      d.setTime(d.getTime() + (7 * 24 * 60 * 60 * 1000))
+      const expires = `expires=${d.toUTCString()}`
+      document.cookie = `profile_auth=1; ${expires}; path=/`
+      document.cookie = `profile_name=${encodeURIComponent(nm || '')}; ${expires}; path=/`
+      document.cookie = `auth_method=steam; ${expires}; path=/`
+      document.cookie = `role=user; ${expires}; path=/`
+      
+      setAuthorized(true)
+      window.dispatchEvent(new Event('storage'))
+      navigate('/profile', { replace: true })
+    }
+  }, [])
+
+  React.useEffect(() => { localStorage.setItem('profile-name', name) }, [name])
+  React.useEffect(() => { localStorage.setItem('profile-avatar', avatar) }, [avatar])
+  React.useEffect(() => { localStorage.setItem('profile-auth', authorized ? '1' : '0') }, [authorized])
+
+  return (
+    <section className="space-y-6">
+      <h2 className="text-2xl font-bold">РџСЂРѕС„РёР»СЊ</h2>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+        <div className="p-4 rounded-lg border border-white/10 bg-[#0D1A2F]">
+          <div className="text-sm text-white/70">РђРІР°С‚Р°СЂ</div>
+          <div className="mt-3 grid grid-cols-6 gap-2">
+            {avatars.map(a => (
+              <button key={a} onClick={() => setAvatar(a)} className={`h-12 rounded border ${avatar===a ? 'border-blue-400 bg-blue-400/10' : 'border-white/10 bg-[#161f38]'}`}>
+                <span className="text-xl">{a}</span>
+              </button>
+            ))}
+          </div>
+          <div className="mt-4 flex items-center gap-3">
+            <div className="w-14 h-14 rounded-full bg-[#161f38] flex items-center justify-center text-2xl border border-white/10">{avatar}</div>
+            <div className="text-white/60 text-sm">Р’С‹Р±СЂР°РЅРЅС‹Р№ Р°РІР°С‚Р°СЂ</div>
+          </div>
+        </div>
+        <div className="p-4 rounded-lg border border-white/10 bg-[#0D1A2F]">
+          <div className="text-sm text-white/70">РРјСЏ</div>
+          <input value={name} onChange={e => setName(e.target.value)} placeholder="Р’РІРµРґРёС‚Рµ РёРјСЏ" className="mt-2 w-full px-3 py-2 rounded bg-[#0D1A2F] border border-white/10" />
+          <div className="mt-2 text-xs text-white/60">РџРѕРґСЃРєР°Р·РєР°: СЌС‚Рѕ РёРјСЏ Р±СѓРґРµС‚ РїРѕРєР°Р·С‹РІР°С‚СЊСЃСЏ СЂСЏРґРѕРј СЃ Р°РІР°С‚Р°СЂРѕРј.</div>
+        </div>
+        <div className="p-4 rounded-lg border border-white/10 bg-[#0D1A2F]">
+          <div className="text-sm text-white/70">РђРІС‚РѕСЂРёР·Р°С†РёСЏ</div>
+          {authorized ? (
+            <div className="space-y-3">
+              <div className="text-white/80">Р’С‹ РІРѕС€Р»Рё РєР°Рє <span className="font-semibold">{name || 'Р“РѕСЃС‚СЊ'}</span></div>
+              {authMethod === 'steam' && (
+                <div className="flex items-center gap-3">
+                  {photo && (<img src={photo} alt="Steam avatar" className="w-10 h-10 rounded-full border border-white/10" />)}
+                  <div className="text-xs text-white/70">SteamID: {steamidState || 'вЂ”'} вЂў Р’С…РѕРґ С‡РµСЂРµР· Steam</div>
+                </div>
+              )}
+              <button onClick={() => { 
+                setAuthorized(false); 
+                localStorage.removeItem('auth-method'); 
+                localStorage.removeItem('steamid'); 
+                localStorage.removeItem('profile-photo'); 
+                localStorage.removeItem('profile-auth'); 
+                localStorage.removeItem('profile-name'); 
+                localStorage.removeItem('role'); 
+                setAuthMethod(''); 
+                setSteamidState(''); 
+                setPhoto(''); 
+                document.cookie = 'profile_auth=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/'; 
+                document.cookie = 'auth_method=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/'; 
+                document.cookie = 'role=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/'; 
+                document.cookie = 'profile_name=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/'; 
+              }} className="px-3 py-2 rounded bg-[#161f38] hover:bg-[#7e2aa8]">Р’С‹Р№С‚Рё</button>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              <div className="text-white/80">Р’С‹ РЅРµ Р°РІС‚РѕСЂРёР·РѕРІР°РЅС‹</div>
+              <button onClick={startSteamLogin} className="px-3 py-2 rounded bg-[#1b2838] hover:bg-[#2a475e]">Р’РѕР№С‚Рё С‡РµСЂРµР· Steam</button>
+              <div className="text-xs text-white/60">Р’С‹ Р±СѓРґРµС‚Рµ РїРµСЂРµРЅР°РїСЂР°РІР»РµРЅС‹ РЅР° СЃС‚СЂР°РЅРёС†Сѓ РІС…РѕРґР° Steam.</div>
+            </div>
+          )}
+        </div>
+       </div>
+
+       {/* Р¤РѕСЂРјР° РґР»СЏ РѕС‚Р·С‹РІРѕРІ */}
+       <div className="bg-gradient-to-br from-[#1a1a2e] via-[#16213e] to-[#0f172a] rounded-3xl p-8 border border-white/10">
+         <div className="text-center space-y-4 mb-8">
+           <h3 className="text-3xl font-bold bg-gradient-to-r from-white via-blue-200 to-purple-200 bg-clip-text text-transparent">
+             вњЌпёЏ РћСЃС‚Р°РІСЊС‚Рµ СЃРІРѕР№ РѕС‚Р·С‹РІ
+           </h3>
+           <p className="text-white/70">
+             РџРѕРґРµР»РёС‚РµСЃСЊ СЃРІРѕРёРј РѕРїС‹С‚РѕРј РёСЃРїРѕР»СЊР·РѕРІР°РЅРёСЏ РЅР°С€РµРіРѕ СЃРµСЂРІРёСЃР°
+           </p>
+         </div>
+
+         <form className="max-w-2xl mx-auto space-y-6">
+           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+             {/* РРјСЏ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ */}
+             <div className="space-y-2">
+               <label className="block text-sm font-medium text-white/80">
+                 Р’Р°С€Рµ РёРјСЏ *
+               </label>
+               <input
+                 type="text"
+                 placeholder="Р’РІРµРґРёС‚Рµ РІР°С€Рµ РёРјСЏ"
+                 className="w-full px-4 py-3 bg-[#0f172a] border border-white/20 rounded-xl text-white placeholder-white/50 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
+                 required
+               />
+             </div>
+
+             {/* Р РµР№С‚РёРЅРі */}
+             <div className="space-y-2">
+               <label className="block text-sm font-medium text-white/80">
+                 РћС†РµРЅРєР° *
+               </label>
+               <div className="flex gap-2">
+                 {[1, 2, 3, 4, 5].map((star) => (
+                   <button
+                     key={star}
+                     type="button"
+                     className="text-2xl text-white/30 hover:text-yellow-400 transition-colors focus:text-yellow-400"
+                     onClick={(e) => {
+                       const stars = e.target.parentElement.children
+                       for (let i = 0; i < stars.length; i++) {
+                         stars[i].classList.toggle('text-yellow-400', i < star)
+                         stars[i].classList.toggle('text-white/30', i >= star)
+                       }
+                     }}
+                   >
+                     в­ђ
+                   </button>
+                 ))}
+               </div>
+             </div>
+           </div>
+
+           {/* РўРµРєСЃС‚ РѕС‚Р·С‹РІР° */}
+           <div className="space-y-2">
+             <label className="block text-sm font-medium text-white/80">
+               Р’Р°С€ РѕС‚Р·С‹РІ *
+             </label>
+             <textarea
+               placeholder="Р Р°СЃСЃРєР°Р¶РёС‚Рµ Рѕ СЃРІРѕРµРј РѕРїС‹С‚Рµ РёСЃРїРѕР»СЊР·РѕРІР°РЅРёСЏ РЅР°С€РµРіРѕ СЃРµСЂРІРёСЃР°..."
+               rows="5"
+               className="w-full px-4 py-3 bg-[#0f172a] border border-white/20 rounded-xl text-white placeholder-white/50 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all resize-none"
+               required
+             ></textarea>
+           </div>
+
+           {/* Р”РѕРїРѕР»РЅРёС‚РµР»СЊРЅР°СЏ РёРЅС„РѕСЂРјР°С†РёСЏ */}
+           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+             <div className="space-y-2">
+               <label className="block text-sm font-medium text-white/80">
+                 РРіСЂР° (РЅРµРѕР±СЏР·Р°С‚РµР»СЊРЅРѕ)
+               </label>
+               <select className="w-full px-4 py-3 bg-[#0f172a] border border-white/20 rounded-xl text-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all">
+                 <option value="">Р’С‹Р±РµСЂРёС‚Рµ РёРіСЂСѓ</option>
+                 <option value="cs2">Counter-Strike 2</option>
+                 <option value="dota2">Dota 2</option>
+                 <option value="rust">Rust</option>
+                 <option value="tf2">Team Fortress 2</option>
+               </select>
+             </div>
+
+             <div className="space-y-2">
+               <label className="block text-sm font-medium text-white/80">
+                 РЎСѓРјРјР° РїРѕРєСѓРїРєРё (РЅРµРѕР±СЏР·Р°С‚РµР»СЊРЅРѕ)
+               </label>
+               <input
+                 type="number"
+                 placeholder="0.00"
+                 min="0"
+                 step="0.01"
+                 className="w-full px-4 py-3 bg-[#0f172a] border border-white/20 rounded-xl text-white placeholder-white/50 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
+               />
+             </div>
+           </div>
+
+           {/* РЎРѕРіР»Р°СЃРёРµ */}
+           <div className="flex items-start gap-3">
+             <input
+               type="checkbox"
+               id="review-consent"
+               className="mt-1 w-4 h-4 text-blue-600 bg-[#0f172a] border-white/20 rounded focus:ring-blue-500 focus:ring-2"
+               required
+             />
+             <label htmlFor="review-consent" className="text-sm text-white/70">
+               РЇ СЃРѕРіР»Р°СЃРµРЅ СЃ{' '}
+               <a href="#" className="text-blue-400 hover:text-blue-300">
+                 РїСЂР°РІРёР»Р°РјРё РїСѓР±Р»РёРєР°С†РёРё РѕС‚Р·С‹РІРѕРІ
+               </a>{' '}
+               Рё РґР°СЋ СЃРѕРіР»Р°СЃРёРµ РЅР° РѕР±СЂР°Р±РѕС‚РєСѓ РїРµСЂСЃРѕРЅР°Р»СЊРЅС‹С… РґР°РЅРЅС‹С…
+             </label>
+           </div>
+
+           {/* РљРЅРѕРїРєР° РѕС‚РїСЂР°РІРєРё */}
+           <div className="text-center">
+             <button
+               type="submit"
+               className="group relative px-8 py-4 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 hover:from-blue-500 hover:via-purple-500 hover:to-pink-500 rounded-xl font-bold text-white transition-all duration-300 transform hover:scale-105 hover:shadow-2xl hover:shadow-purple-500/25 min-w-[200px]"
+             >
+               <span className="relative z-10">рџ“ќ РћС‚РїСЂР°РІРёС‚СЊ РѕС‚Р·С‹РІ</span>
+               <div className="absolute inset-0 bg-gradient-to-r from-blue-400 to-pink-400 rounded-xl blur opacity-0 group-hover:opacity-30 transition-opacity duration-300"></div>
+             </button>
+           </div>
+         </form>
+       </div>
+     </section>
+   )
+}
+
+// РћРїР»Р°С‚Р°
+function Checkout() {
+  const { items, totalPrice, clear } = useCart()
+  const { formatPrice, currency, toAmountInCurrency } = useLang()
+  const [acquirerConnected, setAcquirerConnected] = React.useState(() => localStorage.getItem('acquirer') === '1')
+  React.useEffect(() => { localStorage.setItem('acquirer', acquirerConnected ? '1' : '0') }, [acquirerConnected])
+  const [orderId] = React.useState(() => `ORD-${Date.now()}`)
+  const [status, setStatus] = React.useState('waiting')
+  const [email, setEmail] = React.useState('')
+  const [emailError, setEmailError] = React.useState('')
+  const amountInCurr = toAmountInCurrency(totalPrice)
+  const dataStr = `aigame://pay?order=${orderId}&amount=${amountInCurr.toFixed(2)}&currency=${currency}`
+  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(dataStr)}`
+
+  React.useEffect(() => {
+    const t = setTimeout(() => setStatus('paid'), 15000)
+    return () => clearTimeout(t)
+  }, [orderId])
+
+  const validateEmail = (email) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    return emailRegex.test(email)
+  }
+
+  const handleEmailChange = (e) => {
+    const value = e.target.value
+    setEmail(value)
+    if (value && !validateEmail(value)) {
+      setEmailError('Р’РІРµРґРёС‚Рµ РєРѕСЂСЂРµРєС‚РЅС‹Р№ email Р°РґСЂРµСЃ')
+    } else {
+      setEmailError('')
+    }
+  }
+
+  const markPaid = async () => {
+    if (!email || !validateEmail(email)) {
+      setEmailError('Р’РІРµРґРёС‚Рµ РєРѕСЂСЂРµРєС‚РЅС‹Р№ email РґР»СЏ РїРѕР»СѓС‡РµРЅРёСЏ С‡РµРєР°')
+      return
+    }
+    setStatus('paid')
+    const userName = localStorage.getItem('profile-name') || ''
+    const game = items && items.length > 0 ? (items[0].type || 'cs2') : 'cs2'
+    const orderData = {
+      userEmail: email,
+      userName,
+      items: (items || []).map(i => ({ name: i.name, price: i.price, quality: i.quality })),
+      totalAmount: totalPrice,
+      orderId,
+      game
+    }
+    try {
+      const res = await sendPurchaseEmail(orderData)
+      console.log('Р РµР·СѓР»СЊС‚Р°С‚ РѕС‚РїСЂР°РІРєРё email:', res)
+      // РћС‡РёС‰Р°РµРј РєРѕСЂР·РёРЅСѓ РїРѕСЃР»Рµ СѓСЃРїРµС€РЅРѕР№ РѕРїР»Р°С‚С‹
+      clear()
+    } catch (err) {
+      console.error('РќРµ СѓРґР°Р»РѕСЃСЊ РѕС‚РїСЂР°РІРёС‚СЊ email:', err)
+    }
+  }
+
+  return (
+    <section className="space-y-6">
+      <h2 className="text-2xl font-bold">РћРїР»Р°С‚Р° РїРѕ QR</h2>
+      
+      <div className="p-4 rounded-lg border border-white/10 bg-[#0D1A2F]">
+        <label className="block text-sm font-medium text-white/80 mb-2">
+          Email РґР»СЏ РїРѕР»СѓС‡РµРЅРёСЏ С‡РµРєР° *
+        </label>
+        <input
+          type="email"
+          value={email}
+          onChange={handleEmailChange}
+          placeholder="example@email.com"
+          className="w-full px-3 py-2 rounded-md bg-[#161f38] border border-white/10 text-white placeholder-white/50 focus:border-blue-400 focus:outline-none"
+          required
+        />
+        {emailError && (
+          <p className="mt-1 text-sm text-red-400">{emailError}</p>
+        )}
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+        {acquirerConnected ? (
+          <div className="p-4 rounded-lg border border-white/10 bg-[#0D1A2F] flex flex-col items-center">
+            <img src={qrUrl} alt="QR РґР»СЏ РѕРїР»Р°С‚С‹" className="w-[220px] h-[220px] rounded bg-[#161f38]" />
+            <a href={qrUrl} download={`AI-Game-Store-${orderId}.png`} className="mt-3 px-3 py-2 rounded-md bg-[#161f38] hover:bg-[#7e2aa8]">РЎРєР°С‡Р°С‚СЊ QR</a>
+          </div>
+        ) : (
+          <div className="p-4 rounded-lg border border-white/10 bg-[#0D1A2F]">
+            <div className="text-white/60">QR-РєРѕРґ Р±СѓРґРµС‚ РґРѕСЃС‚СѓРїРµРЅ РїРѕСЃР»Рµ РїРѕРґРєР»СЋС‡РµРЅРёСЏ СЌРєРІР°Р№СЂРёРЅРіР°.</div>
+            <button onClick={() => setAcquirerConnected(true)} className="mt-3 px-3 py-2 rounded-md bg-[#4A90E2] hover:bg-[#7e2aa8]">РџРѕРґРєР»СЋС‡РёС‚СЊ СЌРєРІР°Р№СЂРёРЅРі</button>
+          </div>
+        )}
+        <div className="p-4 rounded-lg border border-white/10 bg-[#0D1A2F]">
+          <div className="text-sm text-white/80">РРЅСЃС‚СЂСѓРєС†РёСЏ</div>
+          <ol className="mt-2 list-decimal list-inside space-y-1 text-white/70 text-sm">
+            <li>РћС‚РєСЂРѕР№С‚Рµ Р±Р°РЅРєРѕРІСЃРєРѕРµ РїСЂРёР»РѕР¶РµРЅРёРµ СЃ РїРѕРґРґРµСЂР¶РєРѕР№ РѕРїР»Р°С‚С‹ РїРѕ QR.</li>
+            <li>РЎРєР°РЅРёСЂСѓР№С‚Рµ QR-РєРѕРґ СЃР»РµРІР°.</li>
+            <li>РџСЂРѕРІРµСЂСЊС‚Рµ СЃСѓРјРјСѓ: {formatPrice(totalPrice)} Рё РїРѕРґС‚РІРµСЂРґРёС‚Рµ РѕРїР»Р°С‚Сѓ.</li>
+          </ol>
+          <button onClick={markPaid} className="mt-3 px-3 py-2 rounded-md bg-[#161f38] hover:bg-[#4A90E2]">РЇ РѕРїР»Р°С‚РёР»</button>
+        </div>
+        <div className="p-4 rounded-lg border border-white/10 bg-[#0D1A2F]">
+          <div className="text-sm text-white/80">РЎС‚Р°С‚СѓСЃ</div>
+          <div className="mt-2 text-white/70">{status === 'paid' ? 'РћРїР»Р°С‡РµРЅРѕ' : 'РћР¶РёРґР°РЅРёРµ РѕРїР»Р°С‚С‹...'}</div>
+        </div>
+      </div>
+    </section>
+  )
+}
+
+// РљР°СЂС‚РѕС‡РєР° РёРіСЂС‹
+function GameCard({ product, addItem, fullSlider = false }) {
+  const { formatPrice } = useLang()
+  const previews = React.useMemo(() => getPreviewImages(product), [product])
+  const [idx, setIdx] = React.useState(0)
+  const prev = () => setIdx(i => (i - 1 + previews.length) % previews.length)
+  const next = () => setIdx(i => (i + 1) % previews.length)
+  const navigate = useNavigate()
+
+  return (
+    <div onClick={() => navigate(`/product/${product.id}`)} className="group relative flex flex-col p-4 rounded-lg border border-white/10 bg-[#0D1A2F] hover:border-blue-400/50 transition cursor-pointer">
+      <div className={`${fullSlider ? 'h-60 sm:h-64' : 'h-36'} rounded-lg bg-[#161f38] overflow-hidden relative`}>
+        {fullSlider ? (
+          <>
+            <LazyImage 
+              src={previews[idx]} 
+              alt={`${product.name}-preview-${idx+1}`} 
+              className="w-full h-full object-cover" 
+            />
+            <button onClick={(e) => { e.stopPropagation(); prev() }} className="absolute left-2 top-1/2 -translate-y-1/2 px-2 py-1 rounded bg-[#0D1A2F] border border-white/10">вЂ№</button>
+            <button onClick={(e) => { e.stopPropagation(); next() }} className="absolute right-2 top-1/2 -translate-y-1/2 px-2 py-1 rounded bg-[#0D1A2F] border border-white/10">вЂє</button>
+            <div className="absolute bottom-2 left-0 right-0 flex justify-center gap-2">
+              {previews.map((_, i) => (
+                <button key={i} onClick={(e) => { e.stopPropagation(); setIdx(i) }} aria-label={`go-${i}`} className={`h-2 w-2 rounded-full ${i===idx?'bg-[#4A90E2]':'bg-white/30'}`}></button>
+              ))}
+            </div>
+          </>
+        ) : (
+          <>
+            <LazyImage 
+              src={product.image || '/vite.svg'} 
+              alt={product.name} 
+              className="w-full h-full object-cover" 
+            />
+            <div className="absolute bottom-2 left-2 right-2">
+              <div className="flex items-center gap-2">
+                <button onClick={(e) => { e.stopPropagation(); prev() }} className="px-2 py-1 rounded bg-[#161f38] hover:bg-[#7e2aa8]">&lsaquo;</button>
+                <div className="flex-1 h-14 rounded border border-white/10 overflow-hidden bg-[#0D1A2F]">
+                  <img src={previews[idx]} alt={`${product.name}-preview`} className="w-full h-full object-cover" loading="lazy" decoding="async" />
+                </div>
+                <button onClick={(e) => { e.stopPropagation(); next() }} className="px-2 py-1 rounded bg-[#161f38] hover:bg-[#7e2aa8]">&rsaquo;</button>
+              </div>
+            </div>
+          </>
+        )}
+      </div>
+      <h3 className="mt-3 font-semibold">{product.name}</h3>
+      <p className="text-white/60 text-sm">{formatPrice(product.price)}</p>
+      <div className="mt-auto flex items-center gap-2">
+        <button onClick={(e) => { e.stopPropagation(); addItem(product, 1) }} className="px-3 py-2 rounded-md bg-[#161f38] hover:bg-[#7e2aa8]">Р’ РєРѕСЂР·РёРЅСѓ</button>
+      </div>
+    </div>
+  )
+}
+
+// РљР°С‚РµРіРѕСЂРёСЏ РёРіСЂ
+function GameCategory() {
+  const { type } = useParams()
+  const { addItem } = useCart()
+  const games = DATA.products.filter(p => p.category === 'game' && p.type === type)
+  return (
+    <section className="space-y-6">
+      <h2 className="text-2xl font-bold">РРіСЂС‹ В· {type?.toUpperCase()}</h2>
+      {games.length > 0 ? (
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          {games.map(p => (
+            <GameCard key={p.id} product={p} addItem={addItem} fullSlider />
+          ))}
+        </div>
+      ) : (
+        <div className="text-white/60">Р’ СЌС‚РѕР№ РєР°С‚РµРіРѕСЂРёРё РїРѕРєР° РЅРµС‚ С‚РѕРІР°СЂРѕРІ</div>
+      )}
+    </section>
+  )
+}
+
+// РљР°С‚РµРіРѕСЂРёСЏ СЃРєРёРЅРѕРІ
+function SkinsCategory() {
+  const { type } = useParams()
+  const { addItem } = useCart()
+  const { formatPrice } = useLang()
+  const skins = DATA.products.filter(p => p.category === 'skin' && p.type === type)
+  const getRarityClasses = (rarity) => {
+    switch (String(rarity || '').toLowerCase()) {
+      case '★ covert':
+      case 'covert':
+        return 'bg-red-600 text-white'
+      case 'classified':
+        return 'bg-pink-600 text-white'
+      case 'restricted':
+        return 'bg-purple-600 text-white'
+      case 'mil-spec':
+        return 'bg-blue-600 text-white'
+      case 'consumer grade':
+        return 'bg-gray-600 text-white'
+      case 'rare':
+        return 'bg-green-600 text-white'
+      case 'unusual':
+        return 'bg-fuchsia-600 text-white'
+      case 'immortal':
+        return 'bg-amber-500 text-black'
+      case 'souvenir':
+        return 'bg-yellow-400 text-black'
+      default:
+        return 'bg-[#0D1A2F] text-white/70 border border-white/10'
+    }
+  }
+  
+  return (
+    <section className="space-y-6">
+      <h2 className="text-2xl font-bold">РЎРєРёРЅС‹ В· {type?.toUpperCase()}</h2>
+      {skins.length > 0 ? (
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+          {skins.map(product => (
+            <div key={product.id} className="bg-[#161f38] rounded-lg overflow-hidden border border-white/10 hover:border-blue-500/50 transition-colors">
+              <div className="relative aspect-square">
+                <LazyImage src={product.image} alt={product.name} className="absolute inset-0 w-full h-full object-cover" />
+                <div className="absolute top-2 right-2 bg-red-600 text-white text-xs px-2 py-1 rounded">
+                  -{Math.floor(Math.random() * 30 + 10)}%
+                </div>
+                {product.rarity && (
+                  <span className={`absolute top-2 left-2 px-2 py-1 rounded text-xs ${getRarityClasses(product.rarity)}`}>
+                    {product.rarity}
+                  </span>
+                )}
+              </div>
+              <div className="p-3">
+                <h3 className="text-sm font-medium text-white/90 truncate">{product.name}</h3>
+                {product.rarity && (
+                  <div className="mt-1">
+                    <span className={`inline-block px-2 py-0.5 rounded text-xs ${getRarityClasses(product.rarity)}`}>
+                      {product.rarity}
+                    </span>
+                  </div>
+                )}
+                <div className="flex items-center justify-between mt-2">
+                  <span className="text-blue-400 font-bold text-sm">{formatPrice(product.price)}</span>
+                  <button 
+                    onClick={() => addItem(product, 1)}
+                    className="px-2 py-1 bg-blue-600 hover:bg-blue-700 rounded text-xs transition-colors"
+                  >
+                    Р’ РєРѕСЂР·РёРЅСѓ
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="text-white/60">Р’ СЌС‚РѕР№ РєР°С‚РµРіРѕСЂРёРё РїРѕРєР° РЅРµС‚ С‚РѕРІР°СЂРѕРІ</div>
+      )}
+    </section>
+  )
+}
+
+// РЈСЃР»РѕРІРёСЏ РёСЃРїРѕР»СЊР·РѕРІР°РЅРёСЏ
+function TermsOfService() {
+  return (
+    <section className="space-y-6">
+      <h2 className="text-2xl font-bold">РЈСЃР»РѕРІРёСЏ РёСЃРїРѕР»СЊР·РѕРІР°РЅРёСЏ</h2>
+      <div className="prose prose-invert max-w-none">
+        <p>РќР°СЃС‚РѕСЏС‰РёРµ РЈСЃР»РѕРІРёСЏ РёСЃРїРѕР»СЊР·РѕРІР°РЅРёСЏ СЂРµРіСѓР»РёСЂСѓСЋС‚ РёСЃРїРѕР»СЊР·РѕРІР°РЅРёРµ СЃР°Р№С‚Р° AI Game Store.</p>
+        <h3 className="text-lg font-semibold mt-6 mb-3">1. РћР±С‰РёРµ РїРѕР»РѕР¶РµРЅРёСЏ</h3>
+        <p>РСЃРїРѕР»СЊР·СѓСЏ РЅР°С€ СЃР°Р№С‚, РІС‹ СЃРѕРіР»Р°С€Р°РµС‚РµСЃСЊ СЃ РґР°РЅРЅС‹РјРё СѓСЃР»РѕРІРёСЏРјРё РёСЃРїРѕР»СЊР·РѕРІР°РЅРёСЏ.</p>
+        <h3 className="text-lg font-semibold mt-6 mb-3">2. РџСЂР°РІР° Рё РѕР±СЏР·Р°РЅРЅРѕСЃС‚Рё РїРѕР»СЊР·РѕРІР°С‚РµР»РµР№</h3>
+        <p>РџРѕР»СЊР·РѕРІР°С‚РµР»Рё РѕР±СЏР·СѓСЋС‚СЃСЏ РёСЃРїРѕР»СЊР·РѕРІР°С‚СЊ СЃР°Р№С‚ РІ СЃРѕРѕС‚РІРµС‚СЃС‚РІРёРё СЃ Р·Р°РєРѕРЅРѕРґР°С‚РµР»СЊСЃС‚РІРѕРј.</p>
+      </div>
+    </section>
+  )
+}
+
+// Р”РѕРіРѕРІРѕСЂ РѕС„РµСЂС‚С‹
+function OfferAgreement() {
+  return (
+    <section className="space-y-6">
+      <h2 className="text-2xl font-bold">Р”РѕРіРѕРІРѕСЂ РѕС„РµСЂС‚С‹</h2>
+      <div className="prose prose-invert max-w-none">
+        <p>РќР°СЃС‚РѕСЏС‰РёР№ РґРѕРіРѕРІРѕСЂ СЏРІР»СЏРµС‚СЃСЏ РїСѓР±Р»РёС‡РЅРѕР№ РѕС„РµСЂС‚РѕР№ РІ СЃРѕРѕС‚РІРµС‚СЃС‚РІРёРё СЃРѕ СЃС‚Р°С‚СЊРµР№ 437 Р“Рљ Р Р¤.</p>
+        <h3 className="text-lg font-semibold mt-6 mb-3">1. РџСЂРµРґРјРµС‚ РґРѕРіРѕРІРѕСЂР°</h3>
+        <p>РџСЂРѕРґР°РІРµС† РѕР±СЏР·СѓРµС‚СЃСЏ РїРµСЂРµРґР°С‚СЊ С‚РѕРІР°СЂ, Р° РїРѕРєСѓРїР°С‚РµР»СЊ РїСЂРёРЅСЏС‚СЊ Рё РѕРїР»Р°С‚РёС‚СЊ РµРіРѕ.</p>
+        <h3 className="text-lg font-semibold mt-6 mb-3">2. РџРѕСЂСЏРґРѕРє РѕРїР»Р°С‚С‹</h3>
+        <p>РћРїР»Р°С‚Р° РїСЂРѕРёР·РІРѕРґРёС‚СЃСЏ С‡РµСЂРµР· РґРѕСЃС‚СѓРїРЅС‹Рµ РЅР° СЃР°Р№С‚Рµ СЃРїРѕСЃРѕР±С‹ РѕРїР»Р°С‚С‹.</p>
+      </div>
+    </section>
+  )
+}
+
+// РћСЃРЅРѕРІРЅРѕРµ РїСЂРёР»РѕР¶РµРЅРёРµ СЃ РјР°СЂС€СЂСѓС‚РёР·Р°С†РёРµР№
+function App() {
+  return (
+    <LangProvider>
+      <CMSProvider>
+        <CartProvider>
+          <BrowserRouter>
+            <Routes>
+              <Route path="/" element={<Layout><Home/></Layout>} />
+              <Route path="/store" element={<Layout><Store/></Layout>} />
+              <Route path="/skins" element={<Layout><Skins/></Layout>} />
+              <Route path="/skins/:type" element={<Layout><SkinsCategory/></Layout>} />
+              <Route path="/product/:id" element={<Layout><Product/></Layout>} />
+              <Route path="/cart" element={<Layout><Cart/></Layout>} />
+              <Route path="/profile" element={<Layout><Profile/></Layout>} />
+              <Route path="/checkout" element={<Layout><Checkout/></Layout>} />
+              <Route path="/sell" element={<Layout><SellSkins/></Layout>} />
+              <Route path="/privacy" element={<Layout><Privacy/></Layout>} />
+              <Route path="/terms" element={<Layout><Terms/></Layout>} />
+              <Route path="/offer" element={<Layout><OfferAgreement/></Layout>} />
+              <Route path="/blog" element={<Layout><BlogPage/></Layout>} />
+              <Route path="/blog/:slug" element={<Layout><BlogPost/></Layout>} />
+              <Route path="/help" element={<Layout><Help/></Layout>} />
+              <Route path="/roulette" element={<Layout><SkinRoulette/></Layout>} />
+              <Route path="/faq" element={<Layout><FAQ/></Layout>} />
+              <Route path="/support" element={<Layout><Support/></Layout>} />
+              <Route path="/about" element={<Layout><About/></Layout>} />
+              <Route path="/contacts" element={<Layout><Contacts/></Layout>} />
+            </Routes>
+          </BrowserRouter>
+        </CartProvider>
+      </CMSProvider>
+    </LangProvider>
+  )
+}
+
+// РРЅРёС†РёР°Р»РёР·Р°С†РёСЏ РїСЂРёР»РѕР¶РµРЅРёСЏ
+createRoot(document.getElementById('app')).render(<App />)
+
+// Р’СЃРїРѕРјРѕРіР°С‚РµР»СЊРЅР°СЏ С„СѓРЅРєС†РёСЏ РґР»СЏ РїРѕР»СѓС‡РµРЅРёСЏ РёР·РѕР±СЂР°Р¶РµРЅРёР№
+function getPreviewImages(product) {
+  const images = []
+  if (Array.isArray(product.images) && product.images.length > 0) {
+    images.push(...product.images)
+  }
+  if (product.image) images.push(product.image)
+  const fallback = '/vite.svg'
+  while (images.length < 5) {
+    images.push(fallback)
+  }
+  return images.slice(0, 5)
+}
+
+// РљР°С‚Р°Р»РѕРі С‚РѕРІР°СЂРѕРІ
+function Store() {
+  const [query, setQuery] = React.useState('')
+  const [type, setType] = React.useState('')
+  const { addItem } = useCart()
+  const { formatPrice } = useLang()
+  const products = DATA.products
+  const filtered = products.filter(p => (p.name.toLowerCase().includes(query.toLowerCase())) && (!type || p.type === type))
+
+  return (
+    <section className="space-y-6">
+      <h2 className="text-2xl font-bold">РљР°С‚Р°Р»РѕРі</h2>
+      <div className="flex gap-3">
+        <input 
+          value={query} 
+          onChange={e => setQuery(e.target.value)} 
+          placeholder="РџРѕРёСЃРє" 
+          className="px-3 py-2 rounded bg-[#0D1A2F] border border-white/10 w-64" 
+        />
+      </div>
+      {filtered.length > 0 ? (
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          {filtered.map(p => (
+            <NavLink to={`/product/${p.id}`} key={p.id} className="flex flex-col p-4 rounded-lg border border-white/10 bg-[#0D1A2F] hover:border-blue-400/50 transition">
+              <div className="h-36 rounded-lg bg-[#161f38] overflow-hidden">
+                <LazyImage 
+                  src={p.image || '/vite.svg'} 
+                  alt={p.name} 
+                  className="w-full h-full object-cover" 
+                />
+              </div>
+              <h3 className="mt-3 font-semibold">{p.name}</h3>
+              <p className="text-white/60 text-sm">Р¦РµРЅР°: {formatPrice(p.price)}</p>
+              <button 
+                onClick={(e) => { e.preventDefault(); e.stopPropagation(); addItem(p, 1) }} 
+                className="mt-auto px-3 py-2 rounded-md bg-[#161f38] hover:bg-[#7e2aa8]"
+              >
+                Р’ РєРѕСЂР·РёРЅСѓ
+              </button>
+            </NavLink>
+          ))}
+        </div>
+      ) : (
+        <div className="text-white/60">РќРёС‡РµРіРѕ РЅРµ РЅР°Р№РґРµРЅРѕ</div>
+      )}
+    </section>
+  )
+}
+
+// РЎС‚СЂР°РЅРёС†Р° РёРіСЂ
+function Games() {
+  const { addItem } = useCart()
+  const { formatPrice } = useLang()
+  const games = DATA.products.filter(p => p.category === 'game')
+
+  return (
+    <section className="space-y-6">
+      <h2 className="text-2xl font-bold">РРіСЂС‹</h2>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        {games.map(product => (
+          <NavLink key={product.id} to={`/product/${product.id}`} className="group">
+            <div className="bg-[#161f38] rounded-lg overflow-hidden border border-white/10 hover:border-blue-500/50 transition-colors">
+              <div className="relative h-40">
+                <LazyImage src={product.image} alt={product.name} className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                <div className="absolute bottom-2 left-2 right-2">
+                  <h3 className="text-white font-medium text-sm">{product.name}</h3>
+                  <div className="flex items-center justify-between mt-1">
+                    <span className="text-blue-400 font-bold text-sm">{formatPrice(product.price)}</span>
+                    <span className="text-xs text-white/70">{product.type}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </NavLink>
+        ))}
+      </div>
+    </section>
+  )
+}
+
+// РЎС‚СЂР°РЅРёС†Р° СЃРєРёРЅРѕРІ
+function Skins() {
+  const { addItem } = useCart()
+  const { formatPrice } = useLang()
+  const skins = DATA.products.filter(p => p.category === 'skin')
+
+  return (
+    <section className="space-y-6">
+      <h2 className="text-2xl font-bold">РЎРєРёРЅС‹</h2>
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+        {skins.map(product => (
+          <div key={product.id} className="bg-[#161f38] rounded-lg overflow-hidden border border-white/10 hover:border-blue-500/50 transition-colors">
+            <div className="relative aspect-square">
+              <LazyImage src={product.image} alt={product.name} className="absolute inset-0 w-full h-full object-cover" />
+              <div className="absolute top-2 right-2 bg-red-600 text-white text-xs px-2 py-1 rounded">
+                -{Math.floor(Math.random() * 30 + 10)}%
+              </div>
+            </div>
+            <div className="p-3">
+              <h3 className="text-sm font-medium text-white/90 truncate">{product.name}</h3>
+              <div className="flex items-center justify-between mt-2">
+                <span className="text-blue-400 font-bold text-sm">{formatPrice(product.price)}</span>
+                <button 
+                  onClick={() => addItem(product, 1)}
+                  className="px-2 py-1 bg-blue-600 hover:bg-blue-700 rounded text-xs transition-colors"
+                >
+                  Р’ РєРѕСЂР·РёРЅСѓ
+                </button>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
+  )
+}
+
+// Р СѓР»РµС‚РєР° СЃРєРёРЅРѕРІ
+function SkinRoulette() {
+  const [isSpinning, setIsSpinning] = React.useState(false)
+  const [result, setResult] = React.useState(null)
+  const { formatPrice } = useLang()
+  
+  const skins = DATA.products.filter(p => p.category === 'skin').slice(0, 10)
+  
+  const spin = () => {
+    if (isSpinning) return
+    
+    setIsSpinning(true)
+    setResult(null)
+    
+    setTimeout(() => {
+      const randomSkin = skins[Math.floor(Math.random() * skins.length)]
+      setResult(randomSkin)
+      setIsSpinning(false)
+    }, 3000)
+  }
+
+  return (
+    <div className="bg-gradient-to-br from-[#161f38] to-[#1f2a4a] rounded-lg p-6 border border-white/10">
+      <div className="text-center space-y-6">
+        <h2 className="text-2xl font-bold">рџЋ° Р СѓР»РµС‚РєР° СЃРєРёРЅРѕРІ</h2>
+        
+        <div className="relative h-32 bg-[#0D1A2F] rounded-lg overflow-hidden border border-white/20">
+          <div className={`flex transition-transform duration-3000 ease-out ${isSpinning ? 'animate-spin-roulette' : ''}`}>
+            {[...skins, ...skins, ...skins].map((skin, i) => (
+              <div key={i} className="flex-shrink-0 w-24 h-32 p-2 border-r border-white/10">
+                <LazyImage src={skin.image} alt={skin.name} className="w-full h-20 object-cover rounded" />
+                <div className="text-xs mt-1 truncate">{skin.name}</div>
+              </div>
+            ))}
+          </div>
+          <div className="absolute top-0 left-1/2 transform -translate-x-1/2 w-1 h-full bg-red-500 z-10"></div>
+        </div>
+
+        {result && (
+          <div className="bg-[#0D1A2F] rounded-lg p-4 border border-green-500/50">
+            <h3 className="text-lg font-bold text-green-400">РџРѕР·РґСЂР°РІР»СЏРµРј!</h3>
+            <div className="flex items-center justify-center gap-4 mt-2">
+              <LazyImage src={result.image} alt={result.name} className="w-16 h-16 object-cover rounded" />
+              <div>
+                <div className="font-medium">{result.name}</div>
+                <div className="text-blue-400">{formatPrice(result.price)}</div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        <button 
+          onClick={spin}
+          disabled={isSpinning}
+          className={`px-8 py-3 rounded-lg font-medium transition-all transform hover:scale-105 ${
+            isSpinning 
+              ? 'bg-gray-600 cursor-not-allowed' 
+              : 'bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700'
+          }`}
+        >
+          {isSpinning ? 'РљСЂСѓС‚РёС‚СЃСЏ...' : 'РљСЂСѓС‚РёС‚СЊ СЂСѓР»РµС‚РєСѓ (100в‚Ѕ)'}
+        </button>
+      </div>
+    </div>
+  )
+}
+
+// РљРѕСЂР·РёРЅР°
+function Cart() {
+  const { items, removeItem, updateQty, clear, totalPrice } = useCart()
+  const { formatPrice } = useLang()
+  const navigate = useNavigate()
+
+  if (items.length === 0) {
+    return (
+      <section className="space-y-6">
+        <h2 className="text-2xl font-bold">РљРѕСЂР·РёРЅР°</h2>
+        <div className="text-center py-12">
+          <div className="text-6xl mb-4">рџ›’</div>
+          <h3 className="text-xl font-medium mb-2">РљРѕСЂР·РёРЅР° РїСѓСЃС‚Р°</h3>
+          <p className="text-white/60 mb-6">Р”РѕР±Р°РІСЊС‚Рµ С‚РѕРІР°СЂС‹ РІ РєРѕСЂР·РёРЅСѓ, С‡С‚РѕР±С‹ РїСЂРѕРґРѕР»Р¶РёС‚СЊ РїРѕРєСѓРїРєРё</p>
+          <button 
+            onClick={() => navigate('/store')}
+            className="px-6 py-3 bg-blue-600 hover:bg-blue-700 rounded-lg font-medium transition-colors"
+          >
+            РџРµСЂРµР№С‚Рё РІ РєР°С‚Р°Р»РѕРі
+          </button>
+        </div>
+      </section>
+    )
+  }
+
+  return (
+    <section className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h2 className="text-2xl font-bold">РљРѕСЂР·РёРЅР°</h2>
+        <button 
+          onClick={clear}
+          className="px-4 py-2 bg-red-600 hover:bg-red-700 rounded-lg text-sm transition-colors"
+        >
+          РћС‡РёСЃС‚РёС‚СЊ РєРѕСЂР·РёРЅСѓ
+        </button>
+      </div>
+
+      <div className="space-y-4">
+        {items.map(item => (
+          <div key={item.id} className="flex items-center gap-4 p-4 bg-[#161f38] rounded-lg border border-white/10">
+            <LazyImage 
+              src={item.image} 
+              alt={item.name} 
+              className="w-16 h-16 object-cover rounded" 
+            />
+            <div className="flex-1">
+              <h3 className="font-medium">{item.name}</h3>
+              <p className="text-white/60 text-sm">{formatPrice(item.price)}</p>
+            </div>
+            <div className="flex items-center gap-2">
+              <button 
+                onClick={() => updateQty(item.id, Math.max(0, item.qty - 1))}
+                className="w-8 h-8 bg-[#0D1A2F] hover:bg-[#7e2aa8] rounded border border-white/10"
+              >
+                -
+              </button>
+              <span className="w-8 text-center">{item.qty}</span>
+              <button 
+                onClick={() => updateQty(item.id, item.qty + 1)}
+                className="w-8 h-8 bg-[#0D1A2F] hover:bg-[#7e2aa8] rounded border border-white/10"
+              >
+                +
+              </button>
+            </div>
+            <div className="text-right">
+              <div className="font-medium">{formatPrice(item.price * item.qty)}</div>
+              <button 
+                onClick={() => removeItem(item.id)}
+                className="text-red-400 hover:text-red-300 text-sm"
+              >
+                РЈРґР°Р»РёС‚СЊ
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="border-t border-white/10 pt-4">
+        <div className="flex items-center justify-between text-xl font-bold">
+          <span>РС‚РѕРіРѕ:</span>
+          <span>{formatPrice(totalPrice)}</span>
+        </div>
+        <button className="w-full mt-4 px-6 py-3 bg-green-600 hover:bg-green-700 rounded-lg font-medium transition-colors">
+          РћС„РѕСЂРјРёС‚СЊ Р·Р°РєР°Р·
+        </button>
+      </div>
+    </section>
+  )
+}
+
+// Р‘Р»РѕРі
+function Blog() {
+  const blogPosts = BLOG_POSTS
+
+  return (
+    <section className="space-y-6">
+      <h2 className="text-2xl font-bold">Р‘Р»РѕРі</h2>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {blogPosts.map(post => (
+          <NavLink key={post.id} to={`/blog/${post.slug}`} className="block group">
+            <article className="bg-[#161f38] rounded-lg overflow-hidden border border-white/10 group-hover:border-blue-500/50 transition-colors">
+              <div className="h-48 bg-[#0D1A2F]">
+                <LazyImage 
+                  src={post.image} 
+                  alt={post.title} 
+                  className="w-full h-full object-cover"
+                  fallback="/vite.svg"
+                />
+              </div>
+              <div className="p-4">
+                <h3 className="font-semibold mb-2">{post.title}</h3>
+                <p className="text-white/70 text-sm mb-3">{post.excerpt}</p>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-white/50">{new Date(post.date).toLocaleDateString('ru-RU')}</span>
+                  <span className="text-blue-400 group-hover:text-blue-300 text-sm">Р§РёС‚Р°С‚СЊ РґР°Р»РµРµ в†’</span>
+                </div>
+              </div>
+            </article>
+          </NavLink>
+        ))}
+      </div>
+    </section>
+  )
+}
+
+// РџСѓР±Р»РёРєР°С†РёРё Р±Р»РѕРіР° (РѕР±С‰РёР№ РёСЃС‚РѕС‡РЅРёРє РґР°РЅРЅС‹С…)
+const BLOG_POSTS = [
+  { id: 1, slug: 'best-games-2025', title: 'Р›СѓС‡С€РёРµ РёРіСЂС‹ 2025 РіРѕРґР°', excerpt: 'РћР±Р·РѕСЂ СЃР°РјС‹С… РѕР¶РёРґР°РµРјС‹С… Рё РїРѕРїСѓР»СЏСЂРЅС‹С… РёРіСЂ 2025 РіРѕРґР°.', content: 'РњС‹ СЃРѕР±СЂР°Р»Рё РїРѕРґР±РѕСЂРєСѓ Р»СѓС‡С€РёС… РёРіСЂ 2025 РіРѕРґР°: РєСЂСѓРїРЅС‹Рµ СЂРµР»РёР·С‹, РёРЅРґРё-С…РёС‚С‹ Рё РїСЂРѕРµРєС‚С‹, РєРѕС‚РѕСЂС‹Рµ СѓР¶Рµ СѓСЃРїРµР»Рё РїРѕР»СѓС‡РёС‚СЊ РїСЂРёР·РЅР°РЅРёРµ РёРіСЂРѕРєРѕРІ. Р’ СЃС‚Р°С‚СЊРµ вЂ” РєСЂР°С‚РєРёРµ РѕР±Р·РѕСЂС‹, СЃРёР»СЊРЅС‹Рµ СЃС‚РѕСЂРѕРЅС‹ Рё РЅР° С‡С‚Рѕ РѕР±СЂР°С‚РёС‚СЊ РІРЅРёРјР°РЅРёРµ РїСЂРё РїРѕРєСѓРїРєРµ.', date: '2025-01-15', image: '/images/blog/games-2024.jpg' },
+  { id: 2, slug: 'choose-skins-cs2-2025', title: 'РљР°Рє РІС‹Р±СЂР°С‚СЊ СЃРєРёРЅС‹ РІ CS2 РІ 2025', excerpt: 'РђРєС‚СѓР°Р»СЊРЅРѕРµ СЂСѓРєРѕРІРѕРґСЃС‚РІРѕ РїРѕ РІС‹Р±РѕСЂСѓ СЃРєРёРЅРѕРІ РґР»СЏ Counter-Strike 2.', content: 'Р Р°СЃСЃРєР°Р·С‹РІР°РµРј, РєР°Рє РїРѕРґРѕР±СЂР°С‚СЊ С…РѕСЂРѕС€РёРµ СЃРєРёРЅС‹ РІ CS2: СЂРµРґРєРѕСЃС‚СЊ, СЃРѕСЃС‚РѕСЏРЅРёРµ, Р»РёРєРІРёРґРЅРѕСЃС‚СЊ Рё РІРёР·СѓР°Р»СЊРЅС‹Р№ СЃС‚РёР»СЊ. РЎРѕРІРµС‚С‹ РґР»СЏ РЅР°С‡РёРЅР°СЋС‰РёС… Рё РѕРїС‹С‚РЅС‹С… РєРѕР»Р»РµРєС†РёРѕРЅРµСЂРѕРІ, С‡С‚РѕР±С‹ РЅРµ РїРµСЂРµРїР»Р°С‡РёРІР°С‚СЊ Рё СЂР°РґРѕРІР°С‚СЊСЃСЏ РїРѕРєСѓРїРєРµ.', date: '2025-01-10', image: '/images/blog/cs2-skins.jpg' },
+  { id: 3, slug: 'gaming-industry-news-2025', title: 'РќРѕРІРѕСЃС‚Рё РёРіСЂРѕРІРѕР№ РёРЅРґСѓСЃС‚СЂРёРё вЂ” 2025', excerpt: 'РџРѕСЃР»РµРґРЅРёРµ С‚СЂРµРЅРґС‹, Р°РЅРѕРЅСЃС‹ Рё СЃРѕР±С‹С‚РёСЏ РЅР°С‡Р°Р»Р° РіРѕРґР°.', content: 'РљСЂР°С‚РєРѕ Рѕ РіР»Р°РІРЅС‹С… С‚СЂРµРЅРґР°С… РёРЅРґСѓСЃС‚СЂРёРё: СЂР°Р·РІРёС‚РёРµ СЃРµСЂРІРёСЃРѕРІ, РЅРѕРІС‹Рµ РјРѕРґРµР»Рё РјРѕРЅРµС‚РёР·Р°С†РёРё, РєСЂРѕСЃСЃРїР»РµР№ Рё РїРѕРґРґРµСЂР¶РєР° РјРѕРґРёС„РёРєР°С†РёР№. РџР»СЋСЃ РїРѕРґР±РѕСЂРєР° Р·Р°РјРµС‚РЅС‹С… Р°РЅРѕРЅСЃРѕРІ Рё СЃРѕР±С‹С‚РёР№.', date: '2025-01-05', image: '/images/blog/gaming-news.jpg' },
+  { id: 4, slug: 'top-skins-january-2025', title: 'РўРѕРї СЃРєРёРЅРѕРІ СЏРЅРІР°СЂСЏ 2025', excerpt: 'РЎР°РјС‹Рµ РїРѕРїСѓР»СЏСЂРЅС‹Рµ Рё РІС‹РіРѕРґРЅС‹Рµ СЃРєРёРЅС‹ РІ РЅР°С‡Р°Р»Рµ РіРѕРґР°.', content: 'РЎРІРѕРґРєР° СЃР°РјС‹С… Р»РёРєРІРёРґРЅС‹С… СЃРєРёРЅРѕРІ СЏРЅРІР°СЂСЏ 2025 РїРѕ РґР°РЅРЅС‹Рј РїР»РѕС‰Р°РґРѕРє Рё РЅР°С€РёС… РїСЂРѕРґР°Р¶. РљР°РєРёРµ РјРѕРґРµР»Рё С‡Р°С‰Рµ РїРѕРєСѓРїР°СЋС‚ Рё РїРѕС‡РµРјСѓ.', date: '2025-01-20', image: '/images/blog/gaming-news.jpg' },
+  { id: 5, slug: 'dota2-cosmetics-2025', title: 'РљРѕСЃРјРµС‚РёРєР° РІ Dota 2: С‡С‚Рѕ СЃС‚РѕРёС‚ РєСѓРїРёС‚СЊ РІ 2025', excerpt: 'Р СѓРєРѕРІРѕРґСЃС‚РІРѕ РїРѕ РІС‹Р±РѕСЂСѓ РєСѓСЂСЊРµСЂРѕРІ, СЃРµС‚РѕРІ Рё СЂРµРґРєРёС… РїСЂРµРґРјРµС‚РѕРІ.', content: 'РћР±Р·РѕСЂ РїРѕРїСѓР»СЏСЂРЅС‹С… СЃРµС‚РѕРІ Рё РєСѓСЂСЊРµСЂРѕРІ, РєР°Рє РѕС†РµРЅРёРІР°С‚СЊ СЂРµРґРєРѕСЃС‚СЊ Рё СЃС‚РѕРёРјРѕСЃС‚СЊ, РіРґРµ РІС‹РіРѕРґРЅРµРµ РёСЃРєР°С‚СЊ РїСЂРµРґР»РѕР¶РµРЅРёСЏ Рё РЅР° С‡С‚Рѕ РѕР±СЂР°С‚РёС‚СЊ РІРЅРёРјР°РЅРёРµ РїСЂРё РѕР±РјРµРЅРµ.', date: '2025-02-01', image: '/images/blog/gaming-news.jpg' },
+  { id: 6, slug: 'rust-skins-feb-2025', title: 'Rust: Р»СѓС‡С€РёРµ СЃРєРёРЅС‹ С„РµРІСЂР°Р»СЏ 2025', excerpt: 'РџРѕРґР±РѕСЂРєР° РІРѕСЃС‚СЂРµР±РѕРІР°РЅРЅС‹С… СЃРєРёРЅРѕРІ РґР»СЏ Rust Рё СЃРѕРІРµС‚С‹ РїРѕ РїРѕРєСѓРїРєРµ.', content: 'РћР±СЃСѓР¶РґР°РµРј РїСЂРёРІР»РµРєР°С‚РµР»СЊРЅС‹Рµ РІР°СЂРёР°РЅС‚С‹ СЃРєРёРЅРѕРІ РґР»СЏ Rust: СЃРѕРѕС‚РЅРѕС€РµРЅРёРµ С†РµРЅС‹ Рё СЂРµРґРєРѕСЃС‚Рё, РІРёР·СѓР°Р»СЊРЅС‹Рµ С‚СЂРµРЅРґС‹ Рё С‡С‚Рѕ Р»СѓС‡С€Рµ Р±СЂР°С‚СЊ РґР»СЏ РѕР±РјРµРЅРѕРІ.', date: '2025-02-10', image: '/images/blog/gaming-news.jpg' },
+  { id: 7, slug: 'tf2-market-2025', title: 'Team Fortress 2: СЂС‹РЅРѕРє РІ 2025', excerpt: 'Р§С‚Рѕ РїСЂРѕРёСЃС…РѕРґРёС‚ СЃ С†РµРЅР°РјРё РЅР° TF2 Рё РєР°РєРёРµ РїСЂРµРґРјРµС‚С‹ СЂР°СЃС‚СѓС‚.', content: 'РљСЂР°С‚РєРёР№ СЂР°Р·Р±РѕСЂ РґРёРЅР°РјРёРєРё С†РµРЅ РЅР° СЂС‹РЅРєРµ TF2, СЂРµРґРєРёРµ С€Р»СЏРїС‹ Рё Р°РєСЃРµСЃСЃСѓР°СЂС‹, СЃРѕРІРµС‚С‹ РїРѕ СЃРґРµР»РєР°Рј Рё СЂРёСЃРє-РјРµРЅРµРґР¶РјРµРЅС‚.', date: '2025-02-18', image: '/images/blog/gaming-news.jpg' },
+  { id: 8, slug: 'pubg-skins-guide-2025', title: 'PUBG: РіРёРґ РїРѕ СЃРєРёРЅР°Рј 2025', excerpt: 'РљР°Рє РІС‹Р±СЂР°С‚СЊ СЃРєРёРЅС‹ РґР»СЏ PUBG Рё РЅРµ РїРµСЂРµРїР»Р°С‚РёС‚СЊ.', content: 'Р Р°Р·Р±РёСЂР°РµРј РєР°С‚РµРіРѕСЂРёРё СЃРєРёРЅРѕРІ РІ PUBG, РїСЂРёР·РЅР°РєРё Р»РёРєРІРёРґРЅС‹С… РїСЂРµРґРјРµС‚РѕРІ, РіРґРµ РёСЃРєР°С‚СЊ РІС‹РіРѕРґРЅС‹Рµ РїСЂРµРґР»РѕР¶РµРЅРёСЏ Рё РєР°Рє РѕС‚СЃР»РµР¶РёРІР°С‚СЊ С‚СЂРµРЅРґС‹.', date: '2025-03-01', image: '/images/blog/gaming-news.jpg' },
+  { id: 9, slug: 'market-safety-2025', title: 'Р‘РµР·РѕРїР°СЃРЅРѕСЃС‚СЊ СЃРґРµР»РѕРє СЃРѕ СЃРєРёРЅР°РјРё РІ 2025', excerpt: 'РџСЂР°РІРёР»Р° Р±РµР·РѕРїР°СЃРЅРѕР№ РїРѕРєСѓРїРєРё Рё РїСЂРѕРґР°Р¶Рё СЃРєРёРЅРѕРІ.', content: 'РќР°РїРѕРјРёРЅР°РµРј Рѕ РІР°Р¶РЅС‹С… РїСЂРёРЅС†РёРїР°С… Р±РµР·РѕРїР°СЃРЅРѕСЃС‚Рё: РїСЂРѕРІРµСЂРєР° РїСЂРѕРґР°РІС†Р°, Р·Р°С‰РёС‚Р° Р°РєРєР°СѓРЅС‚Р°, РёР·Р±РµРіР°РЅРёРµ С„РёС€РёРЅРіР° Рё РёСЃРїРѕР»СЊР·РѕРІР°РЅРёРµ РїСЂРѕРІРµСЂРµРЅРЅС‹С… РїР»РѕС‰Р°РґРѕРє.', date: '2025-03-10', image: '/images/blog/gaming-news.jpg' },
+  { id: 10, slug: 'spring-sale-2025', title: 'Р’РµСЃРµРЅРЅСЏСЏ СЂР°СЃРїСЂРѕРґР°Р¶Р° 2025', excerpt: 'РЎРєРёРґРєРё Рё Р°РєС†РёРё РЅР° РёРіСЂС‹ Рё СЃРєРёРЅС‹ СЌС‚РѕР№ РІРµСЃРЅРѕР№.', content: 'РџРѕРґР±РѕСЂРєР° Р»СѓС‡С€РёС… РїСЂРµРґР»РѕР¶РµРЅРёР№ РІРµСЃРµРЅРЅРµР№ СЂР°СЃРїСЂРѕРґР°Р¶Рё: С‡С‚Рѕ РґРµР№СЃС‚РІРёС‚РµР»СЊРЅРѕ РІС‹РіРѕРґРЅРѕ, РєР°Рє РєРѕРјР±РёРЅРёСЂРѕРІР°С‚СЊ СЃРєРёРґРєРё Рё СѓСЃРїРµРІР°С‚СЊ Р»РѕРІРёС‚СЊ РїСЂРѕРјРѕ.', date: '2025-03-20', image: '/images/blog/gaming-news.jpg' }
+]
+
+// Р”РµС‚Р°Р»СЊРЅР°СЏ СЃС‚СЂР°РЅРёС†Р° РїРѕСЃС‚Р° Р±Р»РѕРіР°
+function BlogPost() {
+  const { slug } = useParams()
+  const post = BLOG_POSTS.find(p => p.slug === slug)
+
+  if (!post) {
+    return (
+      <section className="space-y-4">
+        <h2 className="text-2xl font-bold">РџРѕСЃС‚ РЅРµ РЅР°Р№РґРµРЅ</h2>
+        <p className="text-white/70">Р—Р°РїСЂР°С€РёРІР°РµРјР°СЏ СЃС‚Р°С‚СЊСЏ РѕС‚СЃСѓС‚СЃС‚РІСѓРµС‚ РёР»Рё Р±С‹Р»Р° СѓРґР°Р»РµРЅР°.</p>
+        <NavLink to="/blog" className="inline-block px-4 py-2 rounded bg-[#161f38] hover:bg-[#2a3f5f]">Р’РµСЂРЅСѓС‚СЊСЃСЏ РІ Р±Р»РѕРі</NavLink>
+      </section>
+    )
+  }
+
+  return (
+    <section className="space-y-6">
+      <div className="h-56 bg-[#0D1A2F] rounded-lg overflow-hidden border border-white/10">
+        <LazyImage 
+          src={post.image}
+          alt={post.title}
+          className="w-full h-full object-cover"
+          fallback="/vite.svg"
+        />
+      </div>
+      <div>
+        <h1 className="text-3xl font-bold mb-2">{post.title}</h1>
+        <div className="text-sm text-white/60">{new Date(post.date).toLocaleDateString('ru-RU')}</div>
+      </div>
+      <div className="prose prose-invert max-w-none">
+        <p className="text-sm leading-relaxed">{post.content}</p>
+      </div>
+      <div>
+        <NavLink to="/blog" className="inline-block px-4 py-2 rounded bg-[#161f38] hover:bg-[#2a3f5f]">в†ђ Рљ СЃРїРёСЃРєСѓ СЃС‚Р°С‚РµР№</NavLink>
+      </div>
+    </section>
+  )
+}
+
+// РЎС‚СЂР°РЅРёС†Р° РїСЂРѕРґР°Р¶Рё
+function Sell() {
+  const [selectedGame, setSelectedGame] = useState('')
+  const [itemType, setItemType] = useState('')
+  const [itemName, setItemName] = useState('')
+  const [itemCondition, setItemCondition] = useState('')
+  const [desiredPrice, setDesiredPrice] = useState('')
+  const [description, setDescription] = useState('')
+  const [images, setImages] = useState([])
+  const [contactMethod, setContactMethod] = useState('steam')
+  const [contactInfo, setContactInfo] = useState('')
+
+  const games = [
+    'Counter-Strike 2',
+    'Dota 2',
+    'Team Fortress 2',
+    'Rust',
+    'PUBG'
+  ]
+
+  const itemTypes = {
+    'Counter-Strike 2': ['РћСЂСѓР¶РёРµ', 'РќРѕР¶Рё', 'РџРµСЂС‡Р°С‚РєРё', 'РќР°РєР»РµР№РєРё', 'РљРµР№СЃС‹'],
+    'Dota 2': ['Р“РµСЂРѕРё', 'РљСѓСЂСЊРµСЂС‹', 'Р’Р°СЂРґС‹', 'РЎРµС‚С‹'],
+    'Team Fortress 2': ['РћСЂСѓР¶РёРµ', 'РЁР»СЏРїС‹', 'Р Р°Р·РЅРѕРµ'],
+    'Rust': ['РЎРєРёРЅС‹ РѕСЂСѓР¶РёСЏ', 'РћРґРµР¶РґР°', 'Р”РµРєРѕСЂ'],
+    'PUBG': ['РћСЂСѓР¶РёРµ', 'РћРґРµР¶РґР°', 'РўСЂР°РЅСЃРїРѕСЂС‚']
+  }
+
+  const conditions = ['Factory New', 'Minimal Wear', 'Field-Tested', 'Well-Worn', 'Battle-Scarred']
+
+  const handleImageUpload = (e) => {
+    const files = Array.from(e.target.files)
+    if (files.length + images.length > 5) {
+      alert('РњР°РєСЃРёРјСѓРј 5 РёР·РѕР±СЂР°Р¶РµРЅРёР№')
+      return
+    }
+    
+    files.forEach(file => {
+      const reader = new FileReader()
+      reader.onload = (e) => {
+        setImages(prev => [...prev, e.target.result])
+      }
+      reader.readAsDataURL(file)
+    })
+  }
+
+  const removeImage = (index) => {
+    setImages(prev => prev.filter((_, i) => i !== index))
+  }
+
+  const handleSubmit = (e) => {
+    e.preventDefault()
+    // Р—РґРµСЃСЊ Р±СѓРґРµС‚ Р»РѕРіРёРєР° РѕС‚РїСЂР°РІРєРё С„РѕСЂРјС‹
+    alert('Р—Р°СЏРІРєР° РЅР° РїСЂРѕРґР°Р¶Сѓ РѕС‚РїСЂР°РІР»РµРЅР°! РњС‹ СЃРІСЏР¶РµРјСЃСЏ СЃ РІР°РјРё РІ Р±Р»РёР¶Р°Р№С€РµРµ РІСЂРµРјСЏ.')
+  }
+
+  return (
+    <section className="space-y-8">
+      <div className="text-center space-y-4">
+        <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
+          РџСЂРѕРґР°С‚СЊ РїСЂРµРґРјРµС‚С‹
+        </h1>
+        <p className="text-white/70 max-w-2xl mx-auto">
+          РџСЂРѕРґР°Р№С‚Рµ СЃРІРѕРё РёРіСЂРѕРІС‹Рµ РїСЂРµРґРјРµС‚С‹ Р±С‹СЃС‚СЂРѕ Рё РІС‹РіРѕРґРЅРѕ. РњС‹ РїСЂРµРґР»Р°РіР°РµРј Р»СѓС‡С€РёРµ С†РµРЅС‹ Рё РјРіРЅРѕРІРµРЅРЅС‹Рµ РІС‹РїР»Р°С‚С‹.
+        </p>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Р¤РѕСЂРјР° РїСЂРѕРґР°Р¶Рё */}
+        <div className="lg:col-span-2">
+          <form onSubmit={handleSubmit} className="bg-[#161f38] rounded-lg p-6 border border-white/10 space-y-6">
+            <h2 className="text-xl font-semibold mb-4">РРЅС„РѕСЂРјР°С†РёСЏ Рѕ РїСЂРµРґРјРµС‚Рµ</h2>
+            
+            {/* Р’С‹Р±РѕСЂ РёРіСЂС‹ */}
+            <div>
+              <label className="block text-sm font-medium mb-2">РРіСЂР° *</label>
+              <div className="relative">
+                <select 
+                  value={selectedGame} 
+                  onChange={(e) => {
+                    setSelectedGame(e.target.value)
+                    setItemType('')
+                  }}
+                  className="w-full bg-[#0D1A2F] border border-white/20 rounded-lg px-4 py-3 pl-12 focus:border-blue-500 focus:outline-none appearance-none"
+                  required
+                >
+                  <option value="">Р’С‹Р±РµСЂРёС‚Рµ РёРіСЂСѓ</option>
+                  {games.map(game => (
+                    <option key={game} value={game}>{game}</option>
+                  ))}
+                </select>
+                <div className="absolute left-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
+                  {selectedGame === 'CS2' && (
+                    <svg className="w-6 h-6 text-orange-400" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+                    </svg>
+                  )}
+                  {selectedGame === 'Dota 2' && (
+                    <svg className="w-6 h-6 text-red-400" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                    </svg>
+                  )}
+                  {selectedGame === 'Rust' && (
+                    <svg className="w-6 h-6 text-yellow-400" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                    </svg>
+                  )}
+                  {selectedGame === 'Steam' && (
+                    <svg className="w-6 h-6 text-blue-400" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/>
+                    </svg>
+                  )}
+                  {!selectedGame && (
+                    <svg className="w-6 h-6 text-white/40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1m4 0h1m-6 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* РўРёРї РїСЂРµРґРјРµС‚Р° */}
+            {selectedGame && (
+              <div>
+                <label className="block text-sm font-medium mb-2">РўРёРї РїСЂРµРґРјРµС‚Р° *</label>
+                <select 
+                  value={itemType} 
+                  onChange={(e) => setItemType(e.target.value)}
+                  className="w-full bg-[#0D1A2F] border border-white/20 rounded-lg px-4 py-3 focus:border-blue-500 focus:outline-none"
+                  required
+                >
+                  <option value="">Р’С‹Р±РµСЂРёС‚Рµ С‚РёРї</option>
+                  {itemTypes[selectedGame]?.map(type => (
+                    <option key={type} value={type}>{type}</option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            {/* РќР°Р·РІР°РЅРёРµ РїСЂРµРґРјРµС‚Р° */}
+            <div>
+              <label className="block text-sm font-medium mb-2">РќР°Р·РІР°РЅРёРµ РїСЂРµРґРјРµС‚Р° *</label>
+              <input 
+                type="text"
+                value={itemName}
+                onChange={(e) => setItemName(e.target.value)}
+                placeholder="РќР°РїСЂРёРјРµСЂ: AK-47 | Redline"
+                className="w-full bg-[#0D1A2F] border border-white/20 rounded-lg px-4 py-3 focus:border-blue-500 focus:outline-none"
+                required
+              />
+            </div>
+
+            {/* РЎРѕСЃС‚РѕСЏРЅРёРµ (РґР»СЏ CS2) */}
+            {selectedGame === 'Counter-Strike 2' && (
+              <div>
+                <label className="block text-sm font-medium mb-2">РЎРѕСЃС‚РѕСЏРЅРёРµ</label>
+                <select 
+                  value={itemCondition} 
+                  onChange={(e) => setItemCondition(e.target.value)}
+                  className="w-full bg-[#0D1A2F] border border-white/20 rounded-lg px-4 py-3 focus:border-blue-500 focus:outline-none"
+                >
+                  <option value="">Р’С‹Р±РµСЂРёС‚Рµ СЃРѕСЃС‚РѕСЏРЅРёРµ</option>
+                  {conditions.map(condition => (
+                    <option key={condition} value={condition}>{condition}</option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            {/* Р–РµР»Р°РµРјР°СЏ С†РµРЅР° */}
+            <div>
+              <label className="block text-sm font-medium mb-2">Р–РµР»Р°РµРјР°СЏ С†РµРЅР° (в‚Ѕ) *</label>
+              <input 
+                type="number"
+                value={desiredPrice}
+                onChange={(e) => setDesiredPrice(e.target.value)}
+                placeholder="1000"
+                min="1"
+                className="w-full bg-[#0D1A2F] border border-white/20 rounded-lg px-4 py-3 focus:border-blue-500 focus:outline-none"
+                required
+              />
+            </div>
+
+            {/* РћРїРёСЃР°РЅРёРµ */}
+            <div>
+              <label className="block text-sm font-medium mb-2">Р”РѕРїРѕР»РЅРёС‚РµР»СЊРЅРѕРµ РѕРїРёСЃР°РЅРёРµ</label>
+              <textarea 
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="РЈРєР°Р¶РёС‚Рµ РґРѕРїРѕР»РЅРёС‚РµР»СЊРЅСѓСЋ РёРЅС„РѕСЂРјР°С†РёСЋ Рѕ РїСЂРµРґРјРµС‚Рµ..."
+                rows="4"
+                className="w-full bg-[#0D1A2F] border border-white/20 rounded-lg px-4 py-3 focus:border-blue-500 focus:outline-none resize-none"
+              />
+            </div>
+
+            {/* Р—Р°РіСЂСѓР·РєР° РёР·РѕР±СЂР°Р¶РµРЅРёР№ */}
+            <div>
+              <label className="block text-sm font-medium mb-2">РР·РѕР±СЂР°Р¶РµРЅРёСЏ (РґРѕ 5 С€С‚СѓРє)</label>
+              <div className="space-y-4">
+                <input 
+                  type="file"
+                  multiple
+                  accept="image/*"
+                  onChange={handleImageUpload}
+                  className="w-full bg-[#0D1A2F] border border-white/20 rounded-lg px-4 py-3 focus:border-blue-500 focus:outline-none file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-blue-600 file:text-white file:cursor-pointer"
+                />
+                {images.length > 0 && (
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                    {images.map((image, index) => (
+                      <div key={index} className="relative">
+                        <img src={image} alt={`Preview ${index + 1}`} className="w-full h-24 object-cover rounded-lg" />
+                        <button 
+                          type="button"
+                          onClick={() => removeImage(index)}
+                          className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs hover:bg-red-600"
+                        >
+                          Г—
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <h2 className="text-xl font-semibold mb-4 pt-4 border-t border-white/10">РљРѕРЅС‚Р°РєС‚РЅР°СЏ РёРЅС„РѕСЂРјР°С†РёСЏ</h2>
+
+            {/* РЎРїРѕСЃРѕР± СЃРІСЏР·Рё */}
+            <div>
+              <label className="block text-sm font-medium mb-2">РЎРїРѕСЃРѕР± СЃРІСЏР·Рё *</label>
+              <div className="grid grid-cols-2 gap-4">
+                <label className="flex items-center space-x-2 cursor-pointer">
+                  <input 
+                    type="radio"
+                    value="steam"
+                    checked={contactMethod === 'steam'}
+                    onChange={(e) => setContactMethod(e.target.value)}
+                    className="text-blue-500"
+                  />
+                  <span>Steam</span>
+                </label>
+                <label className="flex items-center space-x-2 cursor-pointer">
+                  <input 
+                    type="radio"
+                    value="telegram"
+                    checked={contactMethod === 'telegram'}
+                    onChange={(e) => setContactMethod(e.target.value)}
+                    className="text-blue-500"
+                  />
+                  <span>Telegram</span>
+                </label>
+              </div>
+            </div>
+
+            {/* РљРѕРЅС‚Р°РєС‚РЅС‹Рµ РґР°РЅРЅС‹Рµ */}
+            <div>
+              <label className="block text-sm font-medium mb-2">
+                {contactMethod === 'steam' ? 'Steam ID РёР»Рё СЃСЃС‹Р»РєР° РЅР° РїСЂРѕС„РёР»СЊ' : 'Telegram username'} *
+              </label>
+              <input 
+                type="text"
+                value={contactInfo}
+                onChange={(e) => setContactInfo(e.target.value)}
+                placeholder={contactMethod === 'steam' ? 'https://steamcommunity.com/id/yourprofile' : '@username'}
+                className="w-full bg-[#0D1A2F] border border-white/20 rounded-lg px-4 py-3 focus:border-blue-500 focus:outline-none"
+                required
+              />
+            </div>
+
+            <button 
+              type="submit"
+              className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold py-3 px-6 rounded-lg transition-all duration-300 transform hover:scale-105"
+            >
+              РћС‚РїСЂР°РІРёС‚СЊ Р·Р°СЏРІРєСѓ РЅР° РїСЂРѕРґР°Р¶Сѓ
+            </button>
+          </form>
+        </div>
+
+        {/* РРЅС„РѕСЂРјР°С†РёРѕРЅРЅР°СЏ РїР°РЅРµР»СЊ */}
+        <div className="space-y-6">
+          {/* РџСЂРµРёРјСѓС‰РµСЃС‚РІР° */}
+          <div className="bg-[#161f38] rounded-lg p-6 border border-white/10">
+            <h3 className="text-lg font-semibold mb-4">РџРѕС‡РµРјСѓ РІС‹Р±РёСЂР°СЋС‚ РЅР°СЃ?</h3>
+            <div className="space-y-4">
+              <div className="flex items-start space-x-3">
+                <div className="w-8 h-8 bg-green-500/20 rounded-lg flex items-center justify-center">
+                  <svg className="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  </svg>
+                </div>
+                <div>
+                  <h4 className="font-medium">Р‘С‹СЃС‚СЂС‹Рµ РІС‹РїР»Р°С‚С‹</h4>
+                  <p className="text-sm text-white/70">РџРѕР»СѓС‡РёС‚Рµ РґРµРЅСЊРіРё РІ С‚РµС‡РµРЅРёРµ 24 С‡Р°СЃРѕРІ</p>
+                </div>
+              </div>
+              <div className="flex items-start space-x-3">
+                <div className="w-8 h-8 bg-blue-500/20 rounded-lg flex items-center justify-center">
+                  <svg className="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <div>
+                  <h4 className="font-medium">Р›СѓС‡С€РёРµ С†РµРЅС‹</h4>
+                  <p className="text-sm text-white/70">РџСЂРµРґР»Р°РіР°РµРј РґРѕ 90% РѕС‚ СЂС‹РЅРѕС‡РЅРѕР№ СЃС‚РѕРёРјРѕСЃС‚Рё</p>
+                </div>
+              </div>
+              <div className="flex items-start space-x-3">
+                <div className="w-8 h-8 bg-purple-500/20 rounded-lg flex items-center justify-center">
+                  <svg className="w-5 h-5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                  </svg>
+                </div>
+                <div>
+                  <h4 className="font-medium">Р‘РµР·РѕРїР°СЃРЅРѕСЃС‚СЊ</h4>
+                  <p className="text-sm text-white/70">Р’СЃРµ СЃРґРµР»РєРё Р·Р°С‰РёС‰РµРЅС‹ Рё Р·Р°СЃС‚СЂР°С…РѕРІР°РЅС‹</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* РџРѕРїСѓР»СЏСЂРЅС‹Рµ РїСЂРµРґРјРµС‚С‹ */}
+          <div className="bg-[#161f38] rounded-lg p-6 border border-white/10">
+            <h3 className="text-lg font-semibold mb-4">РџРѕРїСѓР»СЏСЂРЅС‹Рµ РїСЂРµРґРјРµС‚С‹</h3>
+            <div className="space-y-3">
+              <div className="flex justify-between items-center">
+                <span className="text-sm">AK-47 | Redline</span>
+                <span className="text-sm text-green-400">РѕС‚ 2,500в‚Ѕ</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm">AWP | Dragon Lore</span>
+                <span className="text-sm text-green-400">РѕС‚ 45,000в‚Ѕ</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm">Karambit | Fade</span>
+                <span className="text-sm text-green-400">РѕС‚ 35,000в‚Ѕ</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm">M4A4 | Howl</span>
+                <span className="text-sm text-green-400">РѕС‚ 15,000в‚Ѕ</span>
+              </div>
+            </div>
+          </div>
+
+          {/* РљРѕРЅС‚Р°РєС‚С‹ РїРѕРґРґРµСЂР¶РєРё */}
+          <div className="bg-[#161f38] rounded-lg p-6 border border-white/10">
+            <h3 className="text-lg font-semibold mb-4">РќСѓР¶РЅР° РїРѕРјРѕС‰СЊ?</h3>
+            <div className="space-y-3">
+              <div className="flex items-center space-x-3">
+                <div className="w-8 h-8 bg-blue-600/20 rounded-lg flex items-center justify-center">
+                  <svg className="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                  </svg>
+                </div>
+                <div>
+                  <p className="text-sm font-medium">РћРЅР»Р°Р№РЅ С‡Р°С‚</p>
+                  <p className="text-xs text-white/70">РћС‚РІРµС‚РёРј РІ С‚РµС‡РµРЅРёРµ 5 РјРёРЅСѓС‚</p>
+                </div>
+              </div>
+              <div className="flex items-center space-x-3">
+                <div className="w-8 h-8 bg-green-600/20 rounded-lg flex items-center justify-center">
+                  <svg className="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                  </svg>
+                </div>
+                <div>
+                  <p className="text-sm font-medium">+7 (800) 123-45-67</p>
+                  <p className="text-xs text-white/70">РљСЂСѓРіР»РѕСЃСѓС‚РѕС‡РЅРѕ</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  )
+}
+
+// РџРѕР»РёС‚РёРєР° РєРѕРЅС„РёРґРµРЅС†РёР°Р»СЊРЅРѕСЃС‚Рё
+function PrivacyPolicy() {
+  return (
+    <section className="space-y-6">
+      <h1 className="text-3xl font-bold">РџРѕР»РёС‚РёРєР° РєРѕРЅС„РёРґРµРЅС†РёР°Р»СЊРЅРѕСЃС‚Рё</h1>
+      
+      <div className="space-y-6 text-white/80">
+        <div>
+          <h2 className="text-xl font-semibold mb-3">1. РћР±С‰РёРµ РїРѕР»РѕР¶РµРЅРёСЏ</h2>
+          <p className="text-sm leading-relaxed">
+            РќР°СЃС‚РѕСЏС‰Р°СЏ РџРѕР»РёС‚РёРєР° РєРѕРЅС„РёРґРµРЅС†РёР°Р»СЊРЅРѕСЃС‚Рё (РґР°Р»РµРµ вЂ” В«РџРѕР»РёС‚РёРєР°В») РґРµР№СЃС‚РІСѓРµС‚ РІ РѕС‚РЅРѕС€РµРЅРёРё РІСЃРµР№ РёРЅС„РѕСЂРјР°С†РёРё, 
+            РєРѕС‚РѕСЂСѓСЋ AI Game Store РјРѕР¶РµС‚ РїРѕР»СѓС‡РёС‚СЊ Рѕ РїРѕР»СЊР·РѕРІР°С‚РµР»Рµ РІРѕ РІСЂРµРјСЏ РёСЃРїРѕР»СЊР·РѕРІР°РЅРёСЏ РёРј СЃР°Р№С‚Р° gamesale.shop.
+          </p>
+        </div>
+
+        <div>
+          <h2 className="text-xl font-semibold mb-3">2. РџРµСЂСЃРѕРЅР°Р»СЊРЅС‹Рµ РґР°РЅРЅС‹Рµ РїРѕР»СЊР·РѕРІР°С‚РµР»РµР№</h2>
+          <p className="text-sm leading-relaxed mb-2">
+            Р’ СЂР°РјРєР°С… РЅР°СЃС‚РѕСЏС‰РµР№ РџРѕР»РёС‚РёРєРё РїРѕРґ В«РїРµСЂСЃРѕРЅР°Р»СЊРЅС‹РјРё РґР°РЅРЅС‹РјРё РїРѕР»СЊР·РѕРІР°С‚РµР»СЏВ» РїРѕРЅРёРјР°СЋС‚СЃСЏ:
+          </p>
+          <ul className="list-disc list-inside text-sm space-y-1 ml-4">
+            <li>РџРµСЂСЃРѕРЅР°Р»СЊРЅС‹Рµ РґР°РЅРЅС‹Рµ, РєРѕС‚РѕСЂС‹Рµ РїРѕР»СЊР·РѕРІР°С‚РµР»СЊ РїСЂРµРґРѕСЃС‚Р°РІР»СЏРµС‚ Рѕ СЃРµР±Рµ СЃР°РјРѕСЃС‚РѕСЏС‚РµР»СЊРЅРѕ РїСЂРё СЂРµРіРёСЃС‚СЂР°С†РёРё РёР»Рё РІ РїСЂРѕС†РµСЃСЃРµ РёСЃРїРѕР»СЊР·РѕРІР°РЅРёСЏ СЃР°Р№С‚Р°</li>
+            <li>IP-Р°РґСЂРµСЃ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ</li>
+            <li>РРЅС„РѕСЂРјР°С†РёСЏ Рѕ Р±СЂР°СѓР·РµСЂРµ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ</li>
+            <li>Р”Р°РЅРЅС‹Рµ Рѕ РїРѕРєСѓРїРєР°С… Рё С‚СЂР°РЅР·Р°РєС†РёСЏС…</li>
+            <li>Email Р°РґСЂРµСЃ РґР»СЏ РѕС‚РїСЂР°РІРєРё С‡РµРєРѕРІ</li>
+          </ul>
+        </div>
+
+        <div>
+          <h2 className="text-xl font-semibold mb-3">3. Р¦РµР»Рё РѕР±СЂР°Р±РѕС‚РєРё РїРµСЂСЃРѕРЅР°Р»СЊРЅС‹С… РґР°РЅРЅС‹С…</h2>
+          <p className="text-sm leading-relaxed mb-2">
+            РџРµСЂСЃРѕРЅР°Р»СЊРЅС‹Рµ РґР°РЅРЅС‹Рµ РїРѕР»СЊР·РѕРІР°С‚РµР»РµР№ РѕР±СЂР°Р±Р°С‚С‹РІР°СЋС‚СЃСЏ РІ СЃР»РµРґСѓСЋС‰РёС… С†РµР»СЏС…:
+          </p>
+          <ul className="list-disc list-inside text-sm space-y-1 ml-4">
+            <li>РћР±РµСЃРїРµС‡РµРЅРёРµ С„СѓРЅРєС†РёРѕРЅРёСЂРѕРІР°РЅРёСЏ СЃР°Р№С‚Р°</li>
+            <li>РћР±СЂР°Р±РѕС‚РєР° Рё РІС‹РїРѕР»РЅРµРЅРёРµ Р·Р°РєР°Р·РѕРІ</li>
+            <li>РћС‚РїСЂР°РІРєР° СЌР»РµРєС‚СЂРѕРЅРЅС‹С… С‡РµРєРѕРІ</li>
+            <li>РЈР»СѓС‡С€РµРЅРёРµ РєР°С‡РµСЃС‚РІР° СѓСЃР»СѓРі</li>
+            <li>РўРµС…РЅРёС‡РµСЃРєР°СЏ РїРѕРґРґРµСЂР¶РєР° РїРѕР»СЊР·РѕРІР°С‚РµР»РµР№</li>
+          </ul>
+        </div>
+
+        <div>
+          <h2 className="text-xl font-semibold mb-3">4. РџСЂР°РІРѕРІС‹Рµ РѕСЃРЅРѕРІР°РЅРёСЏ РѕР±СЂР°Р±РѕС‚РєРё</h2>
+          <p className="text-sm leading-relaxed">
+            РћР±СЂР°Р±РѕС‚РєР° РїРµСЂСЃРѕРЅР°Р»СЊРЅС‹С… РґР°РЅРЅС‹С… РѕСЃСѓС‰РµСЃС‚РІР»СЏРµС‚СЃСЏ РЅР° РѕСЃРЅРѕРІР°РЅРёРё СЃРѕРіР»Р°СЃРёСЏ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ, 
+            РїРѕР»СѓС‡РµРЅРЅРѕРіРѕ РїСЂРё РїРµСЂРІРѕРј РїРѕСЃРµС‰РµРЅРёРё СЃР°Р№С‚Р°, Р° С‚Р°РєР¶Рµ РІ СЃРѕРѕС‚РІРµС‚СЃС‚РІРёРё СЃ Р¤РµРґРµСЂР°Р»СЊРЅС‹Рј Р·Р°РєРѕРЅРѕРј 
+            РѕС‚ 27.07.2006 в„– 152-Р¤Р— В«Рћ РїРµСЂСЃРѕРЅР°Р»СЊРЅС‹С… РґР°РЅРЅС‹С…В».
+          </p>
+        </div>
+
+        <div>
+          <h2 className="text-xl font-semibold mb-3">5. РЎСЂРѕРєРё РѕР±СЂР°Р±РѕС‚РєРё РїРµСЂСЃРѕРЅР°Р»СЊРЅС‹С… РґР°РЅРЅС‹С…</h2>
+          <p className="text-sm leading-relaxed">
+            РџРµСЂСЃРѕРЅР°Р»СЊРЅС‹Рµ РґР°РЅРЅС‹Рµ РѕР±СЂР°Р±Р°С‚С‹РІР°СЋС‚СЃСЏ РІ С‚РµС‡РµРЅРёРµ СЃСЂРѕРєР°, РЅРµРѕР±С…РѕРґРёРјРѕРіРѕ РґР»СЏ РґРѕСЃС‚РёР¶РµРЅРёСЏ С†РµР»РµР№ РѕР±СЂР°Р±РѕС‚РєРё, 
+            РЅРѕ РЅРµ Р±РѕР»РµРµ 5 Р»РµС‚ СЃ РјРѕРјРµРЅС‚Р° РїРѕСЃР»РµРґРЅРµРіРѕ РІР·Р°РёРјРѕРґРµР№СЃС‚РІРёСЏ СЃ РїРѕР»СЊР·РѕРІР°С‚РµР»РµРј.
+          </p>
+        </div>
+
+        <div>
+          <h2 className="text-xl font-semibold mb-3">6. РџСЂР°РІР° СЃСѓР±СЉРµРєС‚Р° РїРµСЂСЃРѕРЅР°Р»СЊРЅС‹С… РґР°РЅРЅС‹С…</h2>
+          <p className="text-sm leading-relaxed mb-2">
+            РџРѕР»СЊР·РѕРІР°С‚РµР»СЊ РёРјРµРµС‚ РїСЂР°РІРѕ:
+          </p>
+          <ul className="list-disc list-inside text-sm space-y-1 ml-4">
+            <li>РџРѕР»СѓС‡Р°С‚СЊ РёРЅС„РѕСЂРјР°С†РёСЋ РѕР± РѕР±СЂР°Р±РѕС‚РєРµ СЃРІРѕРёС… РїРµСЂСЃРѕРЅР°Р»СЊРЅС‹С… РґР°РЅРЅС‹С…</li>
+            <li>РўСЂРµР±РѕРІР°С‚СЊ СѓС‚РѕС‡РЅРµРЅРёСЏ, Р±Р»РѕРєРёСЂРѕРІР°РЅРёСЏ РёР»Рё СѓРЅРёС‡С‚РѕР¶РµРЅРёСЏ РїРµСЂСЃРѕРЅР°Р»СЊРЅС‹С… РґР°РЅРЅС‹С…</li>
+            <li>РћС‚Р·С‹РІР°С‚СЊ СЃРѕРіР»Р°СЃРёРµ РЅР° РѕР±СЂР°Р±РѕС‚РєСѓ РїРµСЂСЃРѕРЅР°Р»СЊРЅС‹С… РґР°РЅРЅС‹С…</li>
+            <li>РћР±СЂР°С‰Р°С‚СЊСЃСЏ РІ СѓРїРѕР»РЅРѕРјРѕС‡РµРЅРЅС‹Р№ РѕСЂРіР°РЅ РїРѕ Р·Р°С‰РёС‚Рµ РїСЂР°РІ СЃСѓР±СЉРµРєС‚РѕРІ РїРµСЂСЃРѕРЅР°Р»СЊРЅС‹С… РґР°РЅРЅС‹С…</li>
+          </ul>
+        </div>
+
+        <div>
+          <h2 className="text-xl font-semibold mb-3">7. РљРѕРЅС‚Р°РєС‚РЅР°СЏ РёРЅС„РѕСЂРјР°С†РёСЏ</h2>
+          <div className="text-sm leading-relaxed space-y-2">
+            <p>РџРѕ РІСЃРµРј РІРѕРїСЂРѕСЃР°Рј, СЃРІСЏР·Р°РЅРЅС‹Рј СЃ РѕР±СЂР°Р±РѕС‚РєРѕР№ РїРµСЂСЃРѕРЅР°Р»СЊРЅС‹С… РґР°РЅРЅС‹С…, РІС‹ РјРѕР¶РµС‚Рµ РѕР±СЂР°С‚РёС‚СЊСЃСЏ Рє РЅР°Рј:</p>
+            <div className="bg-[#161f38]/50 p-4 rounded-lg border border-white/10">
+              <div className="space-y-1">
+                <div><strong>РћРћРћ "РђР Р“РµР№Рј РЎС‚РѕСЂ"</strong></div>
+                <div>РРќРќ: 7707123456</div>
+                <div>РћР“Р Рќ: 1127746123456</div>
+                <div>Р®СЂРёРґРёС‡РµСЃРєРёР№ Р°РґСЂРµСЃ: 123456, Рі. РњРѕСЃРєРІР°, СѓР». РџСЂРёРјРµСЂРЅР°СЏ, Рґ. 1, РѕС„. 100</div>
+                <div>Email: <a href="mailto:privacy@aigamestore.ru" className="text-blue-400 hover:text-blue-300">privacy@aigamestore.ru</a></div>
+                <div>РћР±С‰РёР№ Email: <a href="mailto:info@aigamestore.ru" className="text-blue-400 hover:text-blue-300">info@aigamestore.ru</a></div>
+                <div>РўРµР»РµС„РѕРЅ: <a href="tel:+74951234567" className="text-blue-400 hover:text-blue-300">+7 (495) 123-45-67</a></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="text-xs text-white/60 pt-4 border-t border-white/10">
+          Р”Р°С‚Р° РїРѕСЃР»РµРґРЅРµРіРѕ РѕР±РЅРѕРІР»РµРЅРёСЏ: 2025
+        </div>
+      </div>
+    </section>
+  )
+}
+
+// РЎС‚СЂР°РЅРёС†Р° С‚РѕРІР°СЂР°
+function Product() {
+  const { id } = useParams()
+  const { addItem } = useCart()
+  const { formatPrice } = useLang()
+  const [version, setVersion] = React.useState(0)
+  
+  React.useEffect(() => {
+    const onProductsLoaded = () => setVersion(v => v + 1)
+    window.addEventListener('products-loaded', onProductsLoaded)
+    return () => window.removeEventListener('products-loaded', onProductsLoaded)
+  }, [])
+  
+  const product = React.useMemo(() => {
+    const byId = DATA.products.find(p => p.id === id)
+    if (byId) return byId
+    return DATA.products.find(p => String(p.id) === String(id)) || null
+  }, [id, version])
+
+  const images = React.useMemo(() => {
+    if (!product) return ['/vite.svg','/vite.svg','/vite.svg']
+    const base = Array.isArray(product.images) ? product.images.filter(Boolean) : []
+    if (base.length === 0 && product.image) base.push(product.image)
+    const fallback = '/vite.svg'
+    while (base.length < 3) base.push(fallback)
+    return base.slice(0, 10)
+  }, [product])
+  
+  const [idx, setIdx] = React.useState(0)
+  const go = (d) => setIdx(i => (i + d + images.length) % images.length)
+
+  const recommendations = React.useMemo(() => {
+    const list = DATA.products.filter(p => p.id !== (product?.id || ''))
+    const arr = [...list]
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1))
+      ;[arr[i], arr[j]] = [arr[j], arr[i]]
+    }
+    return arr.slice(0, 4)
+  }, [product])
+
+  const [sellStatus, setSellStatus] = React.useState('')
+  const getRarityClasses = (rarity) => {
+    switch (String(rarity || '').toLowerCase()) {
+      case '★ covert':
+      case 'covert':
+        return 'bg-red-600 text-white'
+      case 'classified':
+        return 'bg-pink-600 text-white'
+      case 'restricted':
+        return 'bg-purple-600 text-white'
+      case 'mil-spec':
+        return 'bg-blue-600 text-white'
+      case 'consumer grade':
+        return 'bg-gray-600 text-white'
+      case 'rare':
+        return 'bg-green-600 text-white'
+      case 'unusual':
+        return 'bg-fuchsia-600 text-white'
+      case 'immortal':
+        return 'bg-amber-500 text-black'
+      case 'souvenir':
+        return 'bg-yellow-400 text-black'
+      default:
+        return 'bg-[#0D1A2F] text-white/70 border border-white/10'
+    }
+  }
+  const sellSkin = () => {
+    try {
+      const isAuth = localStorage.getItem('profile-auth') === '1'
+      if (!isAuth) {
+        window.dispatchEvent(new Event('open-login'))
+        return
+      }
+      if (!product || product.category !== 'skin') return
+      const credit = Math.round(product.price * 0.7 * 100) / 100
+      const prev = parseFloat(localStorage.getItem('wallet-usd') || '0')
+      const next = Math.round((prev + credit) * 100) / 100
+      localStorage.setItem('wallet-usd', String(next))
+      let hist = []
+      try { hist = JSON.parse(localStorage.getItem('wallet-history') || '[]') } catch { hist = [] }
+      const item = { id: `SELL-${Date.now()}`, type: 'sell', amountUsd: credit, name: product.name, ts: Date.now() }
+      localStorage.setItem('wallet-history', JSON.stringify([item, ...hist]))
+      window.dispatchEvent(new Event('wallet-updated'))
+      setSellStatus('sold')
+    } catch (e) {
+      console.error('sellSkin error', e)
+    }
+  }
+
+  if (!product) {
+    return (
+      <section className="space-y-6">
+        <h2 className="text-2xl font-bold">РўРѕРІР°СЂ РЅРµ РЅР°Р№РґРµРЅ</h2>
+        <div className="text-white/60">РџРѕС…РѕР¶Рµ, С‚Р°РєРѕРіРѕ С‚РѕРІР°СЂР° РЅРµС‚ РІ РєР°С‚Р°Р»РѕРіРµ.</div>
+      </section>
+    )
+  }
+
+  return (
+    <section className="space-y-6">
+      <h2 className="text-2xl font-bold">{product.name}</h2>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+        <div className="p-4 rounded-lg border border-white/10 bg-[#0D1A2F]">
+          <div className="h-72 rounded-lg bg-[#161f38] overflow-hidden">
+            <div className="relative w-full h-full">
+              <LazyImage 
+                src={images[idx]} 
+                alt={`${product.name}-${idx+1}`} 
+                className="w-full h-full object-cover transition-opacity duration-300" 
+              />
+              <button aria-label="prev" onClick={() => go(-1)} className="absolute left-2 top-1/2 -translate-y-1/2 px-2 py-1 rounded bg-[#0D1A2F] border border-white/10">вЂ№</button>
+              <button aria-label="next" onClick={() => go(1)} className="absolute right-2 top-1/2 -translate-y-1/2 px-2 py-1 rounded bg-[#0D1A2F] border border-white/10">вЂє</button>
+              <div className="absolute bottom-2 left-0 right-0 flex justify-center gap-2">
+                {images.map((_, i) => (
+                  <button key={i} onClick={() => setIdx(i)} aria-label={`go-${i}`} className={`h-2 w-2 rounded-full ${i===idx?'bg-[#4A90E2]':'bg-white/30'}`}></button>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+        <div className="p-4 rounded-lg border border-white/10 bg-[#0D1A2F] lg:col-span-2 flex flex-col">
+          <div className="text-white/80">Р¦РµРЅР°: {formatPrice(product.price)}</div>
+          <div className="mt-2 text-white/60 text-sm">РљР°С‚РµРіРѕСЂРёСЏ: {product.category || 'вЂ”'}{product.type ? ` вЂў ${product.type}` : ''}</div>
+          {product.category === 'skin' && product.rarity && (
+            <div className="mt-2">
+              <span className={`inline-block px-2 py-0.5 rounded text-xs ${getRarityClasses(product.rarity)}`}>
+                {product.rarity}
+              </span>
+            </div>
+          )}
+          <div className="mt-4 flex items-center gap-2">
+            <button onClick={() => addItem(product, 1)} className="px-4 py-2 rounded-md bg-[#161f38] hover:bg-[#7e2aa8]">Р’ РєРѕСЂР·РёРЅСѓ</button>
+            {product.category === 'skin' && (
+              <button onClick={sellSkin} className="px-4 py-2 rounded-md bg-[#4A90E2] hover:bg-[#7e2aa8]">РџСЂРѕРґР°С‚СЊ СЃРєРёРЅ (70%)</button>
+            )}
+            {sellStatus === 'sold' && (
+              <div className="ml-2 text-xs text-green-400">Р—Р°С‡РёСЃР»РµРЅРѕ: {formatPrice(product.price * 0.7)}</div>
+            )}
+          </div>
+          {/* РћРїРёСЃР°РЅРёРµ РёРіСЂС‹ */}
+          <div className="mt-6">
+            <h3 className="text-lg font-semibold">РћРїРёСЃР°РЅРёРµ</h3>
+            <p className="mt-2 text-white/70 text-sm">{product.description || 'РћРїРёСЃР°РЅРёРµ Р±СѓРґРµС‚ РґРѕР±Р°РІР»РµРЅРѕ РїРѕР·Р¶Рµ.'}</p>
+          </div>
+          {/* РўРµС…РЅРёС‡РµСЃРєРёРµ С…Р°СЂР°РєС‚РµСЂРёСЃС‚РёРєРё РґР»СЏ РёРіСЂ */}
+          {product.category === 'game' && (
+            <div className="mt-6">
+              <h3 className="text-lg font-semibold">РўРµС…РЅРёС‡РµСЃРєРёРµ С…Р°СЂР°РєС‚РµСЂРёСЃС‚РёРєРё</h3>
+              <ul className="mt-2 text-white/70 text-sm space-y-1">
+                <li>Р Р°Р·СЂР°Р±РѕС‚С‡РёРє: {product.specs?.developer || 'вЂ”'}</li>
+                <li>Р“РѕРґ РІС‹РїСѓСЃРєР°: {product.specs?.release || 'вЂ”'}</li>
+                <li>РџР»Р°С‚С„РѕСЂРјР°: {product.specs?.platform || 'вЂ”'}</li>
+                <li>РњРёРЅРёРјР°Р»СЊРЅС‹Рµ С‚СЂРµР±РѕРІР°РЅРёСЏ: {product.specs?.min || 'вЂ”'}</li>
+              </ul>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* РЎ СЌС‚РёРј РµС‰Рµ РїРѕРєСѓРїР°СЋС‚ */}
+      {recommendations.length > 0 && (
+        <div className="space-y-3">
+          <h3 className="text-xl font-bold">РЎ СЌС‚РёРј РµС‰Рµ РїРѕРєСѓРїР°СЋС‚</h3>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            {recommendations.map(p => (
+              <div key={p.id} className="bg-[#161f38] rounded-lg overflow-hidden border border-white/10 hover:border-blue-500/50 transition-colors">
+                <div className="relative h-32">
+                  <LazyImage src={p.image} alt={p.name} className="h-full w-full object-cover" />
+                </div>
+                <div className="p-3">
+                  <h3 className="text-sm font-medium text-white/90 truncate">{p.name}</h3>
+                  <div className="flex items-center justify-between mt-2">
+                    <span className="text-blue-400 font-bold text-sm">{formatPrice(p.price)}</span>
+                    <button 
+                      onClick={() => addItem(p, 1)}
+                      className="px-2 py-1 bg-blue-600 hover:bg-blue-700 rounded text-xs transition-colors"
+                    >
+                      Р’ РєРѕСЂР·РёРЅСѓ
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </section>
+  )
+}
+
+// Р“Р»Р°РІРЅР°СЏ СЃС‚СЂР°РЅРёС†Р°
+function Home() {
+  const { formatPrice } = useLang()
+  const { cmsContent } = useCMS()
+  const [version, setVersion] = React.useState(0)
+  
+  React.useEffect(() => {
+    const onProductsLoaded = () => setVersion(v => v + 1)
+    window.addEventListener('products-loaded', onProductsLoaded)
+    return () => window.removeEventListener('products-loaded', onProductsLoaded)
+  }, [])
+
+  const [remaining, setRemaining] = React.useState('')
+  const endsAtRef = React.useRef(Date.now() + 24 * 60 * 60 * 1000) // Р°РєС†РёСЏ 24 С‡Р°СЃР°
+  React.useEffect(() => {
+    const update = () => {
+      const diff = endsAtRef.current - Date.now()
+      if (diff <= 0) { setRemaining('00:00:00'); return }
+      const h = Math.floor(diff / 3600000)
+      const m = Math.floor((diff % 3600000) / 60000)
+      const s = Math.floor((diff % 60000) / 1000)
+      setRemaining(`${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`)
+    }
+    update()
+    const t = setInterval(update, 1000)
+    return () => clearInterval(t)
+  }, [])
+
+  const { addItem } = useCart()
+  const addToCart = (product) => {
+    const qtyStr = window.prompt('Р’С‹Р±РµСЂРёС‚Рµ РєРѕР»РёС‡РµСЃС‚РІРѕ', '1')
+    const qty = parseInt(qtyStr || '0', 10)
+    if (!Number.isNaN(qty) && qty > 0) {
+      addItem(product, qty)
+    }
+  }
+
+  // РџСЂРѕРјРѕ-СЃР»Р°Р№РґРµСЂ РЅР° РіР»Р°РІРЅРѕР№: Р°РІС‚РѕРїСЂРѕРєСЂСѓС‚РєР° Р±РµР· СЂСѓС‡РЅС‹С… РєРѕРЅС‚СЂРѕР»РѕРІ
+  const promoRef = React.useRef(null)
+  const promoTimerRef = React.useRef(null)
+  const promoStep = () => {
+    const el = promoRef.current
+    if (!el) return
+    const first = el.firstElementChild
+    const step = first ? first.getBoundingClientRect().width + 24 : 320
+    const nearEnd = el.scrollLeft + el.clientWidth + step >= el.scrollWidth - 4
+    if (nearEnd) {
+      el.scrollTo({ left: 0, behavior: 'smooth' })
+    } else {
+      el.scrollBy({ left: step, behavior: 'smooth' })
+    }
+  }
+  const startPromo = () => { if (!promoTimerRef.current) promoTimerRef.current = setInterval(promoStep, 2500) }
+  const stopPromo = () => { if (promoTimerRef.current) { clearInterval(promoTimerRef.current); promoTimerRef.current = null } }
+  React.useEffect(() => {
+    const el = promoRef.current
+    if (!el) return
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => { entry.isIntersecting ? startPromo() : stopPromo() })
+    }, { root: null, threshold: 0.1 })
+    observer.observe(el)
+    const onEnter = () => stopPromo()
+    const onLeave = () => startPromo()
+    el.addEventListener('mouseenter', onEnter)
+    el.addEventListener('mouseleave', onLeave)
+    startPromo()
+    return () => { observer.disconnect(); el.removeEventListener('mouseenter', onEnter); el.removeEventListener('mouseleave', onLeave); stopPromo() }
+  }, [])
+
+  const promoItems = React.useMemo(() => {
+    const items = DATA.products.filter(p => {
+      const src = p.introImage || p.image
+      return src && !String(src).includes('/images/logo/logo.png')
+    })
+    const arr = [...items]
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1))
+      ;[arr[i], arr[j]] = [arr[j], arr[i]]
+    }
+    return arr.slice(0, 10).map(p => ({ product: p, src: p.introImage || p.image, to: `/product/${p.id}` }))
+  }, [version])
+  
+  // Р Р°РЅРґРѕРјРёР·Р°С†РёСЏ РёРіСЂ РЅР° РіР»Р°РІРЅРѕР№: РґРІРµ СЃС‚СЂРѕРєРё, СЂР°Р·РЅС‹Рµ РїСЂРё РєР°Р¶РґРѕРј РѕР±РЅРѕРІР»РµРЅРёРё
+  const gamesShuffled = React.useMemo(() => {
+    const list = DATA.products.filter(p => p.category === 'game')
+    const arr = [...list]
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1))
+      ;[arr[i], arr[j]] = [arr[j], arr[i]]
+    }
+    return arr
+  }, [version])
+  const gamesRow1 = React.useMemo(() => gamesShuffled.slice(0, 6), [gamesShuffled])
+  const gamesRow2 = React.useMemo(() => gamesShuffled.slice(6, 12), [gamesShuffled])
+
+  const scrollToRoulette = React.useCallback(() => {
+    const el = document.getElementById('roulette-anchor')
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }, [])
+  
+  return (
+    <section className="space-y-8 p-4 sm:p-6">
+      {/* Р“Р»Р°РІРЅС‹Р№ Р±Р°РЅРЅРµСЂ - Hero Section */}
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#0a0f1c] via-[#1a1f3a] to-[#2d1b69] min-h-[500px] flex items-center">
+        {/* Р¤РѕРЅРѕРІС‹Рµ СЌС„С„РµРєС‚С‹ */}
+        <div className="absolute inset-0">
+          {/* РњРѕРЅС‚Р°Р¶ РёР·РѕР±СЂР°Р¶РµРЅРёР№ РёРіСЂ/СЃРєРёРЅРѕРІ: РґРёРЅР°РјРёС‡РЅР°СЏ СЃРµС‚РєР° РёР· РєРІР°РґСЂР°С‚РѕРІ */}
+          <div className="absolute inset-0 pointer-events-none">
+            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent"></div>
+            <div className="grid grid-cols-5 gap-2 w-full h-full p-4 opacity-20" style={{ gridAutoRows: '100px' }}>
+              {DATA.products.slice(0, 25).map((p) => (
+                <div key={p.id} className="relative rounded-lg overflow-hidden" style={{ aspectRatio: '1 / 1' }}>
+                  <LazyImage src={p.introImage || p.image} alt={p.name} className="w-full h-full object-cover" />
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="absolute top-0 left-0 w-96 h-96 bg-blue-500/20 rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2"></div>
+          <div className="absolute bottom-0 right-0 w-96 h-96 bg-purple-500/20 rounded-full blur-3xl translate-x-1/2 translate-y-1/2"></div>
+          <div className="absolute top-1/2 left-1/2 w-64 h-64 bg-cyan-400/10 rounded-full blur-2xl -translate-x-1/2 -translate-y-1/2"></div>
+        </div>
+        
+        {/* РљРѕРЅС‚РµРЅС‚ Р±Р°РЅРЅРµСЂР° */}
+        <div className="relative z-10 w-full px-8 py-12">
+          <div className="max-w-4xl mx-auto text-center">
+            <div className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-500/20 to-purple-500/20 rounded-full border border-blue-400/30 mb-6">
+              <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
+              <span className="text-sm text-blue-300 font-medium">РђРєС†РёСЏ Р·Р°РєР°РЅС‡РёРІР°РµС‚СЃСЏ С‡РµСЂРµР· {remaining}</span>
+            </div>
+            
+            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black bg-gradient-to-r from-white via-blue-100 to-purple-200 bg-clip-text text-transparent mb-6 leading-tight">
+              {cmsContent.bannerTitle}
+            </h1>
+            
+            <p className="text-lg sm:text-xl text-white/80 mb-8 max-w-2xl mx-auto leading-relaxed">
+              {cmsContent.bannerDescription}
+            </p>
+            
+            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+              <NavLink 
+                to="/skins" 
+                className="group relative px-8 py-4 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 rounded-xl font-bold text-white transition-all duration-300 transform hover:scale-105 hover:shadow-2xl hover:shadow-blue-500/25 min-w-[200px]"
+              >
+                <span className="relative z-10">РљСѓРїРёС‚СЊ СЃРєРёРЅС‹</span>
+                <div className="absolute inset-0 bg-gradient-to-r from-blue-400 to-purple-400 rounded-xl blur opacity-0 group-hover:opacity-30 transition-opacity duration-300"></div>
+              </NavLink>
+              
+              <NavLink 
+                to="/sell" 
+                className="group px-8 py-4 bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/20 hover:border-white/40 rounded-xl font-bold text-white transition-all duration-300 transform hover:scale-105 min-w-[200px]"
+              >
+                РџСЂРѕРґР°С‚СЊ СЃРєРёРЅ
+              </NavLink>
+
+              <NavLink 
+                to="/product/cyberpunk" 
+                className="group px-8 py-4 bg-[#1b2838] hover:bg-[#2a475e] border border-white/10 rounded-xl font-bold text-white transition-all duration-300 transform hover:scale-105 min-w-[200px]"
+              >
+                РўРѕРївЂ‘РёРіСЂР°
+              </NavLink>
+            </div>
+
+            {/* РРєРѕРЅРєРё РїРѕРїСѓР»СЏСЂРЅС‹С… РёРіСЂ СѓРґР°Р»РµРЅС‹ РїРѕ Р·Р°РїСЂРѕСЃСѓ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ */}
+          </div>
+        </div>
+        
+        {/* Р”РµРєРѕСЂР°С‚РёРІРЅС‹Рµ СЌР»РµРјРµРЅС‚С‹ */}
+        <div className="absolute top-4 right-4 w-32 h-32 border border-white/10 rounded-full animate-spin" style={{animationDuration: '20s'}}></div>
+        <div className="absolute bottom-4 left-4 w-24 h-24 border border-blue-400/20 rounded-full animate-pulse"></div>
+      </div>
+
+      {/* РџСЂРѕРјРѕ-СЃР»Р°Р№РґРµСЂ - Featured Games */}
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <h2 className="text-3xl font-bold bg-gradient-to-r from-white to-blue-200 bg-clip-text text-transparent">
+            рџ”Ґ Р“РѕСЂСЏС‡РёРµ РїСЂРµРґР»РѕР¶РµРЅРёСЏ
+          </h2>
+          <div className="text-sm text-white/60">РћР±РЅРѕРІР»СЏРµС‚СЃСЏ РєР°Р¶РґС‹Р№ С‡Р°СЃ</div>
+        </div>
+        
+        <div className="relative">
+          <div ref={promoRef} className="flex gap-6 overflow-x-auto snap-x snap-mandatory scroll-smooth pb-4 scrollbar-hide">
+            {promoItems.map((item, i) => (
+              <NavLink to={item.to} key={i} className="group snap-start shrink-0 w-[320px] sm:w-[380px]">
+                <div className="relative h-48 w-full rounded-2xl overflow-hidden bg-gradient-to-br from-[#161f38] to-[#1f2a4a] border border-white/10 hover:border-blue-400/50 transition-all duration-300 transform hover:scale-[1.02] hover:shadow-2xl hover:shadow-blue-500/20">
+                  <LazyImage src={item.src} alt={item.name} className="h-full w-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                  
+                  {/* Р“СЂР°РґРёРµРЅС‚ РѕРІРµСЂР»РµР№ */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
+                  
+                  {/* Р‘РµР№РґР¶ СЃРєРёРґРєРё */}
+                  <div className="absolute top-4 left-4 px-3 py-1 bg-gradient-to-r from-red-500 to-pink-500 text-white text-sm font-bold rounded-full shadow-lg">
+                    -{Math.floor(Math.random() * 30 + 20)}%
+                  </div>
+                  
+                  {/* РљРѕРЅС‚РµРЅС‚ */}
+                  <div className="absolute bottom-0 left-0 right-0 p-6">
+                    <h3 className="text-white font-bold text-lg mb-2 truncate">{item.name}</h3>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-baseline gap-2">
+                        <span className="text-white/60 line-through text-sm">{formatPrice(Math.round(item.price * 1.4))}</span>
+                        <span className="text-blue-400 font-bold text-xl">{formatPrice(item.price)}</span>
+                      </div>
+                      <button 
+                        onClick={(e) => { e.preventDefault(); e.stopPropagation(); addItem(item.product, 1) }}
+                        className="px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 rounded-lg text-white font-medium transition-all duration-300 transform hover:scale-105"
+                      >
+                        Р’ РєРѕСЂР·РёРЅСѓ
+                      </button>
+                    </div>
+                  </div>
+                  
+                  {/* Р­С„С„РµРєС‚ СЃРІРµС‡РµРЅРёСЏ РїСЂРё С…РѕРІРµСЂРµ */}
+                  <div className="absolute inset-0 bg-gradient-to-r from-blue-500/0 via-blue-500/10 to-purple-500/0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                </div>
+              </NavLink>
+            ))}
+          </div>
+          
+          {/* РРЅРґРёРєР°С‚РѕСЂС‹ РїСЂРѕРєСЂСѓС‚РєРё */}
+          <div className="flex justify-center mt-4 gap-2">
+            {promoItems.slice(0, 5).map((_, i) => (
+              <div key={i} className="w-2 h-2 rounded-full bg-white/20"></div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* РџРѕРїСѓР»СЏСЂРЅС‹Рµ СЃРєРёРЅС‹ - СѓР»СѓС‡С€РµРЅРЅР°СЏ РєР°СЂСѓСЃРµР»СЊ */}
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <h2 className="text-3xl font-bold bg-gradient-to-r from-white to-purple-200 bg-clip-text text-transparent">
+            вњЁ РџРѕРїСѓР»СЏСЂРЅС‹Рµ СЃРєРёРЅС‹
+          </h2>
+          <NavLink to="/skins" className="group flex items-center gap-2 text-blue-400 hover:text-blue-300 transition-colors">
+            <span>РЎРјРѕС‚СЂРµС‚СЊ РІСЃРµ</span>
+            <svg className="w-4 h-4 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          </NavLink>
+        </div>
+        
+        <div className="relative">
+          <div id="popular-skins-carousel" className="flex gap-6 overflow-x-auto snap-x snap-mandatory scroll-smooth pb-4 scrollbar-hide">
+            {DATA.products.filter(p => p.category === 'skin').slice(0, 8).map(product => (
+              <div key={product.id} className="group snap-start shrink-0 w-[240px]">
+                <div className="relative bg-gradient-to-br from-[#161f38] to-[#1f2a4a] rounded-2xl overflow-hidden border border-white/10 hover:border-purple-400/50 transition-all duration-300 transform hover:scale-[1.02] hover:shadow-2xl hover:shadow-purple-500/20">
+                  <div className="relative h-40 overflow-hidden">
+                    <LazyImage src={product.image} alt={product.name} className="h-full w-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                    
+                    {/* Р“СЂР°РґРёРµРЅС‚ РѕРІРµСЂР»РµР№ */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+                    
+                    {/* Р‘РµР№РґР¶ СЃРєРёРґРєРё */}
+                    <div className="absolute top-3 right-3 px-2 py-1 bg-gradient-to-r from-orange-500 to-red-500 text-white text-xs font-bold rounded-full shadow-lg">
+                      -{Math.floor(Math.random() * 30 + 10)}%
+                    </div>
+                    
+                    {/* Р РµР№С‚РёРЅРі РєР°С‡РµСЃС‚РІР° */}
+                    <div className="absolute top-3 left-3 px-2 py-1 bg-black/50 backdrop-blur-sm rounded-full">
+                      <div className="flex items-center gap-1">
+                        <div className="w-2 h-2 bg-yellow-400 rounded-full"></div>
+                        <span className="text-xs text-white font-medium">Rare</span>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="p-4">
+                    <h3 className="text-white font-semibold text-sm mb-2 truncate">{product.name}</h3>
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-baseline gap-2">
+                        <span className="text-white/50 line-through text-xs">{formatPrice(Math.round(product.price * 1.3))}</span>
+                        <span className="text-purple-400 font-bold text-lg">{formatPrice(product.price)}</span>
+                      </div>
+                    </div>
+                    
+                    <button 
+                      onClick={() => addItem(product, 1)}
+                      className="w-full px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 rounded-lg text-white font-medium transition-all duration-300 transform hover:scale-105"
+                    >
+                      Р’ РєРѕСЂР·РёРЅСѓ
+                    </button>
+                  </div>
+                  
+                  {/* Р­С„С„РµРєС‚ СЃРІРµС‡РµРЅРёСЏ */}
+                  <div className="absolute inset-0 bg-gradient-to-r from-purple-500/0 via-purple-500/5 to-pink-500/0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* РџРѕРїСѓР»СЏСЂРЅС‹Рµ РёРіСЂС‹ - СѓР»СѓС‡С€РµРЅРЅР°СЏ СЃРµС‚РєР° */}
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <h2 className="text-3xl font-bold bg-gradient-to-r from-white to-green-200 bg-clip-text text-transparent">
+            рџЋ® РџРѕРїСѓР»СЏСЂРЅС‹Рµ РёРіСЂС‹
+          </h2>
+          <NavLink to="/games" className="group flex items-center gap-2 text-blue-400 hover:text-blue-300 transition-colors">
+            <span>РЎРјРѕС‚СЂРµС‚СЊ РІСЃРµ</span>
+            <svg className="w-4 h-4 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          </NavLink>
+        </div>
+        
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          {gamesRow1.map(product => (
+            <NavLink key={product.id} to={`/product/${product.id}`} className="group">
+              <div className="relative bg-gradient-to-br from-[#161f38] to-[#1f2a4a] rounded-2xl overflow-hidden border border-white/10 hover:border-green-400/50 transition-all duration-300 transform hover:scale-[1.02] hover:shadow-2xl hover:shadow-green-500/20">
+                <div className="relative h-48 overflow-hidden">
+                  <LazyImage src={product.image} alt={product.name} className="h-full w-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                  
+                  {/* Р“СЂР°РґРёРµРЅС‚ РѕРІРµСЂР»РµР№ */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
+                  
+                  {/* РўРёРї РёРіСЂС‹ */}
+                  <div className="absolute top-3 right-3 px-3 py-1 bg-black/50 backdrop-blur-sm rounded-full">
+                    <span className="text-xs text-white/90 font-medium uppercase tracking-wide">{product.type}</span>
+                  </div>
+                  
+                  {/* Р РµР№С‚РёРЅРі */}
+                  <div className="absolute top-3 left-3 flex items-center gap-1 px-2 py-1 bg-black/50 backdrop-blur-sm rounded-full">
+                    <svg className="w-3 h-3 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                    </svg>
+                    <span className="text-xs text-white font-medium">{(Math.random() * 2 + 3).toFixed(1)}</span>
+                  </div>
+                  
+                  {/* РљРѕРЅС‚РµРЅС‚ РІРЅРёР·Сѓ */}
+                  <div className="absolute bottom-0 left-0 right-0 p-4">
+                    <h3 className="text-white font-bold text-lg mb-2">{product.name}</h3>
+                    <div className="flex items-center justify-between">
+                      <span className="text-green-400 font-bold text-xl">{formatPrice(product.price)}</span>
+                      <button 
+                        onClick={(e) => { e.preventDefault(); e.stopPropagation(); addItem(product, 1) }}
+                        className="px-4 py-2 bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-500 hover:to-blue-500 rounded-lg text-white font-medium transition-all duration-300 transform hover:scale-105"
+                      >
+                        РљСѓРїРёС‚СЊ
+                      </button>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Р­С„С„РµРєС‚ СЃРІРµС‡РµРЅРёСЏ */}
+                <div className="absolute inset-0 bg-gradient-to-r from-green-500/0 via-green-500/5 to-blue-500/0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
+              </div>
+            </NavLink>
+          ))}
+        </div>
+      </div>
+
+      {/* Р СѓР»РµС‚РєР° - СѓР»СѓС‡С€РµРЅРЅС‹Р№ РґРёР·Р°Р№РЅ */}
+      <div id="roulette-anchor" className="space-y-6">
+        <div className="flex items-center justify-between">
+          <h2 className="text-3xl font-bold bg-gradient-to-r from-white to-yellow-200 bg-clip-text text-transparent">
+            рџЋ° Р СѓР»РµС‚РєР° СЃРєРёРЅРѕРІ
+          </h2>
+          <NavLink to="/roulette" className="group flex items-center gap-2 text-yellow-400 hover:text-yellow-300 transition-colors">
+            <span>РРіСЂР°С‚СЊ</span>
+            <svg className="w-4 h-4 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          </NavLink>
+        </div>
+        
+        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#1a0f2e] via-[#2d1b69] to-[#4c1d95] p-8 border border-purple-500/30">
+          {/* Р¤РѕРЅРѕРІС‹Рµ СЌС„С„РµРєС‚С‹ */}
+          <div className="absolute inset-0">
+            <div className="absolute top-0 left-0 w-64 h-64 bg-yellow-500/10 rounded-full blur-3xl animate-pulse"></div>
+            <div className="absolute bottom-0 right-0 w-64 h-64 bg-purple-500/10 rounded-full blur-3xl animate-pulse" style={{animationDelay: '1s'}}></div>
+            <div className="absolute top-1/2 left-1/2 w-32 h-32 bg-pink-500/10 rounded-full blur-2xl animate-pulse" style={{animationDelay: '0.5s'}}></div>
+          </div>
+          
+          <div className="relative z-10 text-center space-y-6">
+            {/* РђРЅРёРјРёСЂРѕРІР°РЅРЅР°СЏ РёРєРѕРЅРєР° */}
+            <div className="relative inline-block">
+              <div className="text-6xl animate-spin" style={{animationDuration: '3s'}}>рџЋ°</div>
+              <div className="absolute inset-0 bg-gradient-to-r from-yellow-400/20 to-purple-400/20 rounded-full blur-xl animate-pulse"></div>
+            </div>
+            
+            <div className="space-y-4">
+              <h3 className="text-2xl sm:text-3xl font-black bg-gradient-to-r from-yellow-400 via-pink-400 to-purple-400 bg-clip-text text-transparent">
+                РџРѕРїСЂРѕР±СѓР№ СѓРґР°С‡Сѓ!
+              </h3>
+              <p className="text-lg text-white/80 max-w-md mx-auto">
+                РљСЂСѓС‚Рё СЂСѓР»РµС‚РєСѓ Рё РІС‹РёРіСЂС‹РІР°Р№ СЂРµРґРєРёРµ СЃРєРёРЅС‹. РљР°Р¶РґС‹Р№ СЃРїРёРЅ - С€Р°РЅСЃ РЅР° Р»РµРіРµРЅРґР°СЂРЅС‹Р№ РїСЂРёР·!
+              </p>
+            </div>
+            
+            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+              <NavLink 
+                to="/roulette" 
+                className="group relative px-8 py-4 bg-gradient-to-r from-yellow-500 via-orange-500 to-red-500 hover:from-yellow-400 hover:via-orange-400 hover:to-red-400 rounded-xl font-bold text-white transition-all duration-300 transform hover:scale-105 hover:shadow-2xl hover:shadow-orange-500/25 min-w-[200px]"
+              >
+                <span className="relative z-10">рџЋІ РљСЂСѓС‚РёС‚СЊ СЂСѓР»РµС‚РєСѓ</span>
+                <div className="absolute inset-0 bg-gradient-to-r from-yellow-300 to-red-300 rounded-xl blur opacity-0 group-hover:opacity-30 transition-opacity duration-300"></div>
+              </NavLink>
+              
+              <div className="text-center">
+                <div className="text-sm text-white/60">РњРёРЅРёРјР°Р»СЊРЅР°СЏ СЃС‚Р°РІРєР°</div>
+                <div className="text-xl font-bold text-yellow-400">$1.00</div>
+              </div>
+            </div>
+            
+            {/* РЎС‚Р°С‚РёСЃС‚РёРєР° */}
+            <div className="grid grid-cols-3 gap-4 max-w-md mx-auto pt-4 border-t border-white/10">
+              <div className="text-center">
+                <div className="text-2xl font-bold text-green-400">87%</div>
+                <div className="text-xs text-white/60">РЁР°РЅСЃ РІС‹РёРіСЂС‹С€Р°</div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-purple-400">2.5x</div>
+                <div className="text-xs text-white/60">РњР°РєСЃ. РјРЅРѕР¶РёС‚РµР»СЊ</div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-yellow-400">1,247</div>
+                <div className="text-xs text-white/60">РРіСЂРѕРєРѕРІ РѕРЅР»Р°Р№РЅ</div>
+              </div>
+            </div>
+          </div>
+          
+          {/* Р”РµРєРѕСЂР°С‚РёРІРЅС‹Рµ СЌР»РµРјРµРЅС‚С‹ */}
+          <div className="absolute top-4 right-4 w-16 h-16 border-2 border-yellow-400/30 rounded-full animate-spin" style={{animationDuration: '8s'}}></div>
+          <div className="absolute bottom-4 left-4 w-12 h-12 border-2 border-purple-400/30 rounded-full animate-ping"></div>
+        </div>
+      </div>
+
+      {/* Р‘Р»РѕРє РѕС‚Р·С‹РІРѕРІ */}
+      <div className="space-y-8">
+        <div className="text-center space-y-4">
+          <h2 className="text-4xl font-bold bg-gradient-to-r from-white via-blue-200 to-purple-200 bg-clip-text text-transparent">
+            рџ’¬ РћС‚Р·С‹РІС‹ РЅР°С€РёС… РєР»РёРµРЅС‚РѕРІ
+          </h2>
+          <p className="text-lg text-white/70 max-w-2xl mx-auto">
+            РЈР·РЅР°Р№С‚Рµ, С‡С‚Рѕ РіРѕРІРѕСЂСЏС‚ Рѕ РЅР°СЃ С‚С‹СЃСЏС‡Рё РґРѕРІРѕР»СЊРЅС‹С… РёРіСЂРѕРєРѕРІ СЃРѕ РІСЃРµРіРѕ РјРёСЂР°
+          </p>
+        </div>
+
+        {/* РљР°СЂСѓСЃРµР»СЊ РѕС‚Р·С‹РІРѕРІ */}
+        <div className="relative overflow-hidden">
+          <div className="flex gap-6 animate-scroll-x">
+            {/* РћС‚Р·С‹РІ 1 */}
+            <div className="min-w-[350px] bg-gradient-to-br from-[#1a1a2e] via-[#16213e] to-[#0f172a] rounded-2xl p-6 border border-white/10 hover:border-blue-500/30 transition-all duration-300 hover:transform hover:scale-105">
+              <div className="flex items-center gap-4 mb-4">
+                <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-white font-bold">
+                  Рђ
+                </div>
+                <div>
+                  <div className="font-semibold text-white">РђР»РµРєСЃРµР№_Pro</div>
+                  <div className="flex text-yellow-400 text-sm">
+                    в­ђв­ђв­ђв­ђв­ђ
+                  </div>
+                </div>
+              </div>
+              <p className="text-white/80 leading-relaxed">
+                "РћС‚Р»РёС‡РЅС‹Р№ РјР°РіР°Р·РёРЅ! РљСѓРїРёР» РЅРµСЃРєРѕР»СЊРєРѕ СЃРєРёРЅРѕРІ РґР»СЏ CS2, РІСЃРµ РїСЂРёС€Р»Рѕ РјРѕРјРµРЅС‚Р°Р»СЊРЅРѕ. Р¦РµРЅС‹ Р°РґРµРєРІР°С‚РЅС‹Рµ, РїРѕРґРґРµСЂР¶РєР° РѕС‚РІРµС‡Р°РµС‚ Р±С‹СЃС‚СЂРѕ. Р РµРєРѕРјРµРЅРґСѓСЋ!"
+              </p>
+              <div className="mt-4 text-xs text-white/50">
+                2 РґРЅСЏ РЅР°Р·Р°Рґ
+              </div>
+            </div>
+
+            {/* РћС‚Р·С‹РІ 2 */}
+            <div className="min-w-[350px] bg-gradient-to-br from-[#1a1a2e] via-[#16213e] to-[#0f172a] rounded-2xl p-6 border border-white/10 hover:border-green-500/30 transition-all duration-300 hover:transform hover:scale-105">
+              <div className="flex items-center gap-4 mb-4">
+                <div className="w-12 h-12 bg-gradient-to-r from-green-500 to-teal-500 rounded-full flex items-center justify-center text-white font-bold">
+                  Рњ
+                </div>
+                <div>
+                  <div className="font-semibold text-white">MaxGamer2024</div>
+                  <div className="flex text-yellow-400 text-sm">
+                    в­ђв­ђв­ђв­ђв­ђ
+                  </div>
+                </div>
+              </div>
+              <p className="text-white/80 leading-relaxed">
+                "РџРѕР»СЊР·СѓСЋСЃСЊ СѓР¶Рµ РїРѕР»РіРѕРґР°. Р СѓР»РµС‚РєР° С‡РµСЃС‚РЅР°СЏ, РІС‹РёРіСЂС‹РІР°Р» РЅРµСЃРєРѕР»СЊРєРѕ СЂР°Р· РєСЂСѓС‚С‹Рµ СЃРєРёРЅС‹. Р’С‹РІРѕРґ СЃСЂРµРґСЃС‚РІ СЂР°Р±РѕС‚Р°РµС‚ Р±РµР· РїСЂРѕР±Р»РµРј."
+              </p>
+              <div className="mt-4 text-xs text-white/50">
+                5 РґРЅРµР№ РЅР°Р·Р°Рґ
+              </div>
+            </div>
+
+            {/* РћС‚Р·С‹РІ 3 */}
+            <div className="min-w-[350px] bg-gradient-to-br from-[#1a1a2e] via-[#16213e] to-[#0f172a] rounded-2xl p-6 border border-white/10 hover:border-purple-500/30 transition-all duration-300 hover:transform hover:scale-105">
+              <div className="flex items-center gap-4 mb-4">
+                <div className="w-12 h-12 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center text-white font-bold">
+                  Р”
+                </div>
+                <div>
+                  <div className="font-semibold text-white">DarkKnight</div>
+                  <div className="flex text-yellow-400 text-sm">
+                    в­ђв­ђв­ђв­ђв­ђ
+                  </div>
+                </div>
+              </div>
+              <p className="text-white/80 leading-relaxed">
+                "Р›СѓС‡С€РёР№ СЃРµСЂРІРёСЃ РґР»СЏ РїРѕРєСѓРїРєРё СЃРєРёРЅРѕРІ! Р‘РѕР»СЊС€РѕР№ РІС‹Р±РѕСЂ, С‡РµСЃС‚РЅС‹Рµ С†РµРЅС‹, Р±С‹СЃС‚СЂС‹Рµ С‚СЂР°РЅР·Р°РєС†РёРё. Р”СЂСѓР·СЊСЏРј СѓР¶Рµ РїРѕСЃРѕРІРµС‚РѕРІР°Р»."
+              </p>
+              <div className="mt-4 text-xs text-white/50">
+                1 РЅРµРґРµР»СЋ РЅР°Р·Р°Рґ
+              </div>
+            </div>
+
+            {/* РћС‚Р·С‹РІ 4 */}
+            <div className="min-w-[350px] bg-gradient-to-br from-[#1a1a2e] via-[#16213e] to-[#0f172a] rounded-2xl p-6 border border-white/10 hover:border-orange-500/30 transition-all duration-300 hover:transform hover:scale-105">
+              <div className="flex items-center gap-4 mb-4">
+                <div className="w-12 h-12 bg-gradient-to-r from-orange-500 to-red-500 rounded-full flex items-center justify-center text-white font-bold">
+                  РЎ
+                </div>
+                <div>
+                  <div className="font-semibold text-white">SteamLegend</div>
+                  <div className="flex text-yellow-400 text-sm">
+                    в­ђв­ђв­ђв­ђв­ђ
+                  </div>
+                </div>
+              </div>
+              <p className="text-white/80 leading-relaxed">
+                "РџРѕРєСѓРїР°Р» Р·РґРµСЃСЊ СЃРєРёРЅС‹ РЅР° 500$, РІСЃРµ С‡РµС‚РєРѕ! РўРµС…РїРѕРґРґРµСЂР¶РєР° РїРѕРјРѕРіР»Р° СЂР°Р·РѕР±СЂР°С‚СЊСЃСЏ СЃ РІРѕРїСЂРѕСЃР°РјРё. РЎР°Р№С‚ СѓРґРѕР±РЅС‹Р№ Рё РїРѕРЅСЏС‚РЅС‹Р№."
+              </p>
+              <div className="mt-4 text-xs text-white/50">
+                2 РЅРµРґРµР»Рё РЅР°Р·Р°Рґ
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* РЎС‚Р°С‚РёСЃС‚РёРєР° */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-4xl mx-auto">
+          <div className="text-center p-4 bg-gradient-to-br from-[#1a1a2e] to-[#16213e] rounded-xl border border-white/10">
+            <div className="text-3xl font-bold text-green-400">4.9</div>
+            <div className="text-sm text-white/60">РЎСЂРµРґРЅСЏСЏ РѕС†РµРЅРєР°</div>
+          </div>
+          <div className="text-center p-4 bg-gradient-to-br from-[#1a1a2e] to-[#16213e] rounded-xl border border-white/10">
+            <div className="text-3xl font-bold text-blue-400">15,247</div>
+            <div className="text-sm text-white/60">РћС‚Р·С‹РІРѕРІ</div>
+          </div>
+          <div className="text-center p-4 bg-gradient-to-br from-[#1a1a2e] to-[#16213e] rounded-xl border border-white/10">
+            <div className="text-3xl font-bold text-purple-400">98%</div>
+            <div className="text-sm text-white/60">Р”РѕРІРѕР»СЊРЅС‹С… РєР»РёРµРЅС‚РѕРІ</div>
+          </div>
+          <div className="text-center p-4 bg-gradient-to-br from-[#1a1a2e] to-[#16213e] rounded-xl border border-white/10">
+            <div className="text-3xl font-bold text-yellow-400">24/7</div>
+            <div className="text-sm text-white/60">РџРѕРґРґРµСЂР¶РєР°</div>
+          </div>
+        </div>
+      </div>
+    </section>
+  )
+}
+
+// Layout РєРѕРјРїРѕРЅРµРЅС‚ СЃ РЅР°РІРёРіР°С†РёРµР№ Рё Р°РІС‚РѕСЂРёР·Р°С†РёРµР№
+function Layout({ children }) {
+  const { lang, setLang, formatPrice } = useLang()
+  const [isAuthorized, setAuthorized] = React.useState(() => {
+    const hasCookie = typeof document !== 'undefined' && document.cookie.includes('profile_auth=1')
+    return hasCookie || localStorage.getItem('profile-auth') === '1'
+  })
+  const [showLogin, setShowLogin] = React.useState(false)
+  const [cookieConsent, setCookieConsent] = React.useState(() => typeof document !== 'undefined' && document.cookie.includes('cookie_consent=accepted'))
+  const [walletUsd, setWalletUsd] = React.useState(() => {
+    try { return parseFloat(localStorage.getItem('wallet-usd') || '0') } catch { return 0 }
+  })
+  // РРјСЏ Рё Р°РІР°С‚Р°СЂ РґР»СЏ РѕС‚РѕР±СЂР°Р¶РµРЅРёСЏ РІ С…РµРґРµСЂРµ
+  const [name, setName] = React.useState(() => localStorage.getItem('profile-name') || '')
+  const [avatar, setAvatar] = React.useState(() => localStorage.getItem('profile-avatar') || 'рџ‘ѕ')
+  
+  React.useEffect(() => {
+    const syncWallet = () => setWalletUsd(parseFloat(localStorage.getItem('wallet-usd') || '0'))
+    window.addEventListener('wallet-updated', syncWallet)
+    window.addEventListener('storage', syncWallet)
+    return () => { window.removeEventListener('wallet-updated', syncWallet); window.removeEventListener('storage', syncWallet) }
+  }, [])
+  
+  // Р—Р°РіСЂСѓР·РєР° РґРёРЅР°РјРёС‡РµСЃРєРёС… С‚РѕРІР°СЂРѕРІ СЃ СЃРµСЂРІРµСЂР°
+  React.useEffect(() => {
+    let aborted = false
+    const load = async () => {
+      try {
+        const res = await fetch('/products')
+        const json = await res.json().catch(() => ({ ok: false }))
+        const list = Array.isArray(json?.data) ? json.data : []
+        if (!aborted && list.length > 0) {
+          const existingIds = new Set(DATA.products.map(p => p.id))
+          const incoming = list.filter(p => p && p.id && !existingIds.has(p.id))
+          if (incoming.length > 0) {
+            DATA.products = [...incoming, ...DATA.products]
+            window.dispatchEvent(new Event('products-loaded'))
+          }
+        }
+      } catch (e) {
+        // ignore
+      }
+    }
+    load()
+    const interval = setInterval(load, 5 * 60 * 1000) // РѕР±РЅРѕРІР»РµРЅРёРµ РєР°Р¶РґС‹Рµ 5 РјРёРЅСѓС‚
+    return () => { aborted = true; clearInterval(interval) }
+  }, [])
+  
+  const navigate = useNavigate()
+  React.useEffect(() => {
+    const sync = () => {
+      const hasCookie = typeof document !== 'undefined' && document.cookie.includes('profile_auth=1')
+      setAuthorized(hasCookie || localStorage.getItem('profile-auth') === '1')
+      // РЎРёРЅС…СЂРѕРЅРёР·РёСЂСѓРµРј РёРјСЏ Рё Р°РІР°С‚Р°СЂ РїСЂРё РёР·РјРµРЅРµРЅРёСЏС…
+      setName(localStorage.getItem('profile-name') || '')
+      setAvatar(localStorage.getItem('profile-avatar') || 'рџ‘ѕ')
+    }
+    const onOpenLogin = () => setShowLogin(true)
+    window.addEventListener('storage', sync)
+    window.addEventListener('open-login', onOpenLogin)
+    return () => { window.removeEventListener('storage', sync); window.removeEventListener('open-login', onOpenLogin) }
+  }, [])
+  
+  const startSteamLogin = () => { window.location.href = '/auth/steam' }
+  const [regularName, setRegularName] = React.useState('')
+  const [regularPassword, setRegularPassword] = React.useState('')
+  const [loginError, setLoginError] = React.useState('')
+  
+  // CMS СЃРѕСЃС‚РѕСЏРЅРёРµ
+  const { cmsContent, updateCmsContent } = useCMS()
+  const [showCmsPanel, setShowCmsPanel] = React.useState(false)
+  
+  const acceptCookies = () => {
+    const d = new Date()
+    d.setTime(d.getTime() + (365 * 24 * 60 * 60 * 1000))
+    document.cookie = `cookie_consent=accepted; expires=${d.toUTCString()}; path=/`
+    setCookieConsent(true)
+  }
+  
+  const doRegularLogin = () => {
+    const name = regularName
+    const password = regularPassword
+    if (!name || !name.trim()) { setLoginError('Р’РІРµРґРёС‚Рµ Р»РѕРіРёРЅ'); return }
+    if (!password || !password.trim()) { setLoginError('Р’РІРµРґРёС‚Рµ РїР°СЂРѕР»СЊ'); return }
+    
+    // РџСЂРѕРІРµСЂСЏРµРј РґРµС„РѕР»С‚РЅС‹Рµ СѓС‡РµС‚РЅС‹Рµ РґР°РЅРЅС‹Рµ
+    const isValidUser = (name.trim() === 'user' && password.trim() === 'password') || 
+                       (name.trim() === 'admin' && password.trim() === 'admin123')
+    
+    if (!isValidUser) {
+      setLoginError('РќРµРІРµСЂРЅС‹Р№ Р»РѕРіРёРЅ РёР»Рё РїР°СЂРѕР»СЊ')
+      return
+    }
+    
+    const isAdmin = name.trim() === 'admin'
+    
+    // Persist localStorage
+    localStorage.setItem('profile-auth', '1')
+    localStorage.setItem('profile-name', name.trim())
+    localStorage.setItem('auth-method', 'regular')
+    localStorage.setItem('role', isAdmin ? 'admin' : 'user')
+    // Persist cookies for 7 days
+    const d = new Date()
+    d.setTime(d.getTime() + (7 * 24 * 60 * 60 * 1000))
+    const expires = `expires=${d.toUTCString()}`
+    document.cookie = `profile_auth=1; ${expires}; path=/`
+    document.cookie = `profile_name=${encodeURIComponent(name.trim())}; ${expires}; path=/`
+    document.cookie = `auth_method=regular; ${expires}; path=/`
+    document.cookie = `role=${isAdmin ? 'admin' : 'user'}; ${expires}; path=/`
+    setAuthorized(true)
+    setShowLogin(false)
+    // РџСЂРёРЅСѓРґРёС‚РµР»СЊРЅРѕ РѕР±РЅРѕРІР»СЏРµРј СЃРѕСЃС‚РѕСЏРЅРёРµ Р°РІС‚РѕСЂРёР·Р°С†РёРё
+    window.dispatchEvent(new Event('storage'))
+    navigate('/profile')
+  }
+
+  // State for mobile menu
+  const [showMobileMenu, setShowMobileMenu] = React.useState(false)
+
+  return (
+    <div className="min-h-screen bg-[#0D1A2F] text-white flex flex-col pt-14 lg:pt-0 overflow-x-hidden max-w-[100vw]">
+      {/* Mobile Header - РїРѕРєР°Р·С‹РІР°РµС‚СЃСЏ С‚РѕР»СЊРєРѕ РЅР° РјРѕР±РёР»СЊРЅС‹С… Рё РїР»Р°РЅС€РµС‚Р°С… */}
+      <header className="mobile-header lg:hidden fixed top-0 left-0 right-0 w-full z-50 bg-[#0D1A2F]/95 backdrop-blur border-b border-white/10">
+        <div className="max-w-6xl mx-auto flex items-center justify-between px-3 py-2">
+          {/* Р›РѕРіРѕС‚РёРї: РјРѕР±РёР»СЊРЅР°СЏ РІРµСЂСЃРёСЏ (СѓРјРµРЅСЊС€РµРЅ СЂР°Р·РјРµСЂ) */}
+          <NavLink to="/" className="flex items-center gap-2">
+                <LazyImage src="/images/logo/logo.png" alt="AI Game Store" className="h-4 w-auto object-contain" />
+          </NavLink>
+          
+          <div className="flex items-center gap-3">
+            {isAuthorized ? (
+              <NavLink to="/profile" className="flex items-center gap-2 px-2 py-1 rounded hover:bg-white/10 transition-colors">
+                {String(avatar || '').startsWith('http') ? (
+                  <LazyImage src={avatar} alt={name || 'РџСЂРѕС„РёР»СЊ'} className="w-8 h-8 rounded-full object-cover" />
+                ) : (
+                  <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-lg">{avatar || 'рџ‘ѕ'}</div>
+                )}
+                <span className="text-sm font-semibold truncate max-w-[120px]">{name || 'РџРѕР»СЊР·РѕРІР°С‚РµР»СЊ'}</span>
+              </NavLink>
+            ) : (
+              <button onClick={() => setShowLogin(true)} className="px-3 py-1 rounded bg-blue-600 hover:bg-blue-700 text-sm">Р’РѕР№С‚Рё</button>
+            )}
+            <button 
+              onClick={() => setShowMobileMenu(!showMobileMenu)}
+              className="p-2 rounded-lg hover:bg-white/10 transition-colors"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                {showMobileMenu ? (
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                ) : (
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                )}
+              </svg>
+            </button>
+          </div>
+        </div>
+        
+        {/* Mobile Menu Dropdown */}
+        {showMobileMenu && (
+          <div className="absolute top-full left-0 right-0 bg-[#0D1A2F]/95 backdrop-blur border-b border-white/10 shadow-lg">
+            <nav className="max-w-6xl mx-auto px-4 py-4 space-y-2">
+              <NavLink 
+                to="/store" 
+                className={({isActive}) => `block px-3 py-2 rounded ${isActive ? 'bg-white/10' : 'hover:bg-white/5'}`}
+                onClick={() => setShowMobileMenu(false)}
+              >
+                РљР°С‚Р°Р»РѕРі
+              </NavLink>
+              <NavLink 
+                to="/skins" 
+                className={({isActive}) => `block px-3 py-2 rounded ${isActive ? 'bg-white/10' : 'hover:bg-white/5'}`}
+                onClick={() => setShowMobileMenu(false)}
+              >
+                РЎРєРёРЅС‹
+              </NavLink>
+              <NavLink 
+                to="/blog" 
+                className={({isActive}) => `block px-3 py-2 rounded ${isActive ? 'bg-white/10' : 'hover:bg-white/5'}`}
+                onClick={() => setShowMobileMenu(false)}
+              >
+                Р‘Р»РѕРі
+              </NavLink>
+              <NavLink 
+                to="/sell" 
+                className={({isActive}) => `block px-3 py-2 rounded ${isActive ? 'bg-white/10' : 'hover:bg-white/5'}`}
+                onClick={() => setShowMobileMenu(false)}
+              >
+                РџСЂРѕРґР°Р¶Р°
+              </NavLink>
+              {isAuthorized && (
+                <>
+                  <NavLink 
+                    to="/cart" 
+                    className={({isActive}) => `block px-3 py-2 rounded ${isActive ? 'bg-white/10' : 'hover:bg-white/5'}`}
+                    onClick={() => setShowMobileMenu(false)}
+                  >
+                    РљРѕСЂР·РёРЅР°
+                  </NavLink>
+                  <NavLink 
+                    to="/profile" 
+                    className={({isActive}) => `block px-3 py-2 rounded ${isActive ? 'bg-white/10' : 'hover:bg-white/5'}`}
+                    onClick={() => setShowMobileMenu(false)}
+                  >
+                    РџСЂРѕС„РёР»СЊ
+                  </NavLink>
+                </>
+              )}
+              {!isAuthorized && (
+                <button 
+                  onClick={() => { setShowLogin(true); setShowMobileMenu(false) }}
+                  className="block w-full text-left px-3 py-2 rounded hover:bg-white/5"
+                >
+                  Р’РѕР№С‚Рё
+                </button>
+              )}
+            </nav>
+          </div>
+        )}
+      </header>
+
+      <div className="flex flex-1">
+        {/* Desktop Header - РїРѕРєР°Р·С‹РІР°РµС‚СЃСЏ С‚РѕР»СЊРєРѕ РЅР° РґРµСЃРєС‚РѕРїРµ */}
+        <header className="desktop-header hidden lg:block fixed top-0 left-0 right-0 z-50 bg-[#0D1A2F]/95 backdrop-blur border-b border-white/10 overflow-hidden">
+          <div className="max-w-6xl mx-auto grid grid-cols-3 items-center px-4 py-2">
+            {/* Logo - РґРµСЃРєС‚РѕРї: СѓРјРµРЅСЊС€РµРЅ СЂР°Р·РјРµСЂ Рё Р±РµР· С‚РµРєСЃС‚Р° */}
+            <NavLink to="/" className="flex items-center gap-3 justify-self-start">
+                <LazyImage src="/images/logo/logo.png" alt="AI Game Store logo" className="h-5 w-auto object-contain" />
+            </NavLink>
+            
+            {/* Desktop Navigation - РїРѕ С†РµРЅС‚СЂСѓ */}
+            <nav className="justify-self-center flex items-center gap-6">
+              <NavLink className={({isActive}) => `px-3 py-2 rounded transition-colors ${isActive ? 'bg-white/10' : 'hover:bg-white/5'}`} to="/store">
+                РљР°С‚Р°Р»РѕРі
+              </NavLink>
+              
+              {/* Skins Dropdown */}
+              <div className="group relative">
+                <NavLink className={({isActive}) => `px-3 py-2 rounded transition-colors ${isActive ? 'bg-white/10' : 'hover:bg-white/5'}`} to="/skins">
+                  РЎРєРёРЅС‹
+                </NavLink>
+                <div className="pointer-events-none absolute left-0 top-full z-20 hidden min-w-[180px] flex-col gap-1 rounded-lg border border-white/10 bg-[#0D1A2F] p-2 shadow-xl group-hover:flex group-hover:pointer-events-auto">
+                  <NavLink className={({isActive}) => `block w-full px-2 py-2 rounded ${isActive ? 'bg-white/10' : 'hover:bg-white/5'}`} to="/skins/character">РџРµСЂСЃРѕРЅР°Р¶Рё</NavLink>
+                  <NavLink className={({isActive}) => `block w-full px-2 py-2 rounded ${isActive ? 'bg-white/10' : 'hover:bg-white/5'}`} to="/skins/weapon">РћСЂСѓР¶РёРµ</NavLink>
+                  <NavLink className={({isActive}) => `block w-full px-2 py-2 rounded ${isActive ? 'bg-white/10' : 'hover:bg-white/5'}`} to="/skins/armor">Р‘СЂРѕРЅСЏ</NavLink>
+                </div>
+              </div>
+              
+              <NavLink className={({isActive}) => `px-3 py-2 rounded transition-colors ${isActive ? 'bg-white/10' : 'hover:bg-white/5'}`} to="/blog">
+                Р‘Р»РѕРі
+              </NavLink>
+              
+              <NavLink className={({isActive}) => `px-3 py-2 rounded transition-colors ${isActive ? 'bg-white/10' : 'hover:bg-white/5'}`} to="/sell">
+                РџСЂРѕРґР°Р¶Р°
+              </NavLink>
+            </nav>
+            
+            {/* User Actions - СЃРїСЂР°РІР° */}
+            <div className="flex items-center gap-3 justify-self-end">
+              {isAuthorized ? (
+                <>
+                  <NavLink to="/cart" className="relative flex items-center gap-2 px-3 py-2 rounded hover:bg-white/5 transition-colors">
+  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4m0 0L7 13m0 0l-1.5 6M7 13l-1.5-6m0 0h15M17 21a2 2 0 100-4 2 2 0 000 4zM9 21a2 2 0 100-4 2 2 0 000 4z" />
+  </svg>
+  <CartBadge />
+</NavLink>
+                  <NavLink to="/profile" className="flex items-center gap-3 px-3 py-2 rounded hover:bg-white/5 transition-colors">
+                    {String(avatar || '').startsWith('http') ? (
+                      <LazyImage src={avatar} alt={name || 'РџСЂРѕС„РёР»СЊ'} className="w-8 h-8 rounded-full object-cover" />
+                    ) : (
+                      <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-lg">{avatar || 'рџ‘ѕ'}</div>
+                    )}
+                    <div className="flex flex-col">
+                      <span className="text-sm font-semibold truncate max-w-[160px]">{name || 'РџРѕР»СЊР·РѕРІР°С‚РµР»СЊ'}</span>
+                      <span className="text-xs text-white/60 truncate max-w-[160px]">РџСЂРѕС„РёР»СЊ</span>
+                    </div>
+                  </NavLink>
+                </>
+              ) : (
+                <button 
+                  onClick={() => setShowLogin(true)}
+                  className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded transition-colors"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013 3v1" />
+                  </svg>
+                  Р’РѕР№С‚Рё
+                </button>
+              )}
+            </div>
+          </div>
+        </header>
+
+        {/* Р›РµРІС‹Р№ СЃР°Р№РґР±Р°СЂ СѓРґР°Р»С‘РЅ: РЅР°РІРёРіР°С†РёСЏ С‚РµРїРµСЂСЊ С‚РѕР»СЊРєРѕ СЃРІРµСЂС…Сѓ (desktop header) */}
+
+        {/* РћСЃРЅРѕРІРЅРѕР№ РєРѕРЅС‚РµРЅС‚ Р±РµР· РѕС‚СЃС‚СѓРїР° РїРѕРґ СЃР°Р№РґР±Р°СЂ, С„РёРєСЃРёСЂРѕРІР°РЅРЅС‹Р№ С…РµРґРµСЂ СЃРІРµСЂС…Сѓ */}
+        <main className="flex-1 pt-14 lg:pt-16">
+          <div className="w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+            {children}
+          </div>
+        </main>
+      </div>
+
+      {/* РњРѕРґР°Р»СЊРЅРѕРµ РѕРєРЅРѕ РІС…РѕРґР° */}
+      {showLogin && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="bg-[#0D1A2F] border border-white/10 rounded-lg p-6 w-full max-w-md mx-4">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-bold">Р’С…РѕРґ РІ Р°РєРєР°СѓРЅС‚</h2>
+              <button onClick={() => setShowLogin(false)} className="text-gray-400 hover:text-white">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            
+            {loginError && (
+              <div className="mb-4 p-3 bg-red-500/20 border border-red-500/30 rounded text-red-300 text-sm">
+                {loginError}
+              </div>
+            )}
+            
+            <div className="space-y-4">
+              <button 
+                onClick={startSteamLogin}
+                className="w-full flex items-center justify-center gap-3 px-4 py-3 bg-[#1B2838] hover:bg-[#2A475E] rounded transition-colors"
+              >
+                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.94-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/>
+                </svg>
+                Р’РѕР№С‚Рё С‡РµСЂРµР· Steam
+              </button>
+              
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-white/10"></div>
+                </div>
+                <div className="relative flex justify-center text-sm">
+                  <span className="px-2 bg-[#0D1A2F] text-gray-400">РёР»Рё</span>
+                </div>
+              </div>
+              
+              <div className="space-y-3">
+                <input
+                  type="text"
+                  placeholder="Р›РѕРіРёРЅ"
+                  value={regularName}
+                  onChange={(e) => setRegularName(e.target.value)}
+                  className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded focus:outline-none focus:border-blue-500"
+                />
+                <input
+                  type="password"
+                  placeholder="РџР°СЂРѕР»СЊ"
+                  value={regularPassword}
+                  onChange={(e) => setRegularPassword(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && doRegularLogin()}
+                  className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded focus:outline-none focus:border-blue-500"
+                />
+                <button 
+                  onClick={doRegularLogin}
+                  className="w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded transition-colors"
+                >
+                  Р’РѕР№С‚Рё
+                </button>
+              </div>
+              
+              <div className="text-sm text-gray-400 text-center">
+                РўРµСЃС‚РѕРІС‹Рµ Р°РєРєР°СѓРЅС‚С‹:<br />
+                user / password РёР»Рё admin / admin123
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Cookie consent */}
+      {!cookieConsent && (
+        <div className="fixed bottom-4 left-4 right-4 z-50 bg-[#0D1A2F] border border-white/10 rounded-lg p-4 shadow-lg">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+            <p className="text-sm text-gray-300">
+              РњС‹ РёСЃРїРѕР»СЊР·СѓРµРј С„Р°Р№Р»С‹ cookie РґР»СЏ СѓР»СѓС‡С€РµРЅРёСЏ СЂР°Р±РѕС‚С‹ СЃР°Р№С‚Р°. РџСЂРѕРґРѕР»Р¶Р°СЏ РёСЃРїРѕР»СЊР·РѕРІР°С‚СЊ СЃР°Р№С‚, РІС‹ СЃРѕРіР»Р°С€Р°РµС‚РµСЃСЊ СЃ РЅР°С€РµР№ РїРѕР»РёС‚РёРєРѕР№ РєРѕРЅС„РёРґРµРЅС†РёР°Р»СЊРЅРѕСЃС‚Рё.
+            </p>
+            <button 
+              onClick={acceptCookies}
+              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded transition-colors text-sm whitespace-nowrap"
+            >
+              РџСЂРёРЅСЏС‚СЊ
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Р¤СѓС‚РµСЂ */}
+      <footer className="bg-gradient-to-br from-[#0a0f1c] via-[#0d1a2f] to-[#1a1a2e] border-t border-white/10 mt-auto">
+        <div className="max-w-7xl mx-auto px-6 py-12">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            {/* Р›РѕРіРѕС‚РёРї Рё РѕРїРёСЃР°РЅРёРµ */}
+            <div className="space-y-4">
+              <div className="flex items-center gap-3">
+                <LazyImage src="/images/logo/logo.png" alt="AI Game Store logo" className="h-10 w-auto object-contain" />
+                <span className="text-xl font-bold bg-gradient-to-r from-white to-blue-200 bg-clip-text text-transparent">
+                  AI Game Store
+                </span>
+              </div>
+              <p className="text-white/70 text-sm leading-relaxed">
+                {cmsContent.footerDescription}
+              </p>
+              {/* РЎРѕС†.РёРєРѕРЅРєРё СѓРґР°Р»РµРЅС‹ РїРѕ С‚СЂРµР±РѕРІР°РЅРёСЋ (YouTube/Twitter/Pinterest) */}
+            </div>
+
+            {/* РњР°СЂРєРµС‚ */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-white">РњР°СЂРєРµС‚</h3>
+              <nav className="space-y-2">
+                <NavLink to="/store" className="block text-white/70 hover:text-white transition-colors text-sm">
+                  РџСЂРѕРґР°С‚СЊ СЃРєРёРЅС‹ CS:GO
+                </NavLink>
+                <NavLink to="/store" className="block text-white/70 hover:text-white transition-colors text-sm">
+                  РџСЂРѕРґР°С‚СЊ СЃРєРёРЅС‹ CS2
+                </NavLink>
+                <NavLink to="/store" className="block text-white/70 hover:text-white transition-colors text-sm">
+                  РљСѓРїРёС‚СЊ СЃРєРёРЅС‹ Steam
+                </NavLink>
+                <NavLink to="/store" className="block text-white/70 hover:text-white transition-colors text-sm">
+                  РљСѓРїРёС‚СЊ СЃРєРёРЅС‹ CS2
+                </NavLink>
+                <NavLink to="/store" className="block text-white/70 hover:text-white transition-colors text-sm">
+                  РљСѓРїРёС‚СЊ РєРµР№СЃС‹ CS2
+                </NavLink>
+              </nav>
+            </div>
+
+            {/* РџРѕРјРѕС‰СЊ */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-white">РџРѕРјРѕС‰СЊ</h3>
+              <nav className="space-y-2">
+                <NavLink to="/faq" className="block text-white/70 hover:text-white transition-colors text-sm">
+                  FAQ
+                </NavLink>
+                <NavLink to="/support" className="block text-white/70 hover:text-white transition-colors text-sm">
+                  РўРµС…РїРѕРґРґРµСЂР¶РєР°
+                </NavLink>
+                <NavLink to="/about" className="block text-white/70 hover:text-white transition-colors text-sm">
+                  РљР°Рє РјС‹ СЂР°Р±РѕС‚Р°РµРј
+                </NavLink>
+                <NavLink to="/about" className="block text-white/70 hover:text-white transition-colors text-sm">
+                  Р“Р°СЂР°РЅС‚РёРё
+                </NavLink>
+                <NavLink to="/contacts" className="block text-white/70 hover:text-white transition-colors text-sm">
+                  РљРѕРЅС‚Р°РєС‚С‹
+                </NavLink>
+              </nav>
+            </div>
+
+            {/* РџРѕР»РµР·РЅРѕРµ */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-white">РџРѕР»РµР·РЅРѕРµ</h3>
+              <nav className="space-y-2">
+                <NavLink to="/sell" className="block text-white/70 hover:text-white transition-colors text-sm">
+                  рџ’° РџСЂРѕРґР°Р¶Р° СЃРєРёРЅРѕРІ
+                </NavLink>
+                <NavLink to="/blog" className="block text-white/70 hover:text-white transition-colors text-sm">
+                  Р‘Р»РѕРі Рё РЅРѕРІРѕСЃС‚Рё
+                </NavLink>
+                <NavLink to="/about" className="block text-white/70 hover:text-white transition-colors text-sm">
+                  Рћ РЅР°СЃ
+                </NavLink>
+                <NavLink to="/terms" className="block text-white/70 hover:text-white transition-colors text-sm">
+                  РџРѕР»СЊР·РѕРІР°С‚РµР»СЊСЃРєРѕРµ СЃРѕРіР»Р°С€РµРЅРёРµ
+                </NavLink>
+                <NavLink to="/privacy" className="block text-white/70 hover:text-white transition-colors text-sm">
+                  РџРѕР»РёС‚РёРєР° РєРѕРЅС„РёРґРµРЅС†РёР°Р»СЊРЅРѕСЃС‚Рё
+                </NavLink>
+              </nav>
+            </div>
+          </div>
+
+          {/* РќРёР¶РЅСЏСЏ С‡Р°СЃС‚СЊ С„СѓС‚РµСЂР° */}
+          <div className="border-t border-white/10 mt-8 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
+            <div className="text-white/60 text-sm">
+              В© 2024 AI Game Store. Р’СЃРµ РїСЂР°РІР° Р·Р°С‰РёС‰РµРЅС‹.
+            </div>
+            <div className="flex items-center gap-6 text-sm text-white/60">
+              <span>РџРѕРґРґРµСЂР¶РєР°: 24/7</span>
+              <span>вЂў</span>
+              <span>РћРЅР»Р°Р№РЅ: 1,247 РёРіСЂРѕРєРѕРІ</span>
+              <span>вЂў</span>
+              <span>РЎРґРµР»РѕРє: 45,892</span>
+            </div>
+          </div>
+        </div>
+      </footer>
+    </div>
+  )
+}
+
+// Cart context
+const CartContext = React.createContext(null)
+
+// CMS Context
+const CMSContext = React.createContext(null)
+const useCMS = () => React.useContext(CMSContext)
+
+function CMSProvider({ children }) {
+  const [cmsContent, setCmsContent] = React.useState(() => {
+    const saved = localStorage.getItem('cms-content')
+    return saved ? JSON.parse(saved) : {
+      bannerTitle: '-30% РЅР° Cyberpunk 2077',
+      bannerDescription: 'РЈСЃРїРµР№С‚Рµ РєСѓРїРёС‚СЊ РїРѕ Р°РєС†РёРё! Р”Рѕ РѕРєРѕРЅС‡Р°РЅРёСЏ:',
+      bannerButton1: 'РљСѓРїРёС‚СЊ СЃРѕ СЃРєРёРґРєРѕР№',
+      bannerButton2: 'РџРѕСЃРјРѕС‚СЂРµС‚СЊ РєР°С‚Р°Р»РѕРі',
+      rouletteButton: 'РџРѕРїСЂРѕР±СѓР№ СЃРІРѕСЋ СѓРґР°С‡Сѓ',
+      footerDescription: 'РЎРѕРІСЂРµРјРµРЅРЅС‹Р№ РјР°РіР°Р·РёРЅ РІРёРґРµРѕРёРіСЂ Рё С†РёС„СЂРѕРІРѕРіРѕ РєРѕРЅС‚РµРЅС‚Р°.'
+    }
+  })
+  
+  const updateCmsContent = (key, value) => {
+    const newContent = { ...cmsContent, [key]: value }
+    setCmsContent(newContent)
+    localStorage.setItem('cms-content', JSON.stringify(newContent))
+  }
+  
+  return (
+    <CMSContext.Provider value={{ cmsContent, updateCmsContent }}>
+      {children}
+    </CMSContext.Provider>
+  )
+}
+
+// Р”Р°РЅРЅС‹Рµ РїСЂРѕРґСѓРєС‚РѕРІ
+const DATA = {
+  products: [
+    // РРіСЂС‹
+    { id: 'cyberpunk', name: 'Cyberpunk 2077', price: 29.99, image: '/images/cyberpunk/intro.jpeg', category: 'game', type: 'rpg', introImage: '/images/cyberpunk/intro.jpeg', images: ['/images/cyberpunk/intro.jpeg','/images/cyberpunk/game-cyberpunk-preview-2.jpeg','/images/cyberpunk/game-cyberpunk-preview-3.jpg','/images/cyberpunk/game-cyberpunk-preview-4.jpg','/images/cyberpunk/game-cyberpunk-preview-5.jpg'], specs: { developer: 'CD Projekt Red', release: '2020', platform: 'PC/PlayStation/Xbox', min: 'Intel Core i5, 8GB RAM, GTX 780' }, description: 'РљСѓР»СЊС‚РѕРІР°СЏ RPG РІ РјРёСЂРµ РќРѕС‡РЅРѕРіРѕ Р“РѕСЂРѕРґР°. РСЃСЃР»РµРґСѓР№С‚Рµ РіРѕСЂРѕРґ, СѓР»СѓС‡С€Р°Р№С‚Рµ РёРјРїР»Р°РЅС‚С‹, РІС‹Р±РёСЂР°Р№С‚Рµ СЃРІРѕСЋ РёСЃС‚РѕСЂРёСЋ.' },
+    { id: 'battlefield6', name: 'Battlefield 6', price: 49.99, image: '/images/battlefield6/intro.jpeg', introImage: '/images/battlefield6/intro.jpeg', category: 'game', type: 'shooter', images: ['/images/battlefield6/intro.jpeg','/images/battlefield6/battlefield-preview-1.jpeg','/images/battlefield6/battlefield-preview-2.jpg','/images/battlefield6/battlefield-preview-3.png','/images/battlefield6/battlefield-preview-4.png'], specs: { developer: 'DICE', release: '2024', platform: 'PC/PlayStation/Xbox', min: 'Intel Core i5-8400, 8GB RAM, GTX 1060' }, description: 'РќРѕРІРµР№С€РёР№ С€СѓС‚РµСЂ РѕС‚ DICE СЃ РјР°СЃС€С‚Р°Р±РЅС‹РјРё СЃСЂР°Р¶РµРЅРёСЏРјРё РґРѕ 128 РёРіСЂРѕРєРѕРІ. Р”РёРЅР°РјРёС‡РЅС‹Рµ Р±РѕРё, СЂР°Р·СЂСѓС€Р°РµРјС‹Рµ РєР°СЂС‚С‹ Рё СЃРѕРІСЂРµРјРµРЅРЅРѕРµ РѕСЂСѓР¶РёРµ.' },
+    { id: 'arc-raiders', name: 'ARC Raiders', price: 39.99, image: '/images/ARC Raiders/intro.jpg', introImage: '/images/ARC Raiders/intro.jpg', category: 'game', type: 'shooter', images: ['/images/ARC Raiders/intro.jpg','/images/ARC Raiders/raiders-preview-1.jpeg','/images/ARC Raiders/raiders-preview-2.jpeg','/images/ARC Raiders/raiders-preview-3.jpg','/images/ARC Raiders/raiders-preview-4.jpeg'], specs: { developer: 'Embark Studios', release: '2024', platform: 'PC/PlayStation/Xbox', min: 'Intel Core i5-9400F, 12GB RAM, GTX 1660' }, description: 'РљРѕРѕРїРµСЂР°С‚РёРІРЅС‹Р№ СЌРєС€РµРЅ-С€СѓС‚РµСЂ РѕС‚ С‚СЂРµС‚СЊРµРіРѕ Р»РёС†Р° РІ РїРѕСЃС‚Р°РїРѕРєР°Р»РёРїС‚РёС‡РµСЃРєРѕРј РјРёСЂРµ. РЎСЂР°Р¶Р°Р№С‚РµСЃСЊ СЃ СЂРѕР±РѕС‚Р°РјРё Рё РґСЂСѓРіРёРјРё РёРіСЂРѕРєР°РјРё Р·Р° СЂРµСЃСѓСЂСЃС‹.' },
+    { id: 'ea-sports-fc-26', name: 'EA SPORTS FC 26', price: 59.99, image: '/images/EA SPORTS FC 26/intro.jpg', introImage: '/images/EA SPORTS FC 26/intro.jpg', category: 'game', type: 'sports', images: ['/images/EA SPORTS FC 26/intro.jpg','/images/EA SPORTS FC 26/sports-preview-1.jpeg','/images/EA SPORTS FC 26/sports-preview-2.jpg','/images/EA SPORTS FC 26/sports-preview-3.jpg','/images/EA SPORTS FC 26/sports-preview-4.jpg'], specs: { developer: 'EA Sports', release: '2025', platform: 'PC/PlayStation/Xbox', min: 'Intel Core i5-10400F, 8GB RAM, GTX 1650' }, description: 'РќРѕРІРµР№С€РёР№ С„СѓС‚Р±РѕР»СЊРЅС‹Р№ СЃРёРјСѓР»СЏС‚РѕСЂ СЃ СѓР»СѓС‡С€РµРЅРЅРѕР№ С„РёР·РёРєРѕР№ РјСЏС‡Р°, СЂРµР°Р»РёСЃС‚РёС‡РЅРѕР№ Р°РЅРёРјР°С†РёРµР№ РёРіСЂРѕРєРѕРІ Рё РѕР±РЅРѕРІР»РµРЅРЅС‹РјРё СЂРµР¶РёРјР°РјРё РєР°СЂСЊРµСЂС‹.' },
+    { id: 'gta-v', name: 'GTA V', price: 29.99, image: '/images/GTA V/intro.jpg', introImage: '/images/GTA V/intro.jpg', category: 'game', type: 'racing', images: ['/images/GTA V/intro.jpg','/images/GTA V/GTA-preview-1.jpg','/images/GTA V/GTA-preview-2.jpg','/images/GTA V/GTA-preview-3.jpg','/images/GTA V/GTA-preview-4.jpg'], specs: { developer: 'Rockstar Games', release: '2013', platform: 'PC/PlayStation/Xbox', min: 'Intel Core i5-3470, 8GB RAM, GTX 660' }, description: 'Р›РµРіРµРЅРґР°СЂРЅР°СЏ РёРіСЂР° РІ РѕС‚РєСЂС‹С‚РѕРј РјРёСЂРµ. РўСЂРё РіР»Р°РІРЅС‹С… РіРµСЂРѕСЏ, РѕРіСЂРѕРјРЅС‹Р№ РіРѕСЂРѕРґ Р›РѕСЃ-РЎР°РЅС‚РѕСЃ, РјРЅРѕР¶РµСЃС‚РІРѕ РјРёСЃСЃРёР№ Рё РѕРЅР»Р°Р№РЅ-СЂРµР¶РёРј GTA Online.' },
+    { id: 'jurassic-world-evolution-3', name: 'Jurassic World Evolution 3', price: 49.99, image: '/images/Jurassic World Evolution 3/intro.jpg', introImage: '/images/Jurassic World Evolution 3/intro.jpg', category: 'game', type: 'strategy', images: ['/images/Jurassic World Evolution 3/intro.jpg','/images/Jurassic World Evolution 3/evolution-preview-1.jpg','/images/Jurassic World Evolution 3/evolution-preview-2.jpeg','/images/Jurassic World Evolution 3/evolution-preview-3.png','/images/Jurassic World Evolution 3/evolution-preview-4.jpg'], specs: { developer: 'Frontier Developments', release: '2024', platform: 'PC/PlayStation/Xbox', min: 'Intel Core i5-8400, 12GB RAM, GTX 1060' }, description: 'РЎРѕР·РґР°РІР°Р№С‚Рµ Рё СѓРїСЂР°РІР»СЏР№С‚Рµ СЃРѕР±СЃС‚РІРµРЅРЅС‹Рј РїР°СЂРєРѕРј РґРёРЅРѕР·Р°РІСЂРѕРІ. РќРѕРІС‹Рµ РІРёРґС‹, СѓР»СѓС‡С€РµРЅРЅР°СЏ РіРµРЅРµС‚РёРєР° Рё Р·Р°С…РІР°С‚С‹РІР°СЋС‰РёРµ СЃС†РµРЅР°СЂРёРё РёР· С„РёР»СЊРјРѕРІ.' },
+    { id: 'rv-there-yet', name: 'RV There Yet', price: 19.99, image: '/images/RV There Yet/intro.jpg', introImage: '/images/RV There Yet/intro.jpg', category: 'game', type: 'indie', images: ['/images/RV There Yet/intro.jpg','/images/RV There Yet/there-preview-1.jpg','/images/RV There Yet/there-preview-2.jpeg','/images/RV There Yet/there-preview-3.jpg','/images/RV There Yet/there-preview-4.jpeg','/images/RV There Yet/there-preview-5.jpg'], specs: { developer: 'Indie Studio', release: '2024', platform: 'PC/Nintendo Switch', min: 'Intel Core i3, 4GB RAM, Integrated Graphics' }, description: 'РЈСЋС‚РЅР°СЏ РїСЂРёРєР»СЋС‡РµРЅС‡РµСЃРєР°СЏ РёРіСЂР° Рѕ РїСѓС‚РµС€РµСЃС‚РІРёРё РЅР° Р°РІС‚РѕРґРѕРјРµ. РСЃСЃР»РµРґСѓР№С‚Рµ РєСЂР°СЃРёРІС‹Рµ Р»РѕРєР°С†РёРё, РІСЃС‚СЂРµС‡Р°Р№С‚Рµ РёРЅС‚РµСЂРµСЃРЅС‹С… РїРµСЂСЃРѕРЅР°Р¶РµР№.' },
+    { id: 'dead-by-daylight', name: 'Dead by Daylight', price: 24.99, image: '/images/dead by daylight/intro.jpg', introImage: '/images/dead by daylight/intro.jpg', category: 'game', type: 'horror', images: ['/images/dead by daylight/intro.jpg','/images/dead by daylight/dead-preview-1.jpg','/images/dead by daylight/dead-preview-2.jpg','/images/dead by daylight/dead-preview-3.png','/images/dead by daylight/dead-preview-4.jpg'], specs: { developer: 'Behaviour Interactive', release: '2016', platform: 'PC/PlayStation/Xbox/Nintendo Switch', min: 'Intel Core i3-4170, 8GB RAM, GTX 460' }, description: 'РђСЃРёРјРјРµС‚СЂРёС‡РЅР°СЏ РёРіСЂР° РЅР° РІС‹Р¶РёРІР°РЅРёРµ 4 РїСЂРѕС‚РёРІ 1. Р’С‹Р¶РёРІР°Р№С‚Рµ РѕС‚ РјР°РЅСЊСЏРєР° РёР»Рё РѕС…РѕС‚СЊС‚РµСЃСЊ РЅР° РІС‹Р¶РёРІС€РёС… РІ Р°С‚РјРѕСЃС„РµСЂРЅС‹С… Р»РѕРєР°С†РёСЏС….' },
+    // РЎРєРёРЅС‹
+    { id: 'skin-awp-gungnir', name: 'AWP | GUNGNIR', price: 14.99, image: '/images/skins/AWP-GUNGNIR.png', category: 'skin', type: 'weapon', description: 'Р›РµРіРµРЅРґР°СЂРЅР°СЏ СЃРЅР°Р№РїРµСЂСЃРєР°СЏ РІРёРЅС‚РѕРІРєР° СЃ РјРёС„РѕР»РѕРіРёС‡РµСЃРєРёРј РґРёР·Р°Р№РЅРѕРј. РљРѕРїСЊРµ РћРґРёРЅР° РІ РјРёСЂРµ CS2.' },
+    { id: 'skin-deagle-fenek', name: 'Desert Eagle | Р¤РµРЅРµРє', price: 9.99, image: '/images/skins/Desert-eagle-fenek.png', category: 'skin', type: 'weapon', description: 'РњРѕС‰РЅС‹Р№ РїРёСЃС‚РѕР»РµС‚ СЃ СЏСЂРєРёРј РґРёР·Р°Р№РЅРѕРј РїСѓСЃС‚С‹РЅРЅРѕР№ Р»РёСЃС‹. Р РµРґРєРёР№ СЃРєРёРЅ СЃ СѓРЅРёРєР°Р»СЊРЅРѕР№ СЂР°СЃС†РІРµС‚РєРѕР№.' },
+    { id: 'skin-karambit-gradient', name: 'РљРµСЂР°РјР±РёС‚ | Р“СЂР°РґРёРµРЅС‚', price: 19.99, image: '/images/skins/kerambit-gradient.png', category: 'skin', type: 'weapon', description: 'РР·РѕРіРЅСѓС‚С‹Р№ РЅРѕР¶ СЃ РїР»Р°РІРЅС‹Рј РіСЂР°РґРёРµРЅС‚РЅС‹Рј РїРµСЂРµС…РѕРґРѕРј С†РІРµС‚РѕРІ. РћРґРёРЅ РёР· СЃР°РјС‹С… РїРѕРїСѓР»СЏСЂРЅС‹С… РЅРѕР¶РµР№ РІ CS2.' },
+    { id: 'skin-negev-tra-ta-ta', name: 'Negev | РўСЂР°-С‚Р°-С‚Р°', price: 4.99, image: '/images/skins/negev-tra-ta-ta.png', category: 'skin', type: 'weapon', description: 'РџСѓР»РµРјРµС‚ СЃ РІРµСЃРµР»С‹Рј РґРёР·Р°Р№РЅРѕРј Рё Р·РІСѓРєРѕРїРѕРґСЂР°Р¶Р°С‚РµР»СЊРЅС‹Рј РЅР°Р·РІР°РЅРёРµРј. РћС‚Р»РёС‡РЅС‹Р№ РІС‹Р±РѕСЂ РґР»СЏ Р»СЋР±РёС‚РµР»РµР№ С‚СЏР¶РµР»РѕРіРѕ РІРѕРѕСЂСѓР¶РµРЅРёСЏ.' },
+    { id: 'skin-pp-bizon-anubis', name: 'PP-Bizon | РЎС‹РЅ РђРЅСѓР±РёСЃР°', price: 5.99, image: '/images/skins/pp-bizon-syd-annubisa.png', category: 'skin', type: 'weapon', description: 'РџРёСЃС‚РѕР»РµС‚-РїСѓР»РµРјРµС‚ СЃ РµРіРёРїРµС‚СЃРєРѕР№ С‚РµРјР°С‚РёРєРѕР№. РњРёСЃС‚РёС‡РµСЃРєРёР№ РґРёР·Р°Р№РЅ СЃ РёР·РѕР±СЂР°Р¶РµРЅРёРµРј Р±РѕРіР° РђРЅСѓР±РёСЃР°.' },
+    { id: 'skin-sawedoff-kraken', name: 'Sawed-Off | РљСЂР°РєРµРЅ', price: 3.99, image: '/images/skins/saved-off-cracken.png', category: 'skin', type: 'weapon', description: 'РћР±СЂРµР· СЃ РјРѕСЂСЃРєРѕР№ С‚РµРјР°С‚РёРєРѕР№. Р”РёР·Р°Р№РЅ СЃ РёР·РѕР±СЂР°Р¶РµРЅРёРµРј Р»РµРіРµРЅРґР°СЂРЅРѕРіРѕ РјРѕСЂСЃРєРѕРіРѕ С‡СѓРґРѕРІРёС‰Р°.' },
+    { id: 'skin-sport-gloves-butcher', name: 'РЎРїРѕСЂС‚РёРІРЅС‹Рµ РїРµСЂС‡Р°С‚РєРё | РњСЏСЃРЅРёРє', price: 24.99, image: '/images/skins/sport-perchatky-myasnik.png', category: 'skin', type: 'armor', description: 'РЎРїРѕСЂС‚РёРІРЅС‹Рµ РїРµСЂС‡Р°С‚РєРё СЃ Р±СЂСѓС‚Р°Р»СЊРЅС‹Рј РґРёР·Р°Р№РЅРѕРј. РљСЂРѕРІР°РІС‹Рµ РїСЏС‚РЅР° Рё РїРѕС‚РµСЂС‚РѕСЃС‚Рё СЃРѕР·РґР°СЋС‚ Р°С‚РјРѕСЃС„РµСЂСѓ РЅР°СЃС‚РѕСЏС‰РµРіРѕ Р±РѕР№С†Р°.' }
+  ]
+}
+
+function CartProvider({ children }) {
+  const [items, setItems] = React.useState(() => {
+    try {
+      const saved = localStorage.getItem('cart-items')
+      return saved ? JSON.parse(saved) : []
+    } catch {
+      return []
+    }
+  })
+  React.useEffect(() => {
+    localStorage.setItem('cart-items', JSON.stringify(items))
+  }, [items])
+  const addItem = (product, qty = 1) => {
+    // РџСЂРѕРІРµСЂСЏРµРј Р°РІС‚РѕСЂРёР·Р°С†РёСЋ С‡РµСЂРµР· cookie Рё localStorage
+    const hasCookie = document.cookie.includes('profile_auth=1')
+    const hasLocalStorage = localStorage.getItem('profile-auth') === '1'
+    const authorized = hasCookie || hasLocalStorage
+    
+    if (!authorized) {
+      window.dispatchEvent(new Event('open-login'))
+      return
+    }
+    setItems(prev => {
+      const exists = prev.find(i => i.id === product.id)
+      if (exists) {
+        return prev.map(i => i.id === product.id ? { ...i, qty: i.qty + qty } : i)
+      }
+      return [...prev, { ...product, image: product.image || '', qty }]
+    })
+  }
+  const removeItem = (id) => setItems(prev => prev.filter(i => i.id !== id))
+  const updateQty = (id, qty) => setItems(prev => prev.map(i => i.id === id ? { ...i, qty: Math.max(1, qty) } : i))
+  const clear = () => setItems([])
+  const totalQuantity = items.reduce((sum, i) => sum + i.qty, 0)
+  const totalPrice = items.reduce((sum, i) => sum + i.price * i.qty, 0)
+  const value = { items, addItem, removeItem, updateQty, clear, totalQuantity, totalPrice }
+  return <CartContext.Provider value={value}>{children}</CartContext.Provider>
+}
+
+function useCart() { const ctx = React.useContext(CartContext); if (!ctx) throw new Error('useCart must be used within CartProvider'); return ctx }
+
+function CartBadge() {
+  const { totalQuantity } = useCart()
+  const isAuthorized = localStorage.getItem('profile-auth') === '1'
+  if (!isAuthorized || totalQuantity <= 0) return null
+  return (
+    <span className="absolute -top-1 -right-2 min-w-[18px] h-5 px-1 rounded-full bg-[#7e2aa8] text-xs flex items-center justify-center">
+      {totalQuantity}
+    </span>
+  )
+}
+
+// РЇР·С‹РєРѕРІРѕР№ РєРѕРЅС‚РµРєСЃС‚: РїРµСЂРµРєР»СЋС‡РµРЅРёРµ СЏР·С‹РєР° Рё РІР°Р»СЋС‚С‹, С„РѕСЂРјР°С‚РёСЂРѕРІР°РЅРёРµ С†РµРЅ
+const LangContext = React.createContext(null)
+function LangProvider({ children }) {
+  const [lang, setLang] = React.useState(() => localStorage.getItem('lang') || 'ru')
+  React.useEffect(() => { localStorage.setItem('lang', lang) }, [lang])
+  const RATE = 90
+  const currency = lang === 'ru' ? 'RUB' : 'USD'
+  const formatPrice = (amountUsd) => {
+    try {
+      if (lang === 'ru') return new Intl.NumberFormat('ru-RU', { style: 'currency', currency: 'RUB' }).format(amountUsd * RATE)
+      return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amountUsd)
+    } catch {
+      return lang === 'ru' ? `${Math.round(amountUsd * RATE)} в‚Ѕ` : `$${amountUsd.toFixed(2)}`
+    }
+  }
+  const toAmountInCurrency = (amountUsd) => lang === 'ru' ? amountUsd * RATE : amountUsd
+  const DICT = {
+    ru: { 'skins.title': 'РЎРєРёРЅС‹ CS2' },
+    en: { 'skins.title': 'CS2 Skins' }
+  }
+  const t = (key) => (DICT[lang] && DICT[lang][key]) || key
+  const value = { lang, setLang, currency, rate: RATE, formatPrice, toAmountInCurrency, t }
+  return <LangContext.Provider value={value}>{children}</LangContext.Provider>
+}
+
+function useLang() { 
+  const ctx = React.useContext(LangContext); 
+  if (!ctx) throw new Error('useLang must be used within LangProvider'); 
+  return ctx; 
+}
+
+// LazyImage РєРѕРјРїРѕРЅРµРЅС‚ РґР»СЏ РѕРїС‚РёРјРёР·РёСЂРѕРІР°РЅРЅРѕР№ Р·Р°РіСЂСѓР·РєРё РёР·РѕР±СЂР°Р¶РµРЅРёР№
+ function LazyImage({ src, alt, className, fallback = '/vite.svg', ...props }) {
+  const [imageSrc, setImageSrc] = React.useState(fallback)
+  const [isLoading, setIsLoading] = React.useState(true)
+  const [hasError, setHasError] = React.useState(false)
+  const imgRef = React.useRef(null)
+
+  React.useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            const img = new Image()
+            img.onload = () => {
+              setImageSrc(src)
+              setIsLoading(false)
+              setHasError(false)
+            }
+            img.onerror = () => {
+              setImageSrc(fallback)
+              setIsLoading(false)
+              setHasError(true)
+            }
+            img.src = src
+            observer.unobserve(entry.target)
+          }
+        })
+      },
+      { threshold: 0.1, rootMargin: '50px' }
+    )
+
+    if (imgRef.current) {
+      observer.observe(imgRef.current)
+    }
+
+    return () => observer.disconnect()
+  }, [src, fallback])
+
+  return (
+    <div ref={imgRef} className={`relative ${className || ''}`}>
+      <img
+        src={imageSrc}
+        alt={alt}
+        className={`transition-opacity duration-300 ${isLoading ? 'opacity-50' : 'opacity-100'} ${className || ''}`}
+        loading="lazy"
+        decoding="async"
+        {...props}
+      />
+      {isLoading && (
+        <div className="absolute inset-0 flex items-center justify-center bg-[#161f38] animate-pulse">
+          <div className="w-8 h-8 border-2 border-white/20 border-t-white/60 rounded-full animate-spin"></div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// РЎС‚СЂР°РЅРёС†Р° РїРѕРјРѕС‰Рё Рё РїРѕРґРґРµСЂР¶РєРё
+function Help() {
+  return (
+    <section className="bg-[#0c0f1a] text-white min-h-[60vh]">
+      <div className="max-w-6xl mx-auto px-4 py-16">
+        <h1 className="text-3xl font-bold mb-4">РџРѕРјРѕС‰СЊ Рё РїРѕРґРґРµСЂР¶РєР°</h1>
+        <p className="text-white/70 mb-6">РћС‚РІРµС‚С‹ РЅР° С‡Р°СЃС‚С‹Рµ РІРѕРїСЂРѕСЃС‹ Рё СЃРїРѕСЃРѕР±С‹ СЃРІСЏР·Рё.</p>
+
+        <div className="grid md:grid-cols-2 gap-6">
+          <div className="p-6 bg-[#111936] rounded-xl border border-white/10">
+            <h2 className="text-xl font-semibold mb-3">FAQ</h2>
+            <p className="text-white/70 mb-4">РџРѕСЃРјРѕС‚СЂРёС‚Рµ РѕС‚РІРµС‚С‹ РЅР° РїРѕРїСѓР»СЏСЂРЅС‹Рµ РІРѕРїСЂРѕСЃС‹ Рѕ РїРѕРєСѓРїРєР°С… Рё РїСЂРѕРґР°Р¶Рµ СЃРєРёРЅРѕРІ.</p>
+            <NavLink to="/blog" className="inline-block bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-lg">Р‘Р»РѕРі Рё РіР°Р№РґС‹</NavLink>
+          </div>
+
+          <div className="p-6 bg-[#111936] rounded-xl border border-white/10">
+            <h2 className="text-xl font-semibold mb-3">РЎРІСЏР·Р°С‚СЊСЃСЏ СЃ РЅР°РјРё</h2>
+            <p className="text-white/70 mb-4">РњС‹ РґРѕСЃС‚СѓРїРЅС‹ 24/7. РќР°РїРёС€РёС‚Рµ РЅР° email РёР»Рё РёСЃРїРѕР»СЊР·СѓР№С‚Рµ С„РѕСЂРјСѓ РѕР±СЂР°С‚РЅРѕР№ СЃРІСЏР·Рё.</p>
+            <div className="space-y-2 text-sm">
+              <div>Email: <a href="mailto:support@aigamestore.ru" className="text-blue-400 hover:text-blue-300">support@aigamestore.ru</a></div>
+              <div>РўРµР»РµС„РѕРЅ: <a href="tel:+74951234567" className="text-blue-400 hover:text-blue-300">+7 (495) 123-45-67</a></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  )
+}
