@@ -1,0 +1,22 @@
+[
+  {
+    "id": "log_1766947907154_f112h1l",
+    "code": "OP-C4EYHR",
+    "action": "Заказ #ORD-1766151123543 обновлен: статус → completed",
+    "entityType": "order",
+    "entityId": "8d8aca28-b80f-4111-a136-b36c9fdcb4d1",
+    "details": "{\"orderId\":\"ORD-1766151123543\",\"status\":\"completed\"}",
+    "adminEmail": "admin@gamesale.shop",
+    "createdAt": "2025-12-28T18:51:47.154Z"
+  },
+  {
+    "id": "log_1766947903330_euwbp1n",
+    "code": "OP-HE4CCN",
+    "action": "Заказ #ORD-1766151123543 обновлен: статус → processing",
+    "entityType": "order",
+    "entityId": "8d8aca28-b80f-4111-a136-b36c9fdcb4d1",
+    "details": "{\"orderId\":\"ORD-1766151123543\",\"status\":\"processing\"}",
+    "adminEmail": "admin@gamesale.shop",
+    "createdAt": "2025-12-28T18:51:43.330Z"
+  }
+]

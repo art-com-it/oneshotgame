@@ -1,0 +1,317 @@
+[
+  {
+    "id": "chat_mhupex5d_3wkjfm7",
+    "createdAt": "2025-11-11T15:06:21.648Z",
+    "updatedAt": "2025-11-11T15:06:42.613Z",
+    "lastMessageAt": "2025-11-11T15:06:36.904Z",
+    "status": "open",
+    "messages": [
+      {
+        "id": "msg_mhupf8x4_vkgl7s",
+        "createdAt": "2025-11-11T15:06:36.904Z",
+        "authorRole": "user",
+        "authorName": "Svyat",
+        "body": "Fпривет!",
+        "meta": null
+      }
+    ],
+    "user": {
+      "name": "Svyat",
+      "email": "svatosplay@gmail.com"
+    },
+    "unreadForAdmin": true,
+    "unreadForUser": false
+  },
+  {
+    "id": "chat_mhuywegp_5wb0ob7",
+    "createdAt": "2025-11-11T19:31:53.784Z",
+    "updatedAt": "2025-11-11T19:31:56.525Z",
+    "lastMessageAt": null,
+    "status": "open",
+    "messages": [],
+    "user": {
+      "name": null,
+      "email": null
+    },
+    "unreadForAdmin": false,
+    "unreadForUser": false
+  },
+  {
+    "id": "chat_mhx4ugya_e9yytjp",
+    "createdAt": "2025-11-13T07:53:53.743Z",
+    "updatedAt": "2025-11-17T10:56:00.170Z",
+    "lastMessageAt": "2025-11-16T00:29:44.947Z",
+    "status": "open",
+    "messages": [
+      {
+        "id": "msg_mi0zaulw_4vnvd0",
+        "createdAt": "2025-11-16T00:29:44.947Z",
+        "authorRole": "user",
+        "authorName": "svatosplay",
+        "body": "eeone11",
+        "meta": null
+      }
+    ],
+    "user": {
+      "name": "svatosplay",
+      "email": "svarosplay@gmail.com"
+    },
+    "unreadForAdmin": true,
+    "unreadForUser": false
+  },
+  {
+    "id": "chat_mhyx8xbr_81z8rfm",
+    "createdAt": "2025-11-14T13:56:43.571Z",
+    "updatedAt": "2025-11-14T13:56:43.638Z",
+    "lastMessageAt": null,
+    "status": "open",
+    "messages": [],
+    "user": {
+      "name": "svatosplay",
+      "email": null
+    },
+    "unreadForAdmin": false,
+    "unreadForUser": false
+  },
+  {
+    "id": "chat_mi66ztqh_ndjq8dq",
+    "createdAt": "2025-11-19T16:03:58.405Z",
+    "updatedAt": "2025-11-19T16:04:31.042Z",
+    "lastMessageAt": "2025-11-19T16:04:31.042Z",
+    "status": "open",
+    "messages": [
+      {
+        "id": "msg_mi670iwz_82rbcy",
+        "createdAt": "2025-11-19T16:04:31.042Z",
+        "authorRole": "user",
+        "authorName": "Алекс",
+        "body": "Привет!",
+        "meta": null
+      }
+    ],
+    "user": {
+      "name": null,
+      "email": null
+    },
+    "unreadForAdmin": true,
+    "unreadForUser": false
+  },
+  {
+    "id": "chat_mi7addog_904r6qc",
+    "createdAt": "2025-11-20T10:26:15.806Z",
+    "updatedAt": "2025-11-20T10:26:15.923Z",
+    "lastMessageAt": null,
+    "status": "open",
+    "messages": [],
+    "user": {
+      "name": null,
+      "email": null
+    },
+    "unreadForAdmin": false,
+    "unreadForUser": false
+  },
+  {
+    "id": "chat_micib5u6_jlho642",
+    "createdAt": "2025-11-24T02:07:20.141Z",
+    "updatedAt": "2025-11-24T02:07:32.711Z",
+    "lastMessageAt": "2025-11-24T02:07:32.711Z",
+    "status": "open",
+    "messages": [
+      {
+        "id": "msg_micibfjb_wc7ho8",
+        "createdAt": "2025-11-24T02:07:32.711Z",
+        "authorRole": "user",
+        "authorName": "svatosplay",
+        "body": "Привет!",
+        "meta": null
+      }
+    ],
+    "user": {
+      "name": "svatosplay",
+      "email": null
+    },
+    "unreadForAdmin": true,
+    "unreadForUser": false
+  },
+  {
+    "id": "chat_micje6gh_7903dio",
+    "createdAt": "2025-11-24T02:37:40.529Z",
+    "updatedAt": "2025-11-24T02:37:51.719Z",
+    "lastMessageAt": "2025-11-24T02:37:51.719Z",
+    "status": "open",
+    "messages": [
+      {
+        "id": "msg_micjef3b_v7f5pa",
+        "createdAt": "2025-11-24T02:37:51.719Z",
+        "authorRole": "user",
+        "authorName": "svatosplay",
+        "body": "привет!",
+        "meta": null
+      }
+    ],
+    "user": {
+      "name": "svatosplay",
+      "email": null
+    },
+    "unreadForAdmin": true,
+    "unreadForUser": false
+  },
+  {
+    "id": "chat_mieh63mb_lmwl8lu",
+    "createdAt": "2025-11-25T11:10:56.723Z",
+    "updatedAt": "2025-11-25T11:10:56.801Z",
+    "lastMessageAt": null,
+    "status": "open",
+    "messages": [],
+    "user": {
+      "name": null,
+      "email": null
+    },
+    "unreadForAdmin": false,
+    "unreadForUser": false
+  },
+  {
+    "id": "chat_miel7h22_c46cgny",
+    "createdAt": "2025-11-25T13:03:59.258Z",
+    "updatedAt": "2025-11-25T13:04:46.543Z",
+    "lastMessageAt": "2025-11-25T13:04:46.543Z",
+    "status": "open",
+    "messages": [
+      {
+        "id": "msg_miel8hjj_nd8z56",
+        "createdAt": "2025-11-25T13:04:46.543Z",
+        "authorRole": "user",
+        "authorName": "Svat",
+        "body": "https://us05web.zoom.us/j/89368562573?pwd=GbeixadutRngd8BVsWeD7Ja2GapsyC.1",
+        "meta": null
+      }
+    ],
+    "user": {
+      "name": null,
+      "email": null
+    },
+    "unreadForAdmin": true,
+    "unreadForUser": false
+  },
+  {
+    "id": "chat_mifjxd4c_kah2hxh",
+    "createdAt": "2025-11-26T05:15:54.153Z",
+    "updatedAt": "2025-11-26T05:15:54.245Z",
+    "lastMessageAt": null,
+    "status": "open",
+    "messages": [],
+    "user": {
+      "name": null,
+      "email": null
+    },
+    "unreadForAdmin": false,
+    "unreadForUser": false
+  },
+  {
+    "id": "chat_mig00o1o_gvkiae7",
+    "createdAt": "2025-11-26T12:46:22.140Z",
+    "updatedAt": "2025-11-26T12:46:22.285Z",
+    "lastMessageAt": null,
+    "status": "open",
+    "messages": [],
+    "user": {
+      "name": null,
+      "email": null
+    },
+    "unreadForAdmin": false,
+    "unreadForUser": false
+  },
+  {
+    "id": "chat_miwz3066_s0lilsk",
+    "createdAt": "2025-12-08T09:52:16.538Z",
+    "updatedAt": "2025-12-08T09:52:16.606Z",
+    "lastMessageAt": null,
+    "status": "open",
+    "messages": [],
+    "user": {
+      "name": "nuqomife",
+      "email": "nuqomife@opemails.com"
+    },
+    "unreadForAdmin": false,
+    "unreadForUser": false
+  },
+  {
+    "id": "chat_mj53p9uz_wgrf3du",
+    "createdAt": "2025-12-14T02:23:43.387Z",
+    "updatedAt": "2025-12-14T02:23:47.946Z",
+    "lastMessageAt": null,
+    "status": "open",
+    "messages": [],
+    "user": {
+      "name": null,
+      "email": null
+    },
+    "unreadForAdmin": false,
+    "unreadForUser": false
+  },
+  {
+    "id": "chat_mj8icqe1_uakawhr",
+    "createdAt": "2025-12-16T11:37:11.062Z",
+    "updatedAt": "2025-12-21T16:05:48.885Z",
+    "lastMessageAt": null,
+    "status": "open",
+    "messages": [],
+    "user": {
+      "name": null,
+      "email": null
+    },
+    "unreadForAdmin": false,
+    "unreadForUser": false
+  },
+  {
+    "id": "chat_mkmn67b5_pclkk8f",
+    "createdAt": "2026-01-20T13:40:33.276Z",
+    "updatedAt": "2026-01-20T13:47:36.773Z",
+    "lastMessageAt": "2026-01-20T13:47:36.773Z",
+    "status": "open",
+    "messages": [
+      {
+        "id": "msg_mkmnfa2t_1vctaf",
+        "createdAt": "2026-01-20T13:47:36.773Z",
+        "authorRole": "user",
+        "authorName": "петр",
+        "body": "привет. хочу оплатить услуги онлайн казино. Можете помочь",
+        "meta": null
+      }
+    ],
+    "user": {
+      "name": null,
+      "email": null
+    },
+    "unreadForAdmin": true,
+    "unreadForUser": false
+  },
+  {
+    "id": "chat_mkwphc5s_3lgo1l0",
+    "createdAt": "2026-01-27T14:42:53.770Z",
+    "updatedAt": "2026-01-27T14:42:53.871Z",
+    "lastMessageAt": null,
+    "status": "open",
+    "messages": [],
+    "user": {
+      "name": null,
+      "email": null
+    },
+    "unreadForAdmin": false,
+    "unreadForUser": false
+  },
+  {
+    "id": "chat_mlmd5p8w_8fw9473",
+    "createdAt": "2026-02-14T13:39:56.044Z",
+    "updatedAt": "2026-02-14T13:39:56.348Z",
+    "lastMessageAt": null,
+    "status": "open",
+    "messages": [],
+    "user": {
+      "name": null,
+      "email": null
+    },
+    "unreadForAdmin": false,
+    "unreadForUser": false
+  }
+]

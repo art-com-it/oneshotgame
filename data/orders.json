@@ -1,0 +1,500 @@
+[
+  {
+    "id": "6fc351c4-7572-4f0b-b86c-709e5bb7d940",
+    "orderId": "ORD-1767035749855",
+    "userEmail": "gamesale@gmail.com",
+    "userName": "svatosplay",
+    "totalAmount": 8999,
+    "currency": "RUB",
+    "paymentMethod": "manual",
+    "paymentStatus": "paid",
+    "status": "new",
+    "items": [
+      {
+        "name": "Desert Eagle | Crimson Web",
+        "price": 8999,
+        "category": "skin",
+        "type": "weapon",
+        "activationKey": null
+      }
+    ],
+    "createdAt": "2025-12-29T19:16:20.444Z",
+    "meta": {
+      "raw": null
+    }
+  },
+  {
+    "id": "8d8aca28-b80f-4111-a136-b36c9fdcb4d1",
+    "orderId": "ORD-1766151123543",
+    "userEmail": "exaple@gmail.com",
+    "userName": "Alex",
+    "totalAmount": 1499,
+    "currency": "RUB",
+    "paymentMethod": "manual",
+    "paymentStatus": "paid",
+    "status": "completed",
+    "items": [
+      {
+        "name": "Ori and the Will of the Wisps",
+        "price": 1499,
+        "category": "game",
+        "type": "indie",
+        "activationKey": "R9KX-VUFZ-9GNW-VWBF"
+      }
+    ],
+    "createdAt": "2025-12-19T13:32:24.965Z",
+    "meta": {
+      "raw": null
+    },
+    "updatedAt": "2025-12-28T18:51:47.151Z",
+    "history": [
+      {
+        "status": "processing",
+        "changedAt": "2025-12-28T18:51:43.309Z"
+      },
+      {
+        "status": "completed",
+        "changedAt": "2025-12-28T18:51:47.151Z"
+      }
+    ]
+  },
+  {
+    "id": "e0331237-e5eb-4faa-a731-d8dbeb86afba",
+    "orderId": "ORD-1765899316418",
+    "userEmail": "alfafiziks@gmail.com",
+    "userName": "svatosplay",
+    "totalAmount": 1999,
+    "currency": "RUB",
+    "paymentMethod": "manual",
+    "paymentStatus": "paid",
+    "status": "new",
+    "items": [
+      {
+        "name": "Star Wars Outlaws",
+        "price": 1999,
+        "category": "game",
+        "type": "action",
+        "activationKey": "ERB5-U5UN-6G7R-U36U"
+      }
+    ],
+    "createdAt": "2025-12-16T15:35:38.112Z",
+    "meta": {
+      "raw": null
+    }
+  },
+  {
+    "id": "f0cc6665-260e-4a15-b7d1-7f7529ea2324",
+    "orderId": "ORD-1765898708660",
+    "userEmail": "alfafiziks@gmail.com",
+    "userName": "svatosplay",
+    "totalAmount": 2999,
+    "currency": "RUB",
+    "paymentMethod": "manual",
+    "paymentStatus": "paid",
+    "status": "new",
+    "items": [
+      {
+        "name": "Anthro Heat",
+        "price": 2999,
+        "category": "game",
+        "type": "casual",
+        "activationKey": "EE8L-C55A-6YLW-869C"
+      }
+    ],
+    "createdAt": "2025-12-16T15:25:31.443Z",
+    "meta": {
+      "raw": null
+    }
+  },
+  {
+    "id": "5808d96f-5722-47d5-9d1b-26c1953c86de",
+    "orderId": "ORD-1765187497085",
+    "userEmail": "nuqomife@opemails.com",
+    "userName": "nuqomife",
+    "totalAmount": 3999,
+    "currency": "RUB",
+    "paymentMethod": "manual",
+    "paymentStatus": "paid",
+    "status": "new",
+    "items": [
+      {
+        "name": "ARC Raiders",
+        "price": 3999,
+        "category": "game",
+        "type": "shooter",
+        "activationKey": "CXWR-WVF3-7U4C-CDMH"
+      }
+    ],
+    "createdAt": "2025-12-08T09:52:06.235Z",
+    "meta": {
+      "raw": null
+    }
+  },
+  {
+    "id": "5017cea2-65ed-4533-8141-d59ce6f1dd12",
+    "orderId": "ORD-1764202075325",
+    "userEmail": "alfafiziks@gmail.com",
+    "userName": "svatosplay",
+    "totalAmount": 1000,
+    "currency": "RUB",
+    "paymentMethod": "manual",
+    "paymentStatus": "paid",
+    "status": "new",
+    "items": [
+      {
+        "name": "NASCAR 25",
+        "price": 1000,
+        "category": "game",
+        "type": "racing",
+        "activationKey": "YPM5-3Z6Q-BK3X-JZSY"
+      }
+    ],
+    "createdAt": "2025-11-27T00:08:25.786Z",
+    "meta": {
+      "raw": null
+    }
+  },
+  {
+    "id": "7d21269d-df13-4fe4-b20b-dfc312ee670f",
+    "orderId": "ORD-1764144753402",
+    "userEmail": "svatosplay@gmail.com",
+    "userName": "svatosplay",
+    "totalAmount": 119.99,
+    "currency": "RUB",
+    "paymentMethod": "manual",
+    "paymentStatus": "paid",
+    "status": "new",
+    "items": [
+      {
+        "name": "M4A4 | Daybreak",
+        "price": 119.99,
+        "category": "skin",
+        "type": "weapon",
+        "activationKey": null
+      }
+    ],
+    "createdAt": "2025-11-26T08:13:02.511Z",
+    "meta": {
+      "raw": null
+    }
+  },
+  {
+    "id": "1358a76c-f566-4008-b6b8-3202c8a9a9e5",
+    "orderId": "ORD-1764098772125",
+    "userEmail": "alfafiziks@gmail.com",
+    "userName": "hilllalex2",
+    "totalAmount": 39.99,
+    "currency": "RUB",
+    "paymentMethod": "manual",
+    "paymentStatus": "paid",
+    "status": "new",
+    "items": [
+      {
+        "name": "ARC Raiders",
+        "price": 39.99,
+        "category": "game",
+        "type": "shooter",
+        "activationKey": "8GCP-E5QG-6VWX-27YA"
+      }
+    ],
+    "createdAt": "2025-11-25T19:26:42.649Z",
+    "meta": {
+      "raw": null
+    }
+  },
+  {
+    "id": "38f83803-580f-4be5-93ab-0c7b4612c348",
+    "orderId": "ORD-1764094887169",
+    "userEmail": "alfafiziks@gmail.com",
+    "userName": "hilllalex2",
+    "totalAmount": 39.99,
+    "currency": "RUB",
+    "paymentMethod": "manual",
+    "paymentStatus": "paid",
+    "status": "new",
+    "items": [
+      {
+        "name": "ARC Raiders",
+        "price": 39.99,
+        "category": "game",
+        "type": "shooter",
+        "activationKey": "A8R3-SN3B-RB2Z-GPJG"
+      }
+    ],
+    "createdAt": "2025-11-25T18:34:23.561Z",
+    "meta": {
+      "raw": null
+    }
+  },
+  {
+    "id": "1e38e1f9-5cde-42a7-b5dd-c13bd81e3d8b",
+    "orderId": "ORD-1763954540233",
+    "userEmail": "alfafiziks@gmail.com",
+    "userName": "svatosplay",
+    "totalAmount": 438.9,
+    "currency": "RUB",
+    "paymentMethod": "manual",
+    "paymentStatus": "paid",
+    "status": "new",
+    "items": [
+      {
+        "name": "Steam Deck",
+        "price": 438.9,
+        "category": "game",
+        "type": "indie",
+        "activationKey": "NBXW-RUR8-QDUW-TLCV"
+      }
+    ],
+    "createdAt": "2025-11-24T03:22:33.258Z",
+    "meta": {
+      "raw": null
+    }
+  },
+  {
+    "id": "65e49fc9-e894-4012-a066-b2311ca24dd8",
+    "orderId": "ORD-1763954170469",
+    "userEmail": "alfafiziks@gmail.com",
+    "userName": "svatosplay",
+    "totalAmount": 438.9,
+    "currency": "RUB",
+    "paymentMethod": "manual",
+    "paymentStatus": "paid",
+    "status": "new",
+    "items": [
+      {
+        "name": "Steam Deck",
+        "price": 438.9,
+        "category": "game",
+        "type": "indie",
+        "activationKey": "RQ8Y-LH9S-SPKY-FU3B"
+      }
+    ],
+    "createdAt": "2025-11-24T03:16:27.349Z",
+    "meta": {
+      "raw": null
+    }
+  },
+  {
+    "id": "675fd255-15a7-4040-95df-fd312add452c",
+    "orderId": "ORD-1763953630255",
+    "userEmail": "svatosplay@gmail.com",
+    "userName": "svatosplay",
+    "totalAmount": 39.99,
+    "currency": "RUB",
+    "paymentMethod": "manual",
+    "paymentStatus": "paid",
+    "status": "new",
+    "items": [
+      {
+        "name": "Resident Evil 4",
+        "price": 39.99,
+        "category": "game",
+        "type": "horror",
+        "activationKey": "QCJ5-ZFUH-UKUF-5N85"
+      }
+    ],
+    "createdAt": "2025-11-24T03:07:30.238Z",
+    "meta": {
+      "raw": null
+    }
+  },
+  {
+    "id": "231d4b5f-3b8e-4e3e-9af2-52c94e19b2ff",
+    "orderId": "ORD-1763951977114",
+    "userEmail": "alfafiziks@gmail.com",
+    "userName": "svatosplay",
+    "totalAmount": 39.99,
+    "currency": "RUB",
+    "paymentMethod": "manual",
+    "paymentStatus": "paid",
+    "status": "new",
+    "items": [
+      {
+        "name": "ARC Raiders",
+        "price": 39.99,
+        "category": "game",
+        "type": "shooter",
+        "activationKey": "EBYV-S2CD-CNKV-YSR7"
+      }
+    ],
+    "createdAt": "2025-11-24T02:39:45.361Z",
+    "meta": {
+      "raw": null
+    }
+  },
+  {
+    "id": "c9a2256d-0b01-4c1d-80c1-af3a3d47d56f",
+    "orderId": "ORD-1763949987434",
+    "userEmail": "svatosplay@gmail.com",
+    "userName": "svatosplay",
+    "totalAmount": 159.99,
+    "currency": "RUB",
+    "paymentMethod": "manual",
+    "paymentStatus": "paid",
+    "status": "new",
+    "items": [
+      {
+        "name": "AK-47 | Hydroponic",
+        "price": 159.99,
+        "category": "skin",
+        "type": "weapon",
+        "activationKey": null
+      }
+    ],
+    "createdAt": "2025-11-24T02:06:46.704Z",
+    "meta": {
+      "raw": null
+    }
+  },
+  {
+    "id": "42782ffb-02df-4f6a-9552-0b40968002ff",
+    "orderId": "ORD-1763568389936",
+    "userEmail": "svatosplay@gmail.com",
+    "userName": "Svyat",
+    "totalAmount": 1516.48,
+    "currency": "RUB",
+    "paymentMethod": "manual",
+    "paymentStatus": "paid",
+    "status": "new",
+    "items": [
+      {
+        "name": "AWP | Gungnir",
+        "price": 1499.99,
+        "category": "skin",
+        "type": "weapon",
+        "activationKey": null
+      },
+      {
+        "name": "Risk of Rain 2: Alloyed Collective",
+        "price": 16.49,
+        "category": "game",
+        "type": "action",
+        "activationKey": "UHGR-SY46-FJZ7-QX3J"
+      }
+    ],
+    "createdAt": "2025-11-19T16:07:06.600Z",
+    "meta": {
+      "raw": null
+    }
+  },
+  {
+    "id": "b674310f-9550-41ab-b6cb-bf9e34ea5b67",
+    "orderId": "ORD-1763254882040",
+    "userEmail": "svatosplay@gmail.com",
+    "userName": "svatosplay",
+    "totalAmount": 79.99,
+    "currency": "RUB",
+    "paymentMethod": "manual",
+    "paymentStatus": "paid",
+    "status": "new",
+    "items": [
+      {
+        "name": "AK-47 | Jaguar",
+        "price": 79.99,
+        "category": "skin",
+        "type": "weapon",
+        "activationKey": null
+      }
+    ],
+    "createdAt": "2025-11-16T01:01:30.021Z",
+    "meta": {
+      "raw": null
+    }
+  },
+  {
+    "id": "57308e3d-9575-4d55-a10a-132995ba4a72",
+    "orderId": "ORD-1763253960156",
+    "userEmail": "svatosplay@gmail.com",
+    "userName": "svatosplay",
+    "totalAmount": 8.79,
+    "currency": "RUB",
+    "paymentMethod": "manual",
+    "paymentStatus": "paid",
+    "status": "new",
+    "items": [
+      {
+        "name": "RV There Yet?",
+        "price": 8.79,
+        "category": "game",
+        "type": "action",
+        "activationKey": "GNA4-YA3X-R6B9-JCMW"
+      }
+    ],
+    "createdAt": "2025-11-16T00:46:12.445Z",
+    "meta": {
+      "raw": null
+    }
+  },
+  {
+    "id": "43915ebf-f80a-470d-9651-305ea61ba323",
+    "orderId": "ORD-1763253385805",
+    "userEmail": "svatosplay@gmail.com",
+    "userName": "svatosplay",
+    "totalAmount": 4.99,
+    "currency": "RUB",
+    "paymentMethod": "manual",
+    "paymentStatus": "paid",
+    "status": "new",
+    "items": [
+      {
+        "name": "Terraria",
+        "price": 4.99,
+        "category": "game",
+        "type": "indie",
+        "activationKey": "8T7J-9CEP-J8F2-43YX"
+      }
+    ],
+    "createdAt": "2025-11-16T00:36:40.544Z",
+    "meta": {
+      "raw": null
+    }
+  },
+  {
+    "id": "08def5d4-e2ec-4153-9028-cef32bf83e9f",
+    "orderId": "ORD-1763128590111",
+    "userEmail": "alfafiziks@gmail.com",
+    "userName": "svatosplay",
+    "totalAmount": 32.99,
+    "currency": "RUB",
+    "paymentMethod": "manual",
+    "paymentStatus": "paid",
+    "status": "new",
+    "items": [
+      {
+        "name": "Dispatch",
+        "price": 32.99,
+        "category": "game",
+        "type": "action",
+        "activationKey": "ENR2-SH3Z-SJU7-X647"
+      }
+    ],
+    "createdAt": "2025-11-14T13:56:34.800Z",
+    "meta": {
+      "raw": null
+    }
+  },
+  {
+    "id": "f8fb1e71-e73c-477c-8c00-83e468450b36",
+    "orderId": "ORD-1763128562066",
+    "userEmail": "alfafiziks@gmail.com",
+    "userName": "svatosplay",
+    "totalAmount": 39.99,
+    "currency": "RUB",
+    "paymentMethod": "manual",
+    "paymentStatus": "paid",
+    "status": "new",
+    "items": [
+      {
+        "name": "ARC Raiders",
+        "price": 39.99,
+        "category": "game",
+        "type": "shooter",
+        "activationKey": "U8BX-PKCA-WVX7-ARVZ"
+      }
+    ],
+    "createdAt": "2025-11-14T13:56:18.236Z",
+    "meta": {
+      "raw": null
+    }
+  }
+]
