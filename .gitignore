@@ -1,16 +1,2 @@
-# Dependencies
-node_modules
-# Build
-dist
-# Env
+# Ignore only local env file
 .env
-.env.local
-# Logs
-logs
-*.log
-# Data
-data
-# IDE
-.vscode
-.idea
-.DS_Store
